@@ -18,6 +18,7 @@ pip install pywikibot imagehash django
 
 Setup the user-config.py
 ```bash
+cd finnauploader
 nano ./user-config.py
 ```
 
