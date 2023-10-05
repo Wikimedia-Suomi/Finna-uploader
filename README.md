@@ -37,7 +37,7 @@ python manage.py import_commons_images_with_link_to_finna
 
 # Import all P9478 Finna id values to local dabase 
 # - This uses https://commons-query.wikimedia.org service so login and OAUTH needs to be working
-python manage.py python manage.py import_P9478_finna_id_values_to_images
+python manage.py import_P9478_finna_id_values_to_images
 
 # Add 'best' finna_id from SDC to Image.finna_id 
 python manage.py set_finna_id_from_SDC_to_image
