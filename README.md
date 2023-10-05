@@ -56,8 +56,8 @@ rm db.sqlite3
 rm -rf images/migrations/000*.py
 ```
 
-Howto create Django boilerplate project 
-- ie. this apps first commit version
+# Howto create Django boilerplate project 
+- this is documentation on how first commit version was created
 
 ```bash
 # Create boilerplate Django app
