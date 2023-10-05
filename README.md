@@ -29,7 +29,7 @@ python manage.py migrate
 ```
 
 IMPORT DATA
-- Commands are in directory images/management/commands
+- Commands are in directory finnauploader/images/management/commands
 
 ```bash
 # Import names and urls of all images with externallinks containing Finna_id to local database
@@ -76,18 +76,18 @@ INSTALLED_APPS = [
 ]
 
 # These files were created manually on initial repo
-./user-config.py
-./images/models.py 
-./images/finna.py 
-./images/imagehash_helpers.py 
+./finnauploader/user-config.py
+./finnauploader/images/models.py 
+./finnauploader/images/finna.py 
+./finnauploader/images/imagehash_helpers.py 
 
 # Management commands created
-mkdir images/management/commands 
-./images/management/commands/import_commons_images_with_link_to_finna.py
-./images/management/commands/import_P9478_finna_id_values_to_images.py
-./images/management/commands/set_finna_id_from_SDC_to_image.py
-./images/management/commands/set_finna_id_from_externallinks_to_image.py
-./images/management/commands/image_status.py
+mkdir finnauploader/images/management/commands 
+./finnauploader/images/management/commands/import_commons_images_with_link_to_finna.py
+./finnauploader/images/management/commands/import_P9478_finna_id_values_to_images.py
+./finnauploader/images/management/commands/set_finna_id_from_SDC_to_image.py
+./finnauploader/images/management/commands/set_finna_id_from_externallinks_to_image.py
+./finnauploader/images/management/commands/image_status.py
 
 ```
 
