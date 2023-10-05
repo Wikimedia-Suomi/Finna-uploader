@@ -15,38 +15,6 @@ pip install --upgrade pip
 pip install pywikibot imagehash django
 ```
 
-SKIP THESE. THESE ARE ALREADY DONE IN THIS GITHUB REPO
-```bash
-# Create boilerplate Django app
-django-admin startproject finnauploader
-cd finnauploader
-python manage.py startapp images
-
-#Add pages to Installed Apps:
-#
-#In finnauploader/settings.py, add 'pages' to the INSTALLED_APPS list:
-#python
-#
-INSTALLED_APPS = [
-    ...
-    'images',
-]
-
-# Files which created manually on initial repo
-./images/models.py 
-./images/finna.py 
-./images/imagehash_helpers.py 
-
-# Management commands & create following files
-mkdir images/management/commands 
-./images/management/commands/import_commons_images_with_link_to_finna.py
-./images/management/commands/import_P9478_finna_id_values_to_images.py
-./images/management/commands/set_finna_id_from_SDC_to_image.py
-./images/management/commands/set_finna_id_from_externallinks_to_image.py
-./images/management/commands/image_status.py
-
-```
-END SKIPPING
 
 Setup the user-config.py
 ```bash
@@ -87,3 +55,39 @@ Howto delete dabase and migrations to start database from zero
 rm db.sqlite3
 rm -rf images/migrations/000*.py
 ```
+
+Howto create Django boilerplate project 
+- ie. this apps first commit version
+
+```bash
+# Create boilerplate Django app
+django-admin startproject finnauploader
+cd finnauploader
+python manage.py startapp images
+
+#Add pages to Installed Apps:
+#
+#In finnauploader/settings.py, add 'pages' to the INSTALLED_APPS list:
+#python
+#
+INSTALLED_APPS = [
+    ...
+    'images',
+]
+
+# These files were created manually on initial repo
+./user-config.py
+./images/models.py 
+./images/finna.py 
+./images/imagehash_helpers.py 
+
+# Management commands & create following files
+mkdir images/management/commands 
+./images/management/commands/import_commons_images_with_link_to_finna.py
+./images/management/commands/import_P9478_finna_id_values_to_images.py
+./images/management/commands/set_finna_id_from_SDC_to_image.py
+./images/management/commands/set_finna_id_from_externallinks_to_image.py
+./images/management/commands/image_status.py
+
+```
+
