@@ -81,7 +81,7 @@ INSTALLED_APPS = [
 ./images/finna.py 
 ./images/imagehash_helpers.py 
 
-# Management commands & create following files
+# Management commands created
 mkdir images/management/commands 
 ./images/management/commands/import_commons_images_with_link_to_finna.py
 ./images/management/commands/import_P9478_finna_id_values_to_images.py
