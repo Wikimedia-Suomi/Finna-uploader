@@ -30,7 +30,8 @@ python manage.py migrate
 ```
 
 IMPORT DATA
-- Commands are in directory finnauploader/images/management/commands
+- Commands source code is in directory finnauploader/images/management/commands
+- Commands are executed from the ./finnauploader directory
 
 ```bash
 # Import names and urls of all images with externallinks containing Finna_id to local database
