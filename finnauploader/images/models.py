@@ -55,26 +55,28 @@ class FinnaImage(models.Model):
     finna_id =  models.CharField(max_length=200, null=False, blank=False)
     title = models.CharField(max_length=200)
     year = models.PositiveIntegerField(unique=False, null=True, blank=True)
+    number_of_images = models.PositiveIntegerField(unique=False, null=True, blank=True)
     non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor, related_name='non_presenter_authors')
     buildings = models.ManyToManyField(FinnaBuilding, related_name='buildings')
     copyright = models.ForeignKey(FinnaCopyright, related_name="finna_copyright", on_delete=models.CASCADE)
 
-#class ImageHash(models.Model):
-#    phash = models.BigIntegerField(null=True)  # To store 64-bit unsigned integer
-#    dhash = models.BigIntegerField(null=True)  # To store 64-bit unsigned integer
-#    dhash_vertical = models.BigIntegerField(null=True)  # To store 64-bit unsigned integer
-#    finna_image = models.ForeignKey(FinnaImage, related_name="image_hashes", on_delete=models.CASCADE)
-#    
-#    class Meta:
-#        unique_together = [['phash', 'finna_image'], ['dhash', 'finna_image'], ['dhash_vertical', 'finna_image']]
+class FinnaImageHash(models.Model):
+    phash = models.BigIntegerField(null=True)  # To store 64-bit unsigned integer
+    dhash = models.BigIntegerField(null=True)  # To store 64-bit unsigned integer
+    dhash_vertical = models.BigIntegerField(null=True)  # To store 64-bit unsigned integer
+    finna_image = models.ForeignKey(FinnaImage, related_name="image_hashes", on_delete=models.CASCADE)
 
-#class ImageHashURL(models.Model):
-#    url = models.URLField(max_length=500)
-#    image_hash = models.ForeignKey(ImageHash, related_name="image_urls", on_delete=models.CASCADE)
-#    width = models.PositiveIntegerField(null=False, default=0)
-#    height = models.PositiveIntegerField(null=False, default=0)
-#    thumbnail = models.BooleanField(default=False)
-#    created = models.DateTimeField(default=timezone.now)
+    class Meta:
+        unique_together = [['phash', 'finna_image'], ['dhash', 'finna_image'], ['dhash_vertical', 'finna_image']]
+
+class FinnaImageHashURL(models.Model):
+    url = models.URLField(max_length=500)
+    imagehash = models.ForeignKey(FinnaImageHash, related_name="image_urls", on_delete=models.CASCADE)
+    width = models.PositiveIntegerField(null=False, default=0)
+    height = models.PositiveIntegerField(null=False, default=0)
+    index = models.PositiveIntegerField(null=False, default=0)
+    thumbnail = models.BooleanField(default=False)
+    created = models.DateTimeField(default=timezone.now)
 
 # Updates the Image.confirmed_finna_id_updated_at when confirmed_finna_id is updated
 

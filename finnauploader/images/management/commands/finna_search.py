@@ -10,6 +10,9 @@ class Command(BaseCommand):
     help = 'Import records from Finna search result to the database'
 
     def process_finna_record(self, record):
+#         if len(record['images'])>1:
+#             print(record)
+#             exit(1)
          i=record['imageRights']
          copyright, created=FinnaCopyright.objects.get_or_create(copyright=i['copyright'], link=i['link'], description=i['description'])
 
@@ -23,6 +26,9 @@ class Command(BaseCommand):
              image.year=record['year']
 
          image.title=record['title']
+
+         # One record can have multiple images
+         image.number_of_images = len(record['images'])
 
          # Save image metadata to db. Before this it is in memory only
          image.save()
