@@ -12,9 +12,7 @@ source venv/bin/activate
 Install packages
 ```bash
 pip install --upgrade pip
-pip install pywikibot imagehash django
-```
-
+pip install pywikibot imagehash django django-extensions
 
 Setup the user-config.py
 ```bash
@@ -51,6 +49,45 @@ python manage.py set_finna_id_from_externallinks_to_image
 # Check the current number of the images in the database
 python manage.py image_status
 ```
+### Database operations
+Howto connect to sqlite3 db from commandline
+
+```bash
+sqlite3 db.sqlite3 
+```
+
+Howto do basic commands inside sqlite3
+```bash
+
+# Show tables
+.tables
+
+# Describe table 
+.schema images_image
+
+# Run select 
+SELECT * FROM images_image LIMIT 10;
+
+# Exit from sqlite3 console
+.exit
+```
+
+Howto visualize the database as a graph if you can install graphviz
+```bash
+sudo apt-get install graphviz
+# OR in OS X
+brew install graphviz
+
+# And then
+python manage.py graph_models -a -o database_model.png
+```
+
+Howto visualize the database as a graph if you don't have graphviz
+```bash
+python manage.py graph_models -a > database_model.dot
+# Render .dot file using web page
+# https://dreampuf.github.io/GraphvizOnline
+```
 
 Howto delete dabase and migrations to start database from zero
 ```bash
@@ -74,6 +111,7 @@ python manage.py startapp images
 #
 INSTALLED_APPS = [
     ...
+    'django_extensions', # graph_models needs this
     'images',
 ]
 

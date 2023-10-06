@@ -1,11 +1,83 @@
 import requests
 import urllib
 import re
+import json
 from images.imagehash_helpers import is_same_image
 
 # urlencode Finna parameters
 def finna_api_parameter(name, value):   
    return "&" + urllib.parse.quote_plus(name) + "=" + urllib.parse.quote_plus(value)
+
+
+def add_finna_api_free_images_only_parameters():
+    url=''
+    url+= finna_api_parameter('filter[]', '~format_ext_str_mv:"0/Image/"')
+    url+= finna_api_parameter('filter[]', 'free_online_boolean:"1"')
+    url+= finna_api_parameter('filter[]', '~usage_rights_str_mv:"usage_B"')
+    return url
+
+def add_finna_api_default_field_parameters():
+    url=''
+    url+= finna_api_parameter('field[]', 'id')
+    url+= finna_api_parameter('field[]', 'title')
+    url+= finna_api_parameter('field[]', 'subTitle')
+    url+= finna_api_parameter('field[]', 'shortTitle')
+    url+= finna_api_parameter('field[]', 'summary')
+    url+= finna_api_parameter('field[]', 'imageRights')
+    url+= finna_api_parameter('field[]', 'images')
+    url+= finna_api_parameter('field[]', 'imagesExtended')
+    url+= finna_api_parameter('field[]', 'onlineUrls')
+    url+= finna_api_parameter('field[]', 'openUrl')
+    url+= finna_api_parameter('field[]', 'nonPresenterAuthors')
+    url+= finna_api_parameter('field[]', 'onlineUrls')
+    url+= finna_api_parameter('field[]', 'subjects')
+    url+= finna_api_parameter('field[]', 'subjectsExtendet')
+    url+= finna_api_parameter('field[]', 'subjectPlaces')
+    url+= finna_api_parameter('field[]', 'subjectActors')
+    url+= finna_api_parameter('field[]', 'subjectDetails')
+    url+= finna_api_parameter('field[]', 'geoLocations')
+    url+= finna_api_parameter('field[]', 'buildings')
+    url+= finna_api_parameter('field[]', 'identifierString')
+    url+= finna_api_parameter('field[]', 'collections')
+    url+= finna_api_parameter('field[]', 'institutions')
+    url+= finna_api_parameter('field[]', 'classifications')
+    url+= finna_api_parameter('field[]', 'events')
+    url+= finna_api_parameter('field[]', 'languages')
+    url+= finna_api_parameter('field[]', 'originalLanguages')
+    url+= finna_api_parameter('field[]', 'year')
+    url+= finna_api_parameter('field[]', 'hierarchicalPlaceNames')
+    url+= finna_api_parameter('field[]', 'formats')
+    url+= finna_api_parameter('field[]', 'physicalDescriptions')
+    url+= finna_api_parameter('field[]', 'measurements')
+    return url
+
+def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None ):
+    data = None
+    url = "https://api.finna.fi/v1/search?"
+    url += add_finna_api_free_images_only_parameters()
+#    url += add_finna_api_default_field_parameters()
+    url += finna_api_parameter('limit','100')
+    url += finna_api_parameter('page',str(page))
+
+    if collection:
+        url+= finna_api_parameter('filter[]', f'~hierarchy_parent_title:"{collection}"')
+
+    # Example search value '"professorit"+"miesten+puvut"'
+    if lookfor:
+        url+= finna_api_parameter('lookfor',f'{lookfor}')     
+
+    # Where lookfor is targeted. Known values 'AllFields', 'Subjects'
+    if type:
+        url+= finna_api_parameter('type',f'{type}') 
+
+    print(url)
+    with urllib.request.urlopen(url) as file:
+        try:
+            data = json.loads(file.read().decode())
+        except Exception as e:
+            print(e)
+            data = None
+    return data
 
 # Get finna API record with most of the information
 # Finna API documentation
@@ -15,24 +87,7 @@ def finna_api_parameter(name, value):
 def get_finna_record(id):
 
     url="https://api.finna.fi/v1/record?id=" +  urllib.parse.quote_plus(id)
-    url+= finna_api_parameter('field[]', 'geoLocations')
-    url+= finna_api_parameter('field[]', 'id')
-    url+= finna_api_parameter('field[]', 'title')
-    url+= finna_api_parameter('field[]', 'subTitle')
-    url+= finna_api_parameter('field[]', 'summary')
-    url+= finna_api_parameter('field[]', 'buildings')
-    url+= finna_api_parameter('field[]', 'formats')
-    url+= finna_api_parameter('field[]', 'imageRights')
-    url+= finna_api_parameter('field[]', 'images')
-    url+= finna_api_parameter('field[]', 'imagesExtended')
-    url+= finna_api_parameter('field[]', 'onlineUrls')
-    url+= finna_api_parameter('field[]', 'openUrl')
-    url+= finna_api_parameter('field[]', 'nonPresenterAuthors')
-    url+= finna_api_parameter('field[]', 'onlineUrls')
-    url+= finna_api_parameter('field[]', 'subjects')   
-    url+= finna_api_parameter('field[]', 'classifications')
-    url+= finna_api_parameter('field[]', 'events')
-    url+= finna_api_parameter('field[]', 'identifierString')
+    url+= add_finna_api_default_field_parameters()
                         
     try:
         response = requests.get(url)

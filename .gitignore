@@ -163,3 +163,4 @@ cython_debug/
 finnauploader/apicache-py3
 finnauploader/pywikibot-FinnaUploadBot2.lwp
 finnauploader/throttle.ctrl
+finnauploader/images/migrations
