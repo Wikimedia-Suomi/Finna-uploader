@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from images.models import Image, ImageURL, FinnaImage, FinnaCopyright, FinnaBuilding, FinnaNonPresenterAuthor, FinnaImageHash, FinnaImageHashURL
+from images.models import Image, ImageURL, FinnaImage, FinnaCopyright, FinnaBuilding, FinnaNonPresenterAuthor, FinnaImageHash, FinnaImageHashURL, SdcFinnaID
 import pywikibot
 from pywikibot.data import sparql
 import requests
@@ -18,6 +18,10 @@ class Command(BaseCommand):
             finna_id=imagehash.finna_image.finna_id
 #            if finna_id != 'museovirasto.B0ACA4613D5CF819619E461288E6CB01':
 #                continue
+
+            sdc_finna_id=SdcFinnaID.objects.filter(finna_id=finna_id).first()
+            if sdc_finna_id:
+                continue
 
             photo=Image.objects.filter(finna_id=finna_id).first()
             if photo:
@@ -41,8 +45,5 @@ class Command(BaseCommand):
  
             else:
                 print("Failed to retrieve data. Status code:", response.status_code)
-
-#            time.sleep(0.2)
-#            exit(1)
 
         self.stdout.write(self.style.SUCCESS(f'Images counted succesfully!'))

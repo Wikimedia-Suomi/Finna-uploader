@@ -19,26 +19,34 @@ class Command(BaseCommand):
 
         photos=FinnaImage.objects.all()
         for photo in photos:
-            if photo.number_of_images>1:
-                print(photo)
-                exit(1)
+            imagehash=FinnaImageHash.objects.filter(finna_image=photo).first()
 
-            print(photo.finna_id)
-            index=0
-            url=f'https://finna.fi/Cover/Show?source=Solr&id={photo.finna_id}&index={index}&size=large'
-            i=get_imagehashes(url, thumbnail=True)
-            print(i)
+            for index in range(photo.number_of_images):
+                imagehash_url=FinnaImageHashURL.objects.filter(imagehash=imagehash, index=index).first()
+                if imagehash_url:
+                    print(f'skipping: {photo.finna_id} {index}')
+                    continue
 
-            imagehash, created=FinnaImageHash.objects.get_or_create(
+                url=f'https://finna.fi/Cover/Show?source=Solr&id={photo.finna_id}&index={index}&size=large'
+                print(photo.title)
+                print(photo.copyright.copyright)
+                print(url)
+
+                try:
+                    i=get_imagehashes(url, thumbnail=True)
+                except:
+                    continue
+
+                imagehash, created=FinnaImageHash.objects.get_or_create(
                                   finna_image=photo, 
                                   phash=unsigned_to_signed(i['phash']), 
                                   dhash=unsigned_to_signed(i['dhash']),
                                   dhash_vertical=unsigned_to_signed(i['dhash_vertical'])
                                )
-            if created:
-                imagehash.save()
+                if created:
+                    imagehash.save()
 
-            imagehash_url, created=FinnaImageHashURL.objects.get_or_create(
+                imagehash_url, created=FinnaImageHashURL.objects.get_or_create(
                                        imagehash=imagehash, 
                                        url=url,
                                        width=i['width'],             
@@ -46,9 +54,9 @@ class Command(BaseCommand):
                                        index=index,
                                        thumbnail=True
                                    )
-            if created:
-                imagehash_url.save()
+                if created:
+                    imagehash_url.save()
 
-            time.sleep(0.2)
+                time.sleep(0.2)
 
         self.stdout.write(self.style.SUCCESS(f'Images counted succesfully!'))

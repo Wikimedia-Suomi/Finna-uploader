@@ -12,7 +12,7 @@ class Command(BaseCommand):
         site = pywikibot.Site("commons", "commons")  # for Wikimedia Commons
         site.login()
 
-        images = Image.objects.filter(finna_id__isnull=True)
+        images = Image.objects.filter(finna_id__isnull=False)
         number_of_images=images.count()
         print(f'Images to do {number_of_images}')
 

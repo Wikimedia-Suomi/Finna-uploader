@@ -9,7 +9,7 @@ from django.utils import timezone
 class Image(models.Model):
     page_id = models.PositiveIntegerField(unique=True)
     page_title = models.CharField(max_length=200)
-    finna_id = models.CharField(max_length=200, null=True, blank=True)
+    finna_id = models.CharField(max_length=200, null=True, blank=True, db_index=True)
     finna_id_confirmed = models.BooleanField(default=False)
     finna_id_confirmed_at = models.DateTimeField(null=True, blank=True)
 
@@ -24,7 +24,7 @@ class ImageURL(models.Model):
 # Commons external links linked from image
 class SdcFinnaID(models.Model):
     image = models.ForeignKey(Image, related_name="sdc_finna_ids", on_delete=models.CASCADE)
-    finna_id = models.CharField(max_length=200)
+    finna_id = models.CharField(max_length=200, db_index=True)
 
     class Meta:
         unique_together = [['image', 'finna_id']]
@@ -52,7 +52,7 @@ class FinnaNonPresenterAuthor(models.Model):
         return self.name
 
 class FinnaImage(models.Model):
-    finna_id =  models.CharField(max_length=200, null=False, blank=False)
+    finna_id =  models.CharField(max_length=200, null=False, blank=False, db_index=True)
     title = models.CharField(max_length=200)
     year = models.PositiveIntegerField(unique=False, null=True, blank=True)
     number_of_images = models.PositiveIntegerField(unique=False, null=True, blank=True)

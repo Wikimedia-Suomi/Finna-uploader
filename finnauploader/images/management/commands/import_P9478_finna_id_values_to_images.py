@@ -51,7 +51,7 @@ class Command(BaseCommand):
                 print(f'Image with page_id={page_id} ({page_title}) does not exist.')
                 break
 
-            sdc_finna_id, created = SdcFinnaID.objects.get_or_create(image=image, defaults={"finna_id": row['finna_id']})
+            sdc_finna_id, created = SdcFinnaID.objects.get_or_create(image=image, finna_id=row['finna_id'])
             print(created)
 
         self.stdout.write(self.style.SUCCESS(f'SDC Finna_ids added successfully!'))

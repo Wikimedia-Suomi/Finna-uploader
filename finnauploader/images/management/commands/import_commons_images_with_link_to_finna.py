@@ -35,7 +35,7 @@ class Command(BaseCommand):
                     # Do actual updating
                     print(link)
                     image, created = Image.objects.get_or_create(page_id=link['pageid'], defaults={"page_title": link['title']})
-                    image_url, image_created = ImageURL.objects.get_or_create(image=image, defaults={"url": link['url']})
+                    image_url, image_created = ImageURL.objects.get_or_create(image=image, url=link['url'])
                     
             if "continue" in data:
                 params["eucontinue"] = data["continue"]["eucontinue"]

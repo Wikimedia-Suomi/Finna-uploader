@@ -84,10 +84,11 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None ):
 # * https://api.finna.fi
 # * https://www.kiwi.fi/pages/viewpage.action?pageId=53839221
 
-def get_finna_record(id):
+def get_finna_record(id, full=False):
 
     url="https://api.finna.fi/v1/record?id=" +  urllib.parse.quote_plus(id)
-    url+= add_finna_api_default_field_parameters()
+    if full:
+        url+= add_finna_api_default_field_parameters()
                         
     try:
         response = requests.get(url)
@@ -97,7 +98,7 @@ def get_finna_record(id):
         exit(1)
 
 def is_correct_finna_record(finna_id, image_url):
-    finna_record = get_finna_record(finna_id)
+    finna_record = get_finna_record(finna_id, True)
     
     if finna_record['status']!='OK':
         print('Finna status not OK')
