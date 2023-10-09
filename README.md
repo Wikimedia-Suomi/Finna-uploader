@@ -24,7 +24,9 @@ makemigrations will generate SQL change files based on models.py changes
 - See https://docs.djangoproject.com/en/4.2/topics/migrations/
 ```bash
 python manage.py makemigrations
+python manage.py sqlmigrate
 python manage.py migrate
+python manage.py showmigrations
 ```
 
 IMPORT DATA
