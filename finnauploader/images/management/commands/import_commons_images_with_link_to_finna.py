@@ -9,6 +9,9 @@ class Command(BaseCommand):
     def add_urls(self, url, match=None):
         print(url)
 
+        # TODO: refactor so that this will use pywikibot.site.exturlusage()
+        # https://doc.wikimedia.org/pywikibot/master/api_ref/pywikibot.site.html#pywikibot.site._generators.GeneratorsMixin.exturlusage
+
         # Find all pages with url
 
         base_url = f"https://commons.wikimedia.org/w/api.php"

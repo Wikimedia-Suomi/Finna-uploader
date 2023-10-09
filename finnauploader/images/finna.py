@@ -55,7 +55,7 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None ):
     data = None
     url = "https://api.finna.fi/v1/search?"
     url += add_finna_api_free_images_only_parameters()
-#    url += add_finna_api_default_field_parameters()
+    url += add_finna_api_default_field_parameters()
     url += finna_api_parameter('limit','100')
     url += finna_api_parameter('page',str(page))
 
