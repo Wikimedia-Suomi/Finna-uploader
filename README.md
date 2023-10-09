@@ -37,7 +37,7 @@ IMPORT DATA
 
 ```bash
 
-# ** Wikimedia Commons images **
+# ** Wikimedia Commons image info **
 
 # Import names and urls of all images with externallinks containing Finna_id to local database
 python manage.py import_commons_images_with_link_to_finna
@@ -56,7 +56,7 @@ python manage.py set_finna_id_from_externallinks_to_image
 # Update Image.finna_id to id from Finna.fi record
 python manage.py set_finna_id_to_latest_from_finna.py
 
-# ** Finna records **
+# ** Finna records ( THESE DOESNT NEED Commons image info to work ) **
 
 # Import JOKA journalistic photo archive records to Finna
 python manage.py finna_search
@@ -67,9 +67,7 @@ python manage.py imagehash_finna_images
 # Export imagehashes
 python manage.py dump_finna_imagehashes
 
-
-
-
+# ** STATUS **
 
 # Check the current number of the images in the database
 python manage.py image_status
