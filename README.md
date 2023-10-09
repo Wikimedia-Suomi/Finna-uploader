@@ -97,7 +97,9 @@ SELECT * FROM images_image LIMIT 10;
 .exit
 ```
 
-Howto visualize the database as a graph if you can install graphviz
+Howto visualize the database as a graph 
+
+- with graphviz
 ```bash
 sudo apt-get install graphviz
 # OR in OS X
@@ -107,7 +109,7 @@ brew install graphviz
 python manage.py graph_models -a -o database_model.png
 ```
 
-Howto visualize the database as a graph if you don't have graphviz
+- without graphviz
 ```bash
 python manage.py graph_models -a > database_model.dot
 # Render .dot file using web page
