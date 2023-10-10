@@ -78,6 +78,11 @@ class FinnaImageHashURL(models.Model):
     thumbnail = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
 
+class ToolforgeImageHashCache(models.Model):
+    page_id = models.PositiveIntegerField()
+    phash = models.BigIntegerField(null=True, db_index=True)  # To store 64-bit unsigned integer
+    dhash = models.BigIntegerField(null=True, db_index=True)  # To store 64-bit unsigned integer
+
 # Updates the Image.confirmed_finna_id_updated_at when confirmed_finna_id is updated
 
 @receiver(pre_save, sender=Image)
