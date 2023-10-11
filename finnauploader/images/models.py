@@ -51,14 +51,58 @@ class FinnaNonPresenterAuthor(models.Model):
      def __str__(self):
         return self.name
 
+class FinnaSummary(models.Model):
+     name = models.CharField(max_length=200)
+
+     def __str__(self):
+        return self.name
+
+class FinnaSubject(models.Model):
+     name = models.CharField(max_length=200)
+
+     def __str__(self):
+        return self.name
+
+class FinnaSubjectPlace(models.Model):
+     name = models.CharField(max_length=200)
+
+     def __str__(self):
+        return self.name
+
+class FinnaSubjectActor(models.Model):
+     name = models.CharField(max_length=200)
+
+     def __str__(self):
+        return self.name
+
+class FinnaSubjectDetail(models.Model):
+     name = models.CharField(max_length=200)
+
+     def __str__(self):
+        return self.name
+
+class FinnaCollection(models.Model):
+     name = models.CharField(max_length=200)
+
+     def __str__(self):
+        return self.name
+
 class FinnaImage(models.Model):
     finna_id =  models.CharField(max_length=200, null=False, blank=False, db_index=True)
     title = models.CharField(max_length=200)
     year = models.PositiveIntegerField(unique=False, null=True, blank=True)
     number_of_images = models.PositiveIntegerField(unique=False, null=True, blank=True)
     non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor, related_name='non_presenter_authors')
+    summary = models.ForeignKey(FinnaSummary, related_name='summary', null=True, on_delete=models.CASCADE)
+    subjects = models.ManyToManyField(FinnaSubject, related_name='subjects')
+    subject_places = models.ManyToManyField(FinnaSubjectPlace, related_name='subject_places')
+    subject_actors = models.ManyToManyField(FinnaSubjectActor, related_name='subject_actors')
+    subject_details = models.ManyToManyField(FinnaSubjectDetail, related_name='subject_details')
+    collections = models.ManyToManyField(FinnaCollection, related_name='collections')
     buildings = models.ManyToManyField(FinnaBuilding, related_name='buildings')
     copyright = models.ForeignKey(FinnaCopyright, related_name="finna_copyright", on_delete=models.CASCADE)
+    identifier_string = models.CharField(max_length=64, null=True, blank=True) # accession number or similar identifier
+    short_title = models.CharField(max_length=200, null=True, blank=True)
 
 class FinnaImageHash(models.Model):
     phash = models.BigIntegerField(null=True)  # To store 64-bit unsigned integer

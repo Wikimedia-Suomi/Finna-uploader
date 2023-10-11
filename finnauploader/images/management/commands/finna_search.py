@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from images.models import Image, ImageURL, FinnaImage, FinnaCopyright, FinnaBuilding, FinnaNonPresenterAuthor
+from images.models import Image, ImageURL, FinnaImage, FinnaCopyright, FinnaBuilding, FinnaNonPresenterAuthor, FinnaSummary, FinnaSubject, FinnaSubjectPlace, FinnaSubjectActor, FinnaSubjectDetail, FinnaCollection
 import pywikibot
 from pywikibot.data import sparql
 import requests
@@ -30,11 +30,54 @@ class Command(BaseCommand):
          # One record can have multiple images
          image.number_of_images = len(record['images'])
 
+         if 'identifierString' in record:
+             image.identifier_string = record['identifierString']
+
+         if 'shortTitle' in record:
+             image.short_title = record['shortTitle']
+
+         if 'summary' in record:
+            image.summary, created=FinnaSummary.objects.get_or_create(name=record['summary'])
+
+         if 'subjects' in record:
+             for subject in record['subjects']:
+                 finna_subject, created=FinnaSubject.objects.get_or_create(
+                                   name=subject
+                                )
+                 image.subjects.add(finna_subject)
+
+         if 'subjectPlaces' in record:
+             for subject_place in record['subjectPlaces']:
+                 finna_subject_place, created=FinnaSubjectPlace.objects.get_or_create(
+                                   name=subject_place
+                                )
+                 image.subject_places.add(finna_subject_place)
+
+         if 'subjectActors' in record:
+             for subject_actor in record['subjectActors']:
+                 finna_subject_actor, created=FinnaSubjectActor.objects.get_or_create(
+                                   name=subject_actor
+                                )
+                 image.subject_actors.add(finna_subject_actor)
+
+         if 'subjectDetails' in record:
+             for subject_detail in record['subjectDetails']:
+                 finna_subject_detail, created=FinnaSubjectDetail.objects.get_or_create(
+                                   name=subject_detail
+                                )
+                 image.subject_details.add(finna_subject_detail)
+
+         #if 'collections' in record:
+             #for collection in record['collections']:
+                 #finna_collection, created=FinnaCollection.objects.get_or_create(
+                 #                  name=collection
+                 #               )
+                 #image.collections.add(finna_collection)
+
          # Save image metadata to db. Before this it is in memory only
          image.save()
        
          if 'buildings' in record:
-             buildings=[]
              for building in record['buildings']:
                  finna_building, created=FinnaBuilding.objects.get_or_create(
                                    value=building['value'], 
