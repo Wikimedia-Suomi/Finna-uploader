@@ -1,8 +1,9 @@
+
 import pywikibot
+import json
 
 wikidata_site = pywikibot.Site("wikidata", "wikidata")  # Connect to Wikidata
 #pywikibot.config.socket_timeout = 120
-#site = pywikibot.Site("commons", "commons")  # for Wikimedia Commons
 
 def create_P7482_source_of_file(url, operator, publisher):
     # Q74228490 = file available on the internet
@@ -41,9 +42,10 @@ def create_P7482_source_of_file(url, operator, publisher):
     
     return claim
 
-def create_P275_licence(value=''):
+def create_P275_licence(value):
     if not value:
-        return None
+        print("No licence error")
+        exit(1)
 
     licences={
         'CC BY 4.0':'Q20007257'
@@ -151,3 +153,22 @@ def create_P571_timestamp(date_obj, precision):
     claim.setTarget(target)    
     return claim
 
+def wbEditEntity(site, page, data):
+    # Reload file_page to be sure that we have updated page_id
+    
+    file_page = pywikibot.FilePage(site, page.title())
+    media_identifier = 'M' + str(file_page.pageid)
+    print(media_identifier)
+    
+    csrf_token = site.tokens['csrf']
+    payload = {
+       'action' : 'wbeditentity',
+       'format' : u'json',
+       'id' : media_identifier,
+       'data' :  json.dumps(data),
+       'token' : csrf_token,
+       'bot' : True, # in case you're using a bot account (which you should)
+    }
+    print(payload)
+    request = site.simple_request(**payload)
+    ret=request.submit()

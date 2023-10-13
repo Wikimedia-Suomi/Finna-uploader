@@ -10,38 +10,16 @@ import json
 import mwparserfromhell
 import re
 from datetime import datetime
-from images.sdc_helpers import create_P7482_source_of_file, create_P275_licence, create_P6216_copyright_state, create_P9478_finna_id, create_P170_author, create_P195_collection, create_P571_timestamp
-
-pywikibot.config.socket_timeout = 120
-site = pywikibot.Site("commons", "commons")  # for Wikimedia Commons
-site.login()
-
-
-def parse_name_and_q_item(text):
-    pattern = r'\*\s(.*?)\s:\s\{\{Q\|(Q\d+)\}\}'
-    matches = re.findall(pattern, text)
-    
-    # Extracted names and Q-items
-    parsed_data = {}
-    for name, q_item in matches:
-        parsed_data[name] = q_item
-    return parsed_data
-
-
-authors_page_title='User:FinnaUploadBot/data/nonPresenterAuthors'
-page = pywikibot.Page(site, authors_page_title)
-nonPresenterAuthorsCache = parse_name_and_q_item(page.text) 
-
-institutions_page_title='User:FinnaUploadBot/data/institutions'
-page = pywikibot.Page(site, institutions_page_title)
-institutionsCache = parse_name_and_q_item(page.text) 
+from images.sdc_helpers import create_P7482_source_of_file, create_P275_licence, create_P6216_copyright_state, create_P9478_finna_id, create_P170_author, create_P195_collection, create_P571_timestamp, wbEditEntity
+from images.wikitext.creator import get_institution_name, get_institution_wikidata_id, get_institution_template_from_wikidata_id, get_author_name, get_author_wikidata_id, get_creator_template_from_wikidata_id
+from images.wikitext.photographer import create_photographer_template
+from images.wikitext.categories import create_categories
+from images.wikitext.timestamps import parse_timestamp
 
 def get_sdc_json(r):
     url='https://www.finna.fi/Record/' + r['id']
     operator='Q420747' # National library
     publisher='Q3029524' # Finnish Heritage Agency
-    parsed_timestamp,precision=parse_timestamp(r['date'])
-    timestamp=datetime.strptime(parsed_timestamp, "+%Y-%m-%dT%H:%M:%SZ")
 
     labels={}
     labels['fi']={'language':'fi', 'value': r['title'] }
@@ -66,8 +44,11 @@ def get_sdc_json(r):
         claim = create_P195_collection(collection, r['identifierString'])
         claims.append(claim)
 
-    claim = create_P571_timestamp(timestamp,precision)
-    claims.append(claim)
+    parsed_timestamp,precision=parse_timestamp(r['date'])
+    if parsed_timestamp:
+        timestamp=datetime.strptime(parsed_timestamp, "+%Y-%m-%dT%H:%M:%SZ")
+        claim = create_P571_timestamp(timestamp,precision)
+        claims.append(claim)
 
     json_claims=[]
     for claim in claims:
@@ -80,27 +61,11 @@ def get_sdc_json(r):
     }
     return ret
 
-def wbEditEntity(site, page, data):
-    # Reload file_page to be sure that we have updated page_id
-                    
-    file_page = pywikibot.FilePage(site, page.title())
-    media_identifier = 'M' + str(file_page.pageid)
-    print(media_identifier)
-                
-    csrf_token = site.tokens['csrf']
-    payload = {
-       'action' : 'wbeditentity',
-       'format' : u'json',
-       'id' : media_identifier,
-       'data' :  json.dumps(data),
-       'token' : csrf_token,
-       'bot' : True, # in case you're using a bot account (which you should)
-    }
-    print(payload)
-    request = site.simple_request(**payload)
-    ret=request.submit()  
 
 def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
+    site = pywikibot.Site('commons', 'commons')  # The site we want to run our bot on
+    site.login()
+
     commons_file_name = "File:" + file_name
     file_page = pywikibot.FilePage(site, commons_file_name)
     file_page.text = wikitext
@@ -111,18 +76,8 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
         exit()
         
     # Load file from url
-#    response = requests.get(source_file_url,  timeout=30)
-    
-    # Create a temporary file and save the downloaded file into this temp file
-#    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-#        temp_file.write(response.content)
-#        temp_file_path = temp_file.name
-    
-#    file_page.upload(temp_file_path, comment=comment,asynchronous=True)
     file_page.upload(source_file_url, comment=comment,asynchronous=True)
     
-    # Delete the temporary file
-#    os.unlink(temp_file_path)  
     return file_page
 
 
@@ -143,237 +98,6 @@ def get_comment_text(r):
     return ret
 
 
-def parse_timestamp(datestr):
-   # str = "valmistusaika: 22.06.2015"
-   m = re.match("valmistusaika:? (\d\d)\.(\d\d)\.(\d\d\d\d)", datestr)
-   if m!=None:
-      year=m.group(3)     
-      month=m.group(2)
-      day=m.group(1)
-      timestamp="+" + year +"-" + month +"-" + day +"T00:00:00Z"
-      precision=11
-      return timestamp, precision
-    
-   m = re.match("valmistusaika:? (\d\d\d\d)", datestr)
-   if m!=None:
-      year=m.group(1)
-      timestamp="+" + year +"-01-01T00:00:00Z"
-      precision=9
-      return timestamp, precision
-      
-   print(datestr)   
-   exit("Parse_timestamp failed")
-
-
-def parse_timestamp_string(datestr):
-   if not datestr:
-       return ''
-
-   m = re.match("valmistusaika:? (\d\d)\.(\d\d)\.(\d\d\d\d)$", datestr.strip())
-   if m!=None:
-      year=m.group(3)
-      month=m.group(2)
-      day=m.group(1)
-      timestamp=year +"-" + month +"-" + day
-      return timestamp
-        
-   m = re.match("valmistusaika:? (\d\d\d\d)$", datestr.strip())
-   if m!=None:              
-      year=m.group(1)
-      return year
-        
-   print(datestr)
-   exit("Parse_timestamp failed") 
-
-def language_template_wrap(lang, text):
-    if text:
-        return '{{' + lang + '|' + text + '}}'
-    else:
-        return ''
-
-def create_categories(r):
-    # Create a new WikiCode object
-    wikicode = mwparserfromhell.parse("")
-    
-    # Create the categories
-    categories = set()
-
-    creator_category=get_creator_image_category_from_wikidata_id(r['creator_wikidata_id'])
-    creator_category=creator_category.replace('Category:', '')
-    categories.add(creator_category)
-        
-    subject_categories = {
-        'muotokuvat':'Portrait photographs',
-        'henkilökuvat':'Portrait photographs',
-        'professorit':'Professors from Finland',
-        'miesten puvut':'Men wearing suits in Finland'
-    }
-    
-    for subject_category in subject_categories.keys():
-        if subject_category in str(r['subjects']):
-            categories.add(subject_categories[subject_category])
-
-    
-    if 'year' in r:
-        if 'Category:Portrait photographs' in categories:
-            categories.add('People of Finland in ' + r['year'])
-        else:
-            categories.add(r['year'] + ' in Finland')
-
-    categories.add('Files uploaded by FinnaUploadBot')
-    
-    for category in categories:
-        # Create the Wikilink
-        wikilink = mwparserfromhell.nodes.Wikilink(title='Category:' + category)
-                
-        # Add the Wikilink to the WikiCode object
-        wikicode.append(wikilink)    
-    
-        
-    flatten_wikicode=str(wikicode).replace('[[Category:', '\n[[Category:')
-                                
-    # return the wikitext 
-    return flatten_wikicode
-
-def create_photographer_template(r):
-    # Create a new WikiCode object
-    wikicode = mwparserfromhell.parse("")
- 
-    # Create the template
-    template = mwparserfromhell.nodes.Template(name='Photograph')
-
-    # Add the parameters to the template
-    template.add('photographer', r['creator_template'])
-    template.add('title', '\n'.join(r['template_titles']))
-    template.add('description', language_template_wrap('fi', '\n'.join(r['template_descriptions'])))
-    template.add('depicted people', language_template_wrap('fi', r['subjectActors']))
-    template.add('depicted place', language_template_wrap('fi', r['subjectPlaces']))
-    template.add('date', parse_timestamp_string(r['date']))
-    template.add('medium', '')
-    template.add('dimensions', "\n".join(r['measurements']))
-    template.add('institution', r['institution_template'])   
-    template.add('department', language_template_wrap('fi', "; ".join(r['collections'])))
-    template.add('references', '')
-    template.add('object history', '')
-    template.add('exhibition history', '')
-    template.add('credit line', '')
-    template.add('inscriptions', '')
-    template.add('notes', '')
-    template.add('accession number', r['identifierString'])
-    template.add('source', r['source'])
-    template.add('permission',  language_template_wrap('fi', "\n".join([r['copyright'], r['copyright_description']])))
-    template.add('other_versions', '')
-    template.add('wikidata', '')
-    template.add('camera coord', '')
-
-    # Add the template to the WikiCode object
-    wikicode.append(template)
-    flatten_wikitext=str(wikicode)
-    
-    # Add newlines before parameter name
-    params = ['photographer', 'title', 'description', 'depicted people', 'depicted place', 'date', 'medium', 'dimensions',
-              'institution', 'department', 'references', 'object history', 'exhibition history', 'credit line', 'inscriptions',
-              'notes', 'accession number', 'source', 'permission', 'other_versions', 'wikidata', 'camera coord']
-    
-    for param in params:
-        flatten_wikitext=flatten_wikitext.replace('|' + param +'=', '\n|' +param +' = ')
-    
-    # return the wikitext
-    return flatten_wikitext   
-
-def get_creator_template_from_wikidata_id(wikidata_id):
-    # Connect to Wikidata
-    site = pywikibot.Site("wikidata", "wikidata")
-    repo = site.data_repository()
-
-    # Access the Wikidata item using the provided ID
-    item = pywikibot.ItemPage(repo, wikidata_id)
-
-    # If the item doesn't exist, return None
-    if not item.exists():
-        print(f"Item {wikidata_id} does not exist!")
-        return None
-
-    # Try to fetch the value of the property P1472 (Commons Creator page)
-    claims = item.get().get('claims')
-
-    if 'P1472' in claims:
-        creator_page_claim = claims['P1472'][0]
-        creator_template_name = creator_page_claim.getTarget()
-        return '{{Creator:' + creator_template_name + '}}'
-    else:
-        return None
-
-
-
-def get_creator_image_category_from_wikidata_id(wikidata_id):
-    # Connect to Wikidata
-    site = pywikibot.Site("wikidata", "wikidata")
-    commons_site = pywikibot.Site("commons", "commons")
-    repo = site.data_repository()
-
-    # Access the Wikidata item using the provided ID
-    item = pywikibot.ItemPage(repo, wikidata_id)
-
-    # If the item doesn't exist, return None
-    if not item.exists():
-        print(f"Item {wikidata_id} does not exist!")
-        return None
-
-    # Try to fetch the value of the property P1472 (Commons Creator page)
-    claims = item.get().get('claims')
-
-    if 'P373' in claims:
-        commons_category_claim = claims['P373'][0]
-        commons_category = commons_category_claim.getTarget()
-        photo_category_name = f"Category:Photographs by {commons_category}"
-        photo_category = pywikibot.Category(commons_site, photo_category_name)
-
-        # Check if the category exists
-        if photo_category.exists():
-            return photo_category.title()
-        else:
-            print(f'{photo_category.title} is missing') 
-            exit(1)
-#            return None
-    else:
-         print(f'{wikidata_id}.P373 value is missing') 
-         exit(1)
-#        return None
-
-
-def get_author_name(nonPresenterAuthors):
-    ret = None
-    for nonPresenterAuthor in nonPresenterAuthors:
-        name = nonPresenterAuthor['name']
-        role = nonPresenterAuthor['role'] 
-
-        if role == "kuvaaja":
-            if name in nonPresenterAuthorsCache:
-                if not ret:
-                    ret=name
-                else:
-                    print("Multiple authors")
-                    print(nonPresenterAuthors)
-                    exit(1)
-            else:
-                print(f'Name {name} is missing from https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors')
-
-    if not ret:
-        print("Unknown author")
-        print(nonPresenterAuthors)
-        exit(1)
-
-    return ret
-
-def get_author_wikidata_id(name):
-    if name in nonPresenterAuthorsCache:
-        wikidata_id=nonPresenterAuthorsCache[name]
-        return wikidata_id
-    else:
-        print(f'Unknown author: {author_name}')
-        exit(1)
-
 # Filter out duplicate placenames
 def get_subject_place(subjectPlaces):
     parts = [part.strip() for part in subjectPlaces.split("; ")]
@@ -386,61 +110,6 @@ def get_subject_place(subjectPlaces):
         if not parts[i] in "; ".join(final_parts):
             final_parts.append(parts[i])
     return "; ".join(final_parts)
-
-def get_institution_name(institutions):
-    if len(institutions)!=1:
-        print('incorrect number of institutions')
-        exit(1)
-    for institution in institutions:
-        if institution['value'] in institutionsCache:
-            return institution['value']
-       
-    print("Unknown institution: " + str(institutions))
-    print("Missing in https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/institutions")
-    exit(1)
-
-def get_institution_wikidata_id(institution_name):
-    if institution_name in institutionsCache:
-        return institutionsCache[institution_name]
-    print("Unknown institution: " + str(institutions))
-    exit(1)
-
-def get_institution_template_from_wikidata_id(wikidata_id):
-    # Connect to Wikidata
-    site = pywikibot.Site("wikidata", "wikidata")
-    repo = site.data_repository()
-    
-    # Access the Wikidata item using the provided ID
-    item = pywikibot.ItemPage(repo, wikidata_id)
-    
-    # If the item doesn't exist, return None
-    if not item.exists():
-        print(f"Item {wikidata_id} does not exist!")
-        exit(1)
-    
-    # Try to fetch the value of the property P1472 (Commons Creator page)
-    claims = item.get().get('claims')
-    
-    if 'P1612' in claims:
-        institution_page_claim = claims['P1612'][0]
-        institution_template_name = institution_page_claim.getTarget()
-        return '{{Institution:' + institution_template_name + '}}'
-    else:
-        print(f"Item {wikidata_id} does not exist!")
-        exit(1)
-
-
-
-
-# Get institution template
-#def get_institution(institutions):
-#    for institution in institutions: 
-#        if institution['value'] == "Museovirasto":
-#            ret="{{institution:Museovirasto}}"
-#        else: 
-#            print("Unknown institution: " + str(institutions))
-#            exit(1)
-#    return ret
                 
 
 def finna_exists(id):  
@@ -477,10 +146,11 @@ def get_existing_finna_ids_from_sparql():
     return data
 
 # get edit summaries of last 5000 edits for checking which files were already uploaded
-def get_upload_summary(username):
+def get_upload_summary():
     site = pywikibot.Site('commons', 'commons')  # The site we want to run our bot on
-    user = pywikibot.User(site, username)       # The user whose edits we want to check
-                 
+    site.login()
+    user = site.user()       # The user whose edits we want to check
+    user = pywikibot.User(site, str(user))             
     contribs = user.contributions(total=5000)  # Get the user's last 1000 contributions
             
     uploadsummary=''
@@ -488,6 +158,12 @@ def get_upload_summary(username):
         uploadsummary+=str(contrib) +"\n"
                             
     user = pywikibot.User(site, 'Zache')       # The user whose edits we want to check
+    contribs = user.contributions(total=5000)  # Get the user's last 1000 contributions
+
+    for contrib in contribs:
+        uploadsummary+=str(contrib) +"\n"
+
+    user = pywikibot.User(site, 'FinnaUploadBot')       # The user whose edits we want to check
     contribs = user.contributions(total=5000)  # Get the user's last 1000 contributions
                                 
     for contrib in contribs:
@@ -500,6 +176,9 @@ class Command(BaseCommand):
     help = 'Upload kuvasiskot images'
 
     def process_finna_record(self, record):        
+        site = pywikibot.Site('commons', 'commons')  # The site we want to run our bot on
+        site.login()
+
         images=[]
         print(record['id'])
         print(record['title'])
@@ -521,6 +200,9 @@ class Command(BaseCommand):
         r['identifierString']=record['identifierString']
         r['subjectPlaces']=get_subject_place("; ".join(record['subjectPlaces']))
         r['subjectActors']="; ".join(record['subjectActors'])
+        if not r['subjectActors']:
+            return
+
         try:
             r['date']=record['events']['valmistus'][0]['date']
         except:
@@ -594,7 +276,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         
         print("Loading 5000 most recent edit summaries for skipping already uploaded photos")
-        uploadsummary=get_upload_summary(site.user())
+        uploadsummary=get_upload_summary()
         sparql_finna_ids=str(get_existing_finna_ids_from_sparql())
 
         lookfor=None

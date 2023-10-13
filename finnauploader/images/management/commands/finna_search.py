@@ -95,8 +95,8 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         lookfor=None
         type=None
-        collection='Studio Kuvasiskojen kokoelma'
-#        collection='JOKA Journalistinen kuva-arkisto'
+#        collection='Studio Kuvasiskojen kokoelma'
+        collection='JOKA Journalistinen kuva-arkisto'
        
         for page in range(1,201):
              # Prevent looping too fast for Finna server
