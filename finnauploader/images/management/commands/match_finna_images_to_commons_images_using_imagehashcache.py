@@ -51,7 +51,10 @@ class Command(BaseCommand):
                         # Converting page to FilePage
                         file_page = pywikibot.FilePage(site, page.title())
                         item = file_page.data_item()
-                        data=item.get()
+                        try:
+                            data=item.get()
+                        except:
+                            continue
 
                         if 'P9478' not in str(data):
                            print(f'\nP9478 missing: {file_page}')
