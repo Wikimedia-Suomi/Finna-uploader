@@ -67,12 +67,12 @@ class Command(BaseCommand):
                                 )
                  image.subject_details.add(finna_subject_detail)
 
-         #if 'collections' in record:
-             #for collection in record['collections']:
-                 #finna_collection, created=FinnaCollection.objects.get_or_create(
-                 #                  name=collection
-                 #               )
-                 #image.collections.add(finna_collection)
+         if 'collections' in record:
+             for collection in record['collections']:
+                 finna_collection, created=FinnaCollection.objects.get_or_create(
+                                   name=collection
+                                )
+                 image.collections.add(finna_collection)
 
          # Save image metadata to db. Before this it is in memory only
          image.save()
@@ -95,12 +95,12 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         lookfor=None
         type=None
-#        collection='Studio Kuvasiskojen kokoelma'
-        collection='JOKA Journalistinen kuva-arkisto'
+        collection='Studio Kuvasiskojen kokoelma'
+#        collection='JOKA Journalistinen kuva-arkisto'
        
         for page in range(1,201):
              # Prevent looping too fast for Finna server
-             time.sleep(0.2)
+             time.sleep(1)
              data=do_finna_search(page, lookfor, type, collection )
              if 'records' in data:
                  for record in data['records']:
