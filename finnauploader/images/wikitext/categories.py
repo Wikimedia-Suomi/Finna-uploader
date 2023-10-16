@@ -1,5 +1,5 @@
 import mwparserfromhell
-from images.wikitext.creator import get_creator_image_category_from_wikidata_id
+from images.wikitext.creator import get_creator_image_category_from_wikidata_id, get_subject_image_category_from_wikidata_id
 
 def create_categories(r):
     # Create a new WikiCode object
@@ -7,6 +7,12 @@ def create_categories(r):
         
     # Create the categories
     categories = set()
+
+    for wikidata_id in r['subjectActors_wikidata_ids']:
+        subject_category=get_subject_image_category_from_wikidata_id(wikidata_id)
+        if subject_category:
+            subject_category=subject_category.replace('Category:', '')
+            categories.add(subject_category)
     
     creator_category=get_creator_image_category_from_wikidata_id(r['creator_wikidata_id'])
     creator_category=creator_category.replace('Category:', '')

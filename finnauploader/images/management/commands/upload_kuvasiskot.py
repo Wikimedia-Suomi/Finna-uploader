@@ -9,8 +9,8 @@ from images.finna import do_finna_search
 import json
 import re
 from datetime import datetime
-from images.sdc_helpers import create_P7482_source_of_file, create_P275_licence, create_P6216_copyright_state, create_P9478_finna_id, create_P170_author, create_P195_collection, create_P571_timestamp, wbEditEntity
-from images.wikitext.creator import get_institution_name, get_institution_wikidata_id, get_institution_template_from_wikidata_id, get_author_name, get_author_wikidata_id, get_creator_template_from_wikidata_id
+from images.sdc_helpers import create_P7482_source_of_file, create_P275_licence, create_P6216_copyright_state, create_P9478_finna_id, create_P170_author, create_P195_collection, create_P571_timestamp, wbEditEntity, create_P180_depicts
+from images.wikitext.creator import get_institution_name, get_institution_wikidata_id, get_institution_template_from_wikidata_id, get_author_name, get_author_wikidata_id, get_creator_template_from_wikidata_id, get_subject_actors_wikidata_ids, get_collection_wikidata_id
 from images.wikitext.photographer import create_photographer_template
 from images.wikitext.categories import create_categories
 from images.wikitext.timestamps import parse_timestamp
@@ -41,7 +41,12 @@ def get_sdc_json(r):
     claims.append(claim)
 
     for collection in r['collections']:
-        claim = create_P195_collection(collection, r['identifierString'])
+        collection_wikidata_id=get_collection_wikidata_id(collection)
+        claim = create_P195_collection(collection_wikidata_id, r['identifierString'])
+        claims.append(claim)
+
+    for wikidata_id in r['subjectActors_wikidata_ids']:
+        claim = create_P180_depicts(wikidata_id)
         claims.append(claim)
 
     parsed_timestamp,precision=parse_timestamp(r['date'])
@@ -140,6 +145,8 @@ class Command(BaseCommand):
         r['identifierString']=record['identifierString']
         r['subjectPlaces']=get_subject_place("; ".join(record['subjectPlaces']))
         r['subjectActors']="; ".join(record['subjectActors'])
+        r['subjectActors_wikidata_ids']=get_subject_actors_wikidata_ids(record['subjectActors'])
+
         if not r['subjectActors']:
             return
 
@@ -225,7 +232,8 @@ class Command(BaseCommand):
              data=do_finna_search(page, lookfor, type, collection )
              if 'records' in data:
                  for record in data['records']:
-
+                    if 'Kekkonen, Urho Kaleva' not in str(record):
+                        continue
                     print(".")
                     # Not photo
                     if not 'imagesExtended' in record:

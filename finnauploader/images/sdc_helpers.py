@@ -116,22 +116,11 @@ def create_P170_author(value, role):
 
     return claim
 
-def create_P195_collection(value, collection_number):
-    if not value:
+def create_P195_collection(wikidata_id, collection_number):
+    if not wikidata_id:
         return None
 
-    collections = { 
-                  'Historian kuvakokoelma' : 'Q107388072',
-                  'Studio Kuvasiskojen kokoelma' : 'Q118976025'
-                  }
-
-    if value not in collections:
-        print(f'Unknown collection: {value}')
-        if 1:
-            exit(1)
-        return None
-
-    claim_target = pywikibot.ItemPage(wikidata_site, collections[value])
+    claim_target = pywikibot.ItemPage(wikidata_site, wikidata_id)
     claim = pywikibot.Claim(wikidata_site, 'P195')
     claim.setTarget(claim_target)
 
@@ -140,6 +129,13 @@ def create_P195_collection(value, collection_number):
     qualifier.setTarget(collection_number)
     claim.addQualifier(qualifier, summary='Adding role qualifier')
 
+    return claim
+
+def create_P180_depicts(wikidata_id):
+    claim_target = pywikibot.ItemPage(wikidata_site, wikidata_id)
+    claim = pywikibot.Claim(wikidata_site, 'P180')
+    claim.setTarget(claim_target)
+#    claim.changeRank("preferred") # "prominent"
     return claim
 
 def create_P571_timestamp(date_obj, precision):

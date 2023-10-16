@@ -22,6 +22,12 @@ def get_institution_name(institutions):
     print("Unknown institution: " + str(institutions))
     print("Missing in https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/institutions")
     exit(1) 
+
+def get_collection_wikidata_id(name):
+    if name in collectionsCache:
+        return collectionsCache[name]
+    print("Unknown collection: " + str(name))
+    exit(1)
         
 def get_institution_wikidata_id(institution_name):
     if institution_name in institutionsCache:
@@ -108,6 +114,33 @@ def get_creator_template_from_wikidata_id(wikidata_id):
     else:
         return None
 
+def get_subject_image_category_from_wikidata_id(wikidata_id):
+    # Connect to Wikidata
+    site = pywikibot.Site("wikidata", "wikidata")
+    commons_site = pywikibot.Site("commons", "commons")
+    repo = site.data_repository()
+    
+    # Access the Wikidata item using the provided ID
+    item = pywikibot.ItemPage(repo, wikidata_id)
+    
+    # If the item doesn't exist, return None
+    if not item.exists():
+        print(f"Item {wikidata_id} does not exist!")
+        return None
+        
+    # Try to fetch the value of the property P1472 (Commons Creator page)
+    claims = item.get().get('claims')
+    
+    if 'P373' in claims:
+        commons_category_claim = claims['P373'][0]
+        commons_category = commons_category_claim.getTarget()
+        photo_category = pywikibot.Category(commons_site, commons_category)
+        
+        # Check if the category exists
+        if photo_category.exists():   
+            return photo_category.title()
+    return None
+
 
 def get_creator_image_category_from_wikidata_id(wikidata_id):
     # Connect to Wikidata
@@ -144,15 +177,31 @@ def get_creator_image_category_from_wikidata_id(wikidata_id):
          exit(1)
 #        return None
 
+def get_subject_actors_wikidata_ids(subjectActors):
+    ret=[]
+    for subjectActor in subjectActors:
+        if subjectActor in subjectActorsCache:
+            ret.append(subjectActorsCache[subjectActor])
+        else:
+            print("Error: Unknown actor. Add actor to https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/subjectActors")
+            print(subjectActor)
+            exit(1)
+    return ret
+
+def parse_cache_page(page_title):
+    page = pywikibot.Page(site, page_title)
+    cache = parse_name_and_q_item(page.text)
+    return cache
+
 
 pywikibot.config.socket_timeout = 120
 site = pywikibot.Site("commons", "commons")  # for Wikimedia Commons
 site.login()
 
-authors_page_title='User:FinnaUploadBot/data/nonPresenterAuthors'
-page = pywikibot.Page(site, authors_page_title)
-nonPresenterAuthorsCache = parse_name_and_q_item(page.text)
 
-institutions_page_title='User:FinnaUploadBot/data/institutions'
-page = pywikibot.Page(site, institutions_page_title)
-institutionsCache = parse_name_and_q_item(page.text)
+nonPresenterAuthorsCache =parse_cache_page('User:FinnaUploadBot/data/nonPresenterAuthors')
+institutionsCache=parse_cache_page('User:FinnaUploadBot/data/institutions')
+collectionsCache=parse_cache_page('User:FinnaUploadBot/data/collections')
+subjectActorsCache=parse_cache_page('User:FinnaUploadBot/data/subjectActors')
+
+

@@ -14,7 +14,7 @@ class Command(BaseCommand):
 
         images = Image.objects.filter(finna_id__isnull=True)
         number_of_images=images.count()
-        print(f'Images to do {number_of_images')
+        print(f'Images to do {number_of_images}')
 
         for image in images:
             print(image.page_title)
