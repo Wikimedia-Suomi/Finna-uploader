@@ -59,7 +59,27 @@ def get_imagehashes(url, thumbnail=False):
 def is_same_image(url1, url2):
     img1=get_imagehashes(url1)
     img2=get_imagehashes(url2)
-    return compare_image_hashes(img1, img2)
+    return compare_image_hashes_strict(img1, img2)
+
+def compare_image_hashes_strict(img1, img2):
+    # Hamming distance difference
+    phash_diff = bin(img1['phash'] ^ img2['phash']).count('1')
+    dhash_diff = bin(img1['dhash'] ^ img2['dhash']).count('1')
+    dhash_vertical_diff = bin(img1['dhash_vertical'] ^ img2['dhash_vertical']).count('1')
+    
+#    print(f'{phash_diff}\t{dhash_diff}\t{dhash_vertical_diff}')
+    
+    if phash_diff == 0 and dhash_diff < 4 and dhash_vertical_diff < 4:
+        return True
+    elif phash_diff < 4 and dhash_diff == 0 and dhash_vertical_diff < 4:
+        return True
+    elif phash_diff < 4 and dhash_vertical_diff == 0 and dhash_diff < 4:
+        return True
+    elif phash_diff+dhash_diff+dhash_vertical_diff <8:
+        return True
+    else:
+        return False
+
 
 def compare_image_hashes(img1, img2):
     # Hamming distance difference

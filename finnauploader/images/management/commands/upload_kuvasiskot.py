@@ -7,7 +7,6 @@ from django.db.models import Count
 import time
 from images.finna import do_finna_search
 import json
-import mwparserfromhell
 import re
 from datetime import datetime
 from images.sdc_helpers import create_P7482_source_of_file, create_P275_licence, create_P6216_copyright_state, create_P9478_finna_id, create_P170_author, create_P195_collection, create_P571_timestamp, wbEditEntity
@@ -15,6 +14,7 @@ from images.wikitext.creator import get_institution_name, get_institution_wikida
 from images.wikitext.photographer import create_photographer_template
 from images.wikitext.categories import create_categories
 from images.wikitext.timestamps import parse_timestamp
+from images.duplicatedetection import is_already_in_commons
 
 def get_sdc_json(r):
     url='https://www.finna.fi/Record/' + r['id']
@@ -111,66 +111,6 @@ def get_subject_place(subjectPlaces):
             final_parts.append(parts[i])
     return "; ".join(final_parts)
                 
-
-def finna_exists(id):  
-    url='https://imagehash.toolforge.org/finnasearch?finna_id=' + str(id)
-    print(url)
-    response = requests.get(url)
-    response.raise_for_status()  # Raise an exception for HTTP errors
-    data = response.json()
-    print(data)
-    if len(data):
-        return True
-    else:
-        return False
-
-def get_existing_finna_ids_from_sparql():
-    print("Loading existing photo Finna ids using SPARQL")
-    # Define the SPARQL query
-    query = "SELECT ?item ?finna_id WHERE { ?item wdt:P9478 ?finna_id }"
-              
-    # Set up the SPARQL endpoint and entity URL
-    # Note: https://commons-query.wikimedia.org requires user to be logged in
-                     
-    entity_url = 'https://commons.wikimedia.org/entity/'
-    endpoint = 'https://commons-query.wikimedia.org/sparql'
-                            
-    # Create a SparqlQuery object
-    query_object = sparql.SparqlQuery(endpoint= endpoint, entity_url= entity_url)
-                                    
-    # Execute the SPARQL query and retrieve the data
-    data = query_object.select(query, full_data=True)
-    if data == None:
-        print("SPARQL Failed. login BUG?")
-        exit(1)
-    return data
-
-# get edit summaries of last 5000 edits for checking which files were already uploaded
-def get_upload_summary():
-    site = pywikibot.Site('commons', 'commons')  # The site we want to run our bot on
-    site.login()
-    user = site.user()       # The user whose edits we want to check
-    user = pywikibot.User(site, str(user))             
-    contribs = user.contributions(total=5000)  # Get the user's last 1000 contributions
-            
-    uploadsummary=''
-    for contrib in contribs:
-        uploadsummary+=str(contrib) +"\n"
-                            
-    user = pywikibot.User(site, 'Zache')       # The user whose edits we want to check
-    contribs = user.contributions(total=5000)  # Get the user's last 1000 contributions
-
-    for contrib in contribs:
-        uploadsummary+=str(contrib) +"\n"
-
-    user = pywikibot.User(site, 'FinnaUploadBot')       # The user whose edits we want to check
-    contribs = user.contributions(total=5000)  # Get the user's last 1000 contributions
-                                
-    for contrib in contribs:
-        uploadsummary+=str(contrib) +"\n"
-                                  
-    return uploadsummary
-
 
 class Command(BaseCommand):
     help = 'Upload kuvasiskot images'
@@ -274,11 +214,6 @@ class Command(BaseCommand):
             wbEditEntity(site, page, structured_data)
 
     def handle(self, *args, **kwargs):
-        
-        print("Loading 5000 most recent edit summaries for skipping already uploaded photos")
-        uploadsummary=get_upload_summary()
-        sparql_finna_ids=str(get_existing_finna_ids_from_sparql())
-
         lookfor=None
         type=None
         collection='Studio Kuvasiskojen kokoelma'
@@ -294,22 +229,10 @@ class Command(BaseCommand):
                     print(".")
                     # Not photo
                     if not 'imagesExtended' in record:
-                        contineu
+                        continue
     
-                    # Check if image is already uploaded
-                    if record['id'] in sparql_finna_ids:
-                        print("Skipping 1: " + record['id'] + " already uploaded based on sparql")
-                        continue
-        
-                    if record['id'] in uploadsummary:
-                        print("Skipping 2: " + record['id'] + " already uploaded based on upload summaries")
-                        continue  
-        
-                    if finna_exists(record['id']):
-                        print("Skipping 3: " + record['id'] + " already uploaded based on imagehash")
-                        continue
-                    self.process_finna_record(record)
-
+                    if not is_already_in_commons(record['id']):
+                        self.process_finna_record(record)
 
              else:
                  break
