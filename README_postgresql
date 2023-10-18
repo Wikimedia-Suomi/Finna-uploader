@@ -1,0 +1,79 @@
+## Postgresql:n käyttö djangossa
+
+Esivaatimuksena käyttäjälle pitäisi olla tuttua komentorivin ja pakettien asennus 
+käyttöjärjestelmään (tässä Debian) ja pythonin virtuaaliympäristön luominen.
+
+== Asennus ==
+1. Postgresql:n asennus
+- Postgresql asentuu (Debianissa): sudo apt-get install postgresql
+- oletuksena tämän pitäisi lisätä uusi käyttäjä: postgres (/etc/passwd)
+- Postgresql:n asetuksissa autentikaatiomoodina on oletuksena "peer" (pg_hba.conf, /etc/postgresql/16/main)
+
+2. jos muuttaa postgresql:n asetuksia (esim. autentikaatiomoodit) se pitää käynnistää uudelleen
+- systemctl restart postgresql
+
+3. testaa että tietokantaan pääsee kirjautumaan sisälle
+- psql on komentorivillä käytettävä ohjelma, jolla voi tehdä kyselyitä
+- komentorivillä: sudo -u postgres psql
+- django-yhteyttä varten testaa myös: psql -U postgres -h 127.0.0.1 -W
+.. jossa -h tarkoittaa hostia (tässä localhost)
+
+4. tee tietokanta ja käyttäjä djangoa/finnauploaderia varten psql-ohjelmassa:
+- huomaa, että psql:ssä SQL-lauseet päättyvät aina puolipisteeseen (;)
+- luo tietokanta: CREATE DATABASE djangodb;
+- lisää käyttäjä ja salasana: CREATE USER django PASSWORD 'django';
+- lisää taulujen yms. luontioikeudet: GRANT ALL ON DATABASE djangodb TO django;
+- lisää yhteysoikeudet: GRANT CONNECT ON DATABASE djangodb TO django;
+
+- kirjaudu tietokantaan sisään psql:llä django-käyttäjällä (tarkista, että yhteys toimii)
+- psql -d djangodb -U django -h 127.0.0.1 -W
+- tee schema käyttäjälle: CREATE SCHEMA django;
+
+5. asenna tarvittavat lisäpaketit djangoa varten:
+- käyttöjärjestelmälle on asennettava libpq-dev paketti 
+-- komentorivillä: sudo apt-get install libpq-dev
+- ylläolevaa tarvitaan psycopg2-paketin asentamiseen 
+-- käynnistä pythonin virtuaaliympäristö: source venv/bin/activate
+-- asenna psycopg2: pip install psycopg2
+
+6. yhteysasetukset djangolle
+- asetetaan tiedostoon finnauploader/settings.py
+- 'NAME' pitää olla tietokannan nimi, esim. 'djangodb'
+- 'HOST' pitäisi olla mihin yhteys otetaan (/var/run/postgresql, 'localhost' tai '127.0.0.1')
+
+eli yhteysasetukset finnauploader/settings.py:
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'djangodb',
+        'USER': 'django',
+        'PASSWORD': 'django',
+        'HOST': '127.0.0.1'
+    }
+}
+
+7. testaa, että django voi luoda tauluja ja kirjoittaa tietoja:
+- käynnistä pythonin virtuaaliympäristö
+- python manage.py makemigrations
+- python manage.py migrate
+
+== Postgis ==
+TODO
+(kesken)
+
+'postgis' laajennuksen luomiseen pitää olla superuser-oikeudet, jos enginessä on 'django.db.backends.postgresql' ei tarvitse postgis-laajennusta ja sen tarvitsemia oikeuksia
+
+1. asennus (Debianissa): sudo apt-get install postgresql-postgis
+
+2. Postgisin kanssa yhteys eri ajurilla:
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        ...
+    }
+}
+
+3. .. vaatii lisäoikeudet, tarkista GRANT ..
+
+== spgist ==
+TODO
