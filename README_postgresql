@@ -8,6 +8,8 @@ käyttöjärjestelmään (tässä Debian) ja pythonin virtuaaliympäristön luom
 - Postgresql asentuu (Debianissa): sudo apt-get install postgresql
 - oletuksena tämän pitäisi lisätä uusi käyttäjä: postgres (/etc/passwd)
 - Postgresql:n asetuksissa autentikaatiomoodina on oletuksena "peer" (pg_hba.conf, /etc/postgresql/16/main)
+- Oletuksena Postgresql kuuntelee vain "loopback"-yhteyksiä (localhost, postgresql.conf, /etc/postgresql/16/main).
+Jos asettaa tyhjän listan vain Unix domain socketit sallitaan, muuttamalla "listen_addresses" -asetusta voi sallia muita.
 
 2. jos muuttaa postgresql:n asetuksia (esim. autentikaatiomoodit) se pitää käynnistää uudelleen
 - systemctl restart postgresql
