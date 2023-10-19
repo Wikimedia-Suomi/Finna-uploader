@@ -1,22 +1,7 @@
 import urllib
 import imagehash
 from PIL import Image
-
-# SQLite and Postgresql stores only signed 64bit integers so we convert numbers
-
-def unsigned_to_signed(unsigned_num):
-    """Convert an unsigned 64-bit integer to a signed 64-bit integer."""
-    if unsigned_num >= 2**63:
-        return unsigned_num - 2**64
-    return unsigned_num
-
-
-def signed_to_unsigned(signed_num):
-    """Convert a signed 64-bit integer to an unsigned 64-bit integer."""
-    if signed_num < 0:
-        return signed_num + 2**64
-    return signed_num
-
+from images.conversion import unsigned_to_signed, signed_to_unsigned
 
 # Perceptual hashing
 # http://www.hackerfactor.com/blog/index.php?/archives/432-Looks-Like-It.html

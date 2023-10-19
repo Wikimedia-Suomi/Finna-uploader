@@ -5,7 +5,7 @@ import pywikibot
 from pywikibot.data import sparql
 import requests
 from django.db.models import Count
-from images.imagehash_helpers import unsigned_to_signed
+from images.conversion import unsigned_to_signed
 import gzip
 
 class Command(BaseCommand):

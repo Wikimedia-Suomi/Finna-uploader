@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from images.models import Image,ToolforgeImageHashCache
 import requests
 from django.db.models import Count
-from images.imagehash_helpers import unsigned_to_signed
+from images.conversion import unsigned_to_signed
 
 class Command(BaseCommand):
     help = 'Import Commons Finna imagehashes from Toolforge to database'
