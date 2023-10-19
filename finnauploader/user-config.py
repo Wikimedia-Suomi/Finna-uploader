@@ -1,2 +1,2 @@
-usernames['commons']['commons'] = 'FinnaUploadBot2'
+usernames['commons']['commons'] = 'insertyourusername'
 put_throttle = 5
