@@ -20,6 +20,11 @@ Jos asettaa tyhjän listan vain Unix domain socketit sallitaan, muuttamalla "lis
 - django-yhteyttä varten testaa myös: psql -U postgres -h 127.0.0.1 -W
 .. jossa -h tarkoittaa hostia (tässä localhost)
 
+- Voit tarkistaa, että ulkoisella IP:llä ei pääse sisään vaihtamalla hostia koneen ulkoiseen IP-osoitteeseen:
+psql -U postgres -h 1.1.1.1 -W 
+.. jossa 1.1.1.1 on koneen ulkoinen IP-osoite
+- Muita keinoja ovat esimerkiksi netstat ja nmap
+
 4. tee tietokanta ja käyttäjä djangoa/finnauploaderia varten psql-ohjelmassa:
 - huomaa, että psql:ssä SQL-lauseet päättyvät aina puolipisteeseen (;)
 - luo tietokanta: CREATE DATABASE djangodb;
