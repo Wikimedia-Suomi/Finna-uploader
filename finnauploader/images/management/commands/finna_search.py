@@ -5,6 +5,7 @@ from pywikibot.data import sparql
 import requests
 import time
 from images.finna import do_finna_search
+from django.db import transaction
 
 class Command(BaseCommand):
     help = 'Import records from Finna search result to the database'
@@ -103,8 +104,9 @@ class Command(BaseCommand):
              time.sleep(1)
              data=do_finna_search(page, lookfor, type, collection )
              if 'records' in data:
-                 for record in data['records']:
-                     self.process_finna_record(record)
+                 with transaction.atomic():
+                     for record in data['records']:                      
+                         self.process_finna_record(record)
              else:
                  break
 

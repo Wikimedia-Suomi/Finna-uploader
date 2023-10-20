@@ -1,2 +1,2 @@
-usernames['commons']['commons'] = 'YourOwnPywikibotBotUser'
+usernames['commons']['commons'] = 'insertyourusername'
 put_throttle = 5
