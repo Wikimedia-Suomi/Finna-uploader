@@ -2,7 +2,7 @@ import requests
 import urllib
 import re
 import json
-# from images.imagehash_helpers import is_same_image
+from images.imagehash_helpers import is_same_image
 
 # urlencode Finna parameters
 def finna_api_parameter(name, value):   
@@ -123,8 +123,8 @@ def is_correct_finna_record(finna_id, image_url):
     
         finna_thumbnail_url="https://finna.fi" + imageExtended['urls']['large']
         
-        # if is_same_image(finna_thumbnail_url, image_url):
-        #    return record_finna_id
+         if is_same_image(finna_thumbnail_url, image_url):
+            return record_finna_id
 
 def get_finna_id_from_url(url):
      if "finna.fi" in url:

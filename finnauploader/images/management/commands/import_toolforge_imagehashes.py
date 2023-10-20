@@ -4,7 +4,6 @@ from images.models import Image,ToolforgeImageHashCache
 import requests
 from django.db.models import Count
 from images.conversion import unsigned_to_signed
-from django.db import transaction
 
 class Command(BaseCommand):
     help = 'Import Commons Finna imagehashes from Toolforge to database'
@@ -22,15 +21,14 @@ class Command(BaseCommand):
         # Load JSON data
         rows = json.loads(response.content)
 
-        with transaction.atomic():
-            for row in rows:
-                imagehash, created=ToolforgeImageHashCache.objects.get_or_create(
+        for row in rows:
+            imagehash, created=ToolforgeImageHashCache.objects.get_or_create(
                                   page_id=row['commons'],
                                   phash=unsigned_to_signed(row['phash']),
                                   dhash=unsigned_to_signed(row['dhash']),
                                )
-                if created:
-                    imagehash.save()
+            if created:
+                imagehash.save()
         photos=Image.objects.all()          
         imagehashes=ToolforgeImageHashCache.objects.all()
 

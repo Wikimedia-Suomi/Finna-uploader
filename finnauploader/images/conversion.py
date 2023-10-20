@@ -10,5 +10,4 @@ def signed_to_unsigned(signed_num):
     if signed_num < 0:
         return signed_num + 2**64
     return signed_num
-        
 
