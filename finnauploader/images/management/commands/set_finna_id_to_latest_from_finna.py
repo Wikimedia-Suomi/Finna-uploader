@@ -3,7 +3,6 @@ from images.models import Image, ImageURL
 from images.finna import is_correct_finna_record, get_finna_id_from_url, get_finna_record
 import pywikibot
 from pywikibot.data import sparql
-import requests
 
 class Command(BaseCommand):
     help = 'Updates Image.finna_id to latest finna_id from Finna.'

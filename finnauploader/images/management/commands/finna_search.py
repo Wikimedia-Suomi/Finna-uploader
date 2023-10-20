@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from images.models import Image, ImageURL, FinnaImage, FinnaCopyright, FinnaBuilding, FinnaNonPresenterAuthor, FinnaSummary, FinnaSubject, FinnaSubjectPlace, FinnaSubjectActor, FinnaSubjectDetail, FinnaCollection
+from images.models import Image, ImageURL, FinnaImage, FinnaImageRight, FinnaBuilding, FinnaNonPresenterAuthor, FinnaSummary, FinnaSubject, FinnaSubjectPlace, FinnaSubjectActor, FinnaSubjectDetail, FinnaCollection
 import pywikibot
 from pywikibot.data import sparql
 import requests
@@ -15,13 +15,13 @@ class Command(BaseCommand):
 #             print(record)
 #             exit(1)
          i=record['imageRights']
-         copyright, created=FinnaCopyright.objects.get_or_create(copyright=i['copyright'], link=i['link'], description=i['description'])
+         copyright, created=FinnaImageRight.objects.get_or_create(copyright=i['copyright'], link=i['link'], description=i['description'])
 
          # created = True, False depending if the record was in the database already
-         image,created=FinnaImage.objects.get_or_create(finna_id=record['id'], defaults={'copyright':copyright})
+         image,created=FinnaImage.objects.get_or_create(finna_id=record['id'], defaults={'image_right':copyright})
 
          # Update data if the record exists
-         image.copyright=copyright
+         image.image_right=copyright
 
          if 'year' in record:
              image.year=record['year']
@@ -38,7 +38,7 @@ class Command(BaseCommand):
              image.short_title = record['shortTitle']
 
          if 'summary' in record:
-            image.summary, created=FinnaSummary.objects.get_or_create(name=record['summary'])
+            image.summary, created=FinnaSummary.objects.get_or_create(text=record['summary'])
 
          if 'subjects' in record:
              for subject in record['subjects']:

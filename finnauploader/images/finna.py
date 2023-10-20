@@ -4,6 +4,9 @@ import re
 import json
 from images.imagehash_helpers import is_same_image
 
+s = requests.Session()
+s.headers.update({'User-Agent': 'FinnaUploader 0.1'})
+
 # urlencode Finna parameters
 def finna_api_parameter(name, value):   
    return "&" + urllib.parse.quote_plus(name) + "=" + urllib.parse.quote_plus(value)
@@ -84,14 +87,17 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None ):
 # * https://api.finna.fi
 # * https://www.kiwi.fi/pages/viewpage.action?pageId=53839221
 
-def get_finna_record(id, full=False):
-
-    url="https://api.finna.fi/v1/record?id=" +  urllib.parse.quote_plus(id)
+def get_finna_record_url(id, full=False):
+    url="https://api.finna.fi/v1/record?prettyPrint=1&id=" +  urllib.parse.quote_plus(id)
     if full:
         url+= add_finna_api_default_field_parameters()
+    return url
+
+def get_finna_record(id, full=False):
+    url=get_finna_record_url(id, full)
                         
     try:
-        response = requests.get(url)
+        response = s.get(url)
         return response.json()
     except:
         print("Finna API query failed: " + url)

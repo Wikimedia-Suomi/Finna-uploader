@@ -188,6 +188,15 @@ def get_subject_actors_wikidata_ids(subjectActors):
             exit(1)
     return ret
 
+def get_subject_actors_wikidata_id(subject_actor):
+    if subject_actor in subjectActorsCache:
+        return subjectActorsCache[subject_actor]
+    else:
+        print(f'Error: Unknown actor "{subject_actor}".')
+        print('Add actor to https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/subjectActors')
+        exit(1)
+
+
 def parse_cache_page(page_title):
     page = pywikibot.Page(site, page_title)
     cache = parse_name_and_q_item(page.text)

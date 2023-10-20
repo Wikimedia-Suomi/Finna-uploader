@@ -2,8 +2,10 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+from images.finna import get_finna_record_url
 
 # Create your models here.
+
 
 # Commons image
 class Image(models.Model):
@@ -13,6 +15,7 @@ class Image(models.Model):
     finna_id_confirmed = models.BooleanField(default=False)
     finna_id_confirmed_at = models.DateTimeField(null=True, blank=True)
 
+
 # Commons external links linked from image
 class ImageURL(models.Model):
     image = models.ForeignKey(Image, related_name="urls", on_delete=models.CASCADE)
@@ -20,6 +23,7 @@ class ImageURL(models.Model):
 
     class Meta:
         unique_together = [['image', 'url']]
+
 
 # Commons external links linked from image
 class SdcFinnaID(models.Model):
@@ -29,80 +33,229 @@ class SdcFinnaID(models.Model):
     class Meta:
         unique_together = [['image', 'finna_id']]
 
-class FinnaBuilding(models.Model):
-     value = models.CharField(max_length=64)
-     translated = models.CharField(max_length=64)
 
-     def __str__(self):
+class FinnaBuilding(models.Model):
+    value = models.CharField(max_length=64)
+    translated = models.CharField(max_length=64)
+
+    def __str__(self):
         return self.translated
 
-class FinnaCopyright(models.Model):
-     copyright = models.CharField(max_length=32)
-     link = models.URLField(max_length=500)
-     description = models.TextField()
 
-     def __str__(self):
+class FinnaImageRight(models.Model):
+    copyright = models.CharField(max_length=32)
+    link = models.URLField(max_length=500)
+    description = models.TextField()
+
+    def __str__(self):
         return self.copyright
 
-class FinnaNonPresenterAuthor(models.Model):
-     name = models.CharField(max_length=64)
-     role = models.CharField(max_length=64)
 
-     def __str__(self):
+class FinnaNonPresenterAuthor(models.Model):
+    name = models.CharField(max_length=64)
+    role = models.CharField(max_length=64)
+
+    def __str__(self):
         return self.name
+
 
 class FinnaSummary(models.Model):
-     name = models.TextField()
+    text = models.TextField()
 
-     def __str__(self):
+    def __str__(self):
         return self.name
+
 
 class FinnaSubject(models.Model):
-     name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
 
-     def __str__(self):
+    def __str__(self):
         return self.name
+
 
 class FinnaSubjectPlace(models.Model):
-     name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
 
-     def __str__(self):
+    def __str__(self):
         return self.name
+
 
 class FinnaSubjectActor(models.Model):
-     name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
 
-     def __str__(self):
+    def __str__(self):
         return self.name
+
 
 class FinnaSubjectDetail(models.Model):
-     name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
 
-     def __str__(self):
+    def __str__(self):
         return self.name
+
 
 class FinnaCollection(models.Model):
-     name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
 
-     def __str__(self):
+    def __str__(self):
         return self.name
 
+
+class FinnaInstitution(models.Model):
+    value = models.CharField(max_length=200)
+    translated = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+
+# Managers
+
+
+class FinnaRecordManager(models.Manager):
+    def create_from_data(self, data):
+
+        # Extract and handle non_presenter_authors data
+        non_presenter_authors_data = data.pop('nonPresenterAuthors', [])
+        non_presenter_authors = []
+        for non_presenter_author_data in non_presenter_authors_data:
+            author = FinnaNonPresenterAuthor.objects.get_or_create(
+                name=non_presenter_author_data['name'],
+                role=non_presenter_author_data['role']
+                )[0]
+            non_presenter_authors.append(author)
+
+        # Extract and handle buildings data
+        buildings_data = data.pop('buildings', [])
+        buildings = [FinnaBuilding.objects.get_or_create(value=building_data['value'], defaults={'translated': building_data['translated']})[0] for building_data in buildings_data]
+
+        # Extract and handle subjects data
+        subjects_data = data.pop('subjects', [])
+        subjects = [FinnaSubject.objects.get_or_create(name=subject_name)[0] for subject_name in subjects_data]
+
+        # Extract and handle subjectPlaces data
+        subject_places_data = data.pop('subjectPlaces', [])
+        subject_places = [FinnaSubjectPlace.objects.get_or_create(name=subject_place_name)[0] for subject_place_name in subject_places_data]
+
+        # Extract and handle subjectActors data
+        subject_actors_data = data.pop('subjectActors', [])
+        subject_actors = [FinnaSubjectActor.objects.get_or_create(name=subject_actor_name)[0] for subject_actor_name in subject_actors_data]
+
+        # Extract and handle subjectDetails data
+        subject_details_data = data.pop('subjectDetails', [])
+        subject_details = [FinnaSubjectDetail.objects.get_or_create(name=subject_detail_name)[0] for subject_detail_name in subject_details_data]
+
+        # Extract and handle collections data
+        collections_data = data.pop('collections', [])
+        collections = [FinnaCollection.objects.get_or_create(name=collection_name)[0] for collection_name in collections_data]
+
+        # Extract and handle institutions data
+        institutions_data = data.pop('institutions', [])
+        institutions = [FinnaInstitution.objects.get_or_create(value=institution_data['value'], defaults={'translated': institution_data['translated']})[0] for institution_data in institutions_data]
+
+        # Extract and handle image_right data
+        image_rights_data = data.pop('imageRights', {})
+        image_rights = FinnaImageRight.objects.get_or_create(copyright=image_rights_data['copyright'], link=image_rights_data['link'], description=image_rights_data['description'])[0]
+
+        # Extract images data
+        images_data = data.pop('images', [])
+
+        # Extract the Summary
+        summary_data = data.pop('summary', '')
+        if summary_data:
+            summary = FinnaSummary(text=summary_data)
+        else:
+            summary = None
+
+        # Create the book instance
+        record, created = self.get_or_create(finna_id=data['id'], defaults={'image_right': image_rights})
+        record.title = data['title']
+        record.short_title = data['shortTitle']
+        record.identifier_string = data['identifierString']
+        record.year = data['year']
+        record.number_of_images = len(images_data)
+
+        try:
+            record.date_string = record['events']['valmistus'][0]['date']
+        except:
+            print("Skipping date_string")
+
+        if summary:
+            record.summary = summary
+
+        for non_presenter_author in non_presenter_authors:
+            record.non_presenter_authors.add(non_presenter_author)
+
+        for building in buildings:
+            record.buildings.add(building)
+
+        for subject in subjects:
+            record.subjects.add(subject)
+
+        for subject_place in subject_places:
+            record.subject_places.add(subject_place)
+
+        for subject_actor in subject_actors:
+            record.subject_actors.add(subject_actor)
+
+        for subject_detail in subject_details:
+            record.subject_details.add(subject_detail)
+
+        for collection in collections:
+            record.collections.add(collection)
+
+        for institution in institutions:
+            record.institutions.add(institution)
+
+        record.image_right = image_rights
+        record.save()
+
+        return record
+
+
 class FinnaImage(models.Model):
-    finna_id =  models.CharField(max_length=200, null=False, blank=False, db_index=True)
+    finna_id = models.CharField(max_length=200, null=False, blank=False, db_index=True, unique=True)
     title = models.CharField(max_length=200)
     year = models.PositiveIntegerField(unique=False, null=True, blank=True)
+    date_string = models.CharField(max_length=200, null=True, blank=True)
     number_of_images = models.PositiveIntegerField(unique=False, null=True, blank=True)
-    non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor, related_name='non_presenter_authors')
+    non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor)
     summary = models.ForeignKey(FinnaSummary, related_name='summary', null=True, on_delete=models.CASCADE)
-    subjects = models.ManyToManyField(FinnaSubject, related_name='subjects')
-    subject_places = models.ManyToManyField(FinnaSubjectPlace, related_name='subject_places')
-    subject_actors = models.ManyToManyField(FinnaSubjectActor, related_name='subject_actors')
-    subject_details = models.ManyToManyField(FinnaSubjectDetail, related_name='subject_details')
-    collections = models.ManyToManyField(FinnaCollection, related_name='collections')
-    buildings = models.ManyToManyField(FinnaBuilding, related_name='buildings')
-    copyright = models.ForeignKey(FinnaCopyright, related_name="finna_copyright", on_delete=models.CASCADE)
-    identifier_string = models.CharField(max_length=64, null=True, blank=True) # accession number or similar identifier
+    subjects = models.ManyToManyField(FinnaSubject)
+    subject_places = models.ManyToManyField(FinnaSubjectPlace)
+    subject_actors = models.ManyToManyField(FinnaSubjectActor)
+    subject_details = models.ManyToManyField(FinnaSubjectDetail)
+    collections = models.ManyToManyField(FinnaCollection)
+    buildings = models.ManyToManyField(FinnaBuilding)
+    institutions = models.ManyToManyField(FinnaInstitution)
+    image_right = models.ForeignKey(FinnaImageRight, on_delete=models.RESTRICT)
+
+    # Accession number or similar identifier
+    identifier_string = models.CharField(max_length=64, null=True, blank=True)
     short_title = models.CharField(max_length=200, null=True, blank=True)
+
+    # Pseudo properties
+    @property
+    def thumbnail_url(self):
+        url = f'https://finna.fi/Cover/Show?source=Solr&id={self.finna_id}&index=0&size=small'
+        return url
+
+    @property
+    def image_url(self):
+        url = f'https://finna.fi/Cover/Show?source=Solr&id={self.finna_id}&index=0&size=large'
+        return url
+
+    @property
+    def url(self):
+        url = f'https://finna.fi/Record/{self.finna_id}'
+        return url
+
+    @property
+    def finna_json(self):
+        url = get_finna_record_url(self.finna_id, True)
+        return url
+
+    objects = FinnaRecordManager()
+
 
 class FinnaImageHash(models.Model):
     phash = models.BigIntegerField(null=True)  # To store 64-bit unsigned integer
@@ -113,6 +266,7 @@ class FinnaImageHash(models.Model):
     class Meta:
         unique_together = [['phash', 'finna_image'], ['dhash', 'finna_image'], ['dhash_vertical', 'finna_image']]
 
+
 class FinnaImageHashURL(models.Model):
     url = models.URLField(max_length=500)
     imagehash = models.ForeignKey(FinnaImageHash, related_name="image_urls", on_delete=models.CASCADE)
@@ -122,13 +276,14 @@ class FinnaImageHashURL(models.Model):
     thumbnail = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
 
+
 class ToolforgeImageHashCache(models.Model):
     page_id = models.PositiveIntegerField()
     phash = models.BigIntegerField(null=True, db_index=True)  # To store 64-bit unsigned integer
     dhash = models.BigIntegerField(null=True, db_index=True)  # To store 64-bit unsigned integer
 
-# Updates the Image.confirmed_finna_id_updated_at when confirmed_finna_id is updated
 
+# Updates the Image.confirmed_finna_id_updated_at when confirmed_finna_id is updated
 @receiver(pre_save, sender=Image)
 def update_timestamp(sender, instance, **kwargs):
     # If the instance exists, means it's not a new record
@@ -136,4 +291,3 @@ def update_timestamp(sender, instance, **kwargs):
         old_instance = Image.objects.get(pk=instance.pk)
         if old_instance.finna_id_confirmed != instance.finna_id_confirmed:
             instance.finna_id_confirmed_at = timezone.now()
-

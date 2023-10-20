@@ -12,7 +12,7 @@ source venv/bin/activate
 Install packages
 ```bash
 pip install --upgrade pip
-pip install pywikibot imagehash django django-extensions
+pip install pywikibot imagehash django django-extensions djangorestframework flake8 
 
 Setup the user-config.py
 ```bash
