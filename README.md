@@ -121,7 +121,7 @@ rm -rf images/migrations/000*.py
 ```
 
 ### Switching to PostgreSQL
-For instructions on using PostgreSQL instead of SQLite, see: [README_postgresql]
+For instructions on using PostgreSQL instead of SQLite, see: [README_postgresql](README_postgresql).
 
 ### Howto create Django boilerplate project 
 - this is documentation on how first commit version was created
