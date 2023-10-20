@@ -65,14 +65,39 @@ DATABASES = {
 - python manage.py migrate
 
 == Postgis ==
-TODO
-(kesken)
-
-'postgis' laajennuksen luomiseen pitää olla superuser-oikeudet, jos enginessä on 'django.db.backends.postgresql' ei tarvitse postgis-laajennusta ja sen tarvitsemia oikeuksia
+'postgis' laajennuksen luomiseen pitää olla superuser-oikeudet.
+Jos djangon asetuksissa käytetään yhteyteen 'django.db.backends.postgresql' ei tarvitse postgis-laajennusta ja sen tarvitsemia oikeuksia.
 
 1. asennus (Debianissa): sudo apt-get install postgresql-postgis
 
-2. Postgisin kanssa yhteys eri ajurilla:
+2. avaa psql postgresql:n superuserina (oletuksena postgres-käyttäjä).
+- psql:ssä näet käyttäjien oikeudet komennolla \du
+- käyttäjää vaihdetaan SET ROLE -komennolla tai palataan superuseriksi RESET ROLE -komennolla
+
+- psql:ssä varmista että käytät oikeaa tietokantaa: \connect djangodb
+
+- aja komento CREATE EXTENSION postgis;
+
+
+3. postgisin toiminnan voi testata seuraavasti:
+- SET ROLE djangouser;
+
+- aja komento:
+SELECT current_user, x AS id,
+        ST_AsText(
+            ST_Transform(
+                ST_SetSRID(
+                    ST_MakePoint(x, x * random())
+                    , 4326)
+                , 3857)
+            ) AS geom
+    FROM generate_series(1, 5) x
+;
+
+.. jossa on neljä PostGIS-funktiota (ST_AsText(), ST_Transform(), ST_SetSRID() ja ST_MakePoint()).
+
+
+4. Postgisin kanssa yhteys eri ajurilla (settings.py):
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
@@ -80,7 +105,6 @@ DATABASES = {
     }
 }
 
-3. .. vaatii lisäoikeudet, tarkista GRANT ..
 
 == spgist ==
 TODO
