@@ -39,7 +39,7 @@ class FinnaBuilding(models.Model):
 class FinnaCopyright(models.Model):
      copyright = models.CharField(max_length=32)
      link = models.URLField(max_length=500)
-     description = models.CharField(max_length=300)
+     description = models.TextField()
 
      def __str__(self):
         return self.copyright
