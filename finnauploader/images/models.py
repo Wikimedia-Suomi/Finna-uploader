@@ -52,7 +52,7 @@ class FinnaNonPresenterAuthor(models.Model):
         return self.name
 
 class FinnaSummary(models.Model):
-     name = models.CharField(max_length=200)
+     name = models.TextField()
 
      def __str__(self):
         return self.name
