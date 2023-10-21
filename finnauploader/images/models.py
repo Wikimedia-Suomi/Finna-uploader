@@ -154,15 +154,25 @@ class FinnaRecordManager(models.Manager):
 
         # Extract and handle image_right data
         image_rights_data = data.pop('imageRights', {})
-        image_rights = FinnaImageRight.objects.get_or_create(copyright=image_rights_data['copyright'], link=image_rights_data['link'], description=image_rights_data['description'])[0]
+        image_rights = FinnaImageRight.objects.get_or_create(copyright=image_rights_data['copyright'], link=image_rights_data['link'], description=image_rights_data['description'][0])[0]
 
         # Extract images data
         images_data = data.pop('images', [])
+
+        # Extract imagesExtended data
+        images_extended_data = data.pop('imagesExtended', None)
+        if images_extended_data:
+            master_url = images_extended_data[0]['highResolution']['original'][0]['url']
+            master_format = images_extended_data[0]['highResolution']['original'][0]['format']
+        else:
+            print("Error: imagesExtended missing")
+            exit(1)
 
         # Extract the Summary
         summary_data = data.pop('summary', '')
         if summary_data:
             summary = FinnaSummary(text=summary_data)
+            summary.save()
         else:
             summary = None
 
@@ -173,6 +183,9 @@ class FinnaRecordManager(models.Manager):
         record.identifier_string = data['identifierString']
         record.year = data['year']
         record.number_of_images = len(images_data)
+        record.master_url = master_url
+        record.master_format = master_format
+        record.measurements = data['measurements']
 
         try:
             record.date_string = record['events']['valmistus'][0]['date']
@@ -218,8 +231,11 @@ class FinnaImage(models.Model):
     year = models.PositiveIntegerField(unique=False, null=True, blank=True)
     date_string = models.CharField(max_length=200, null=True, blank=True)
     number_of_images = models.PositiveIntegerField(unique=False, null=True, blank=True)
+    master_url = models.URLField(max_length=500)
+    master_format = models.CharField(max_length=16)
+    measurements = models.CharField(max_length=32)
     non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor)
-    summary = models.ForeignKey(FinnaSummary, related_name='summary', null=True, on_delete=models.CASCADE)
+    summary = models.ForeignKey(FinnaSummary, related_name='summary', blank=True, null=True, on_delete=models.CASCADE)
     subjects = models.ManyToManyField(FinnaSubject)
     subject_places = models.ManyToManyField(FinnaSubjectPlace)
     subject_actors = models.ManyToManyField(FinnaSubjectActor)
@@ -253,6 +269,20 @@ class FinnaImage(models.Model):
     def finna_json(self):
         url = get_finna_record_url(self.finna_id, True)
         return url
+
+    @property
+    def pseudo_filename(self):
+        if self.master_format == 'tif':
+            name = self.short_title
+            name = name.replace(" ", "_")
+            name = name.replace(":", "_")
+            identifier = self.identifier_string.replace(":", "-")
+            file_name = f'{name}_({identifier}).tif'
+            return file_name
+
+        else:
+            print(f'Unknown format: {self.master_format}')
+            exit(1)
 
     objects = FinnaRecordManager()
 
