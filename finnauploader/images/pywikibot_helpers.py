@@ -1,8 +1,10 @@
 import pywikibot
 import json
 
+
 site = pywikibot.Site('commons', 'commons')
 site.login()
+
 
 # Edit Wikimedia Commons mediaitem using wbeditentity
 def edit_commons_mediaitem(page, data):
@@ -14,12 +16,12 @@ def edit_commons_mediaitem(page, data):
 
     csrf_token = site.tokens['csrf']
     payload = {
-       'action': 'wbeditentity',
-       'format': u'json',
-       'id': media_identifier,
-       'data':  json.dumps(data),
-       'token': csrf_token,
-       'bot': True,  # in case you're using a bot account (which you should)
+        'action': 'wbeditentity',
+        'format': u'json',
+        'id': media_identifier,
+        'data':  json.dumps(data),
+        'token': csrf_token,
+        'bot': True,  # in case you're using a bot account (which you should)
     }
     request = site.simple_request(**payload)
     ret = request.submit()
@@ -34,6 +36,14 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
     # Check if the page exists
     if file_page.exists():
         print(f"The file {commons_file_name} exists.")
+        exit()
+
+    # Check if the page exists
+    if site.userinfo['messages']:
+        talk_page = site.user.getUserTalkPage()
+        page_name = talk_page.title()
+        msg = f'Warning: You have received a {page_name} message. Exiting.'
+        print(msg)
         exit()
 
     # Load file from url
