@@ -5,6 +5,7 @@ from django.utils import timezone
 from images.finna import get_finna_record_url
 from images.wikitext.creator import get_author_wikidata_id, \
                                     get_creator_template_from_wikidata_id, \
+                                    get_subject_actors_wikidata_id, \
                                     get_subject_image_category_from_wikidata_id, \
                                     get_creator_image_category_from_wikidata_id, \
                                     get_institution_wikidata_id, \
@@ -56,6 +57,20 @@ class FinnaImageRight(models.Model):
     def __str__(self):
         return self.copyright
 
+    def get_copyright_template(self):
+        if self.copyright == "CC BY 4.0":
+            return "{{CC-BY-4.0}}\n{{FinnaReview}}"
+        else:
+            print("Unknown copyright: " + self.copyright)
+            exit(1)
+
+    def get_permission_string(self):
+        if self.link:
+            ret = f'[{self.link} {self.copyright}]; {self.description}'
+        else:
+            ret = f'{self.copyright}; {self.description}'
+        return ret
+
 
 class FinnaNonPresenterAuthor(models.Model):
     name = models.CharField(max_length=64)
@@ -68,16 +83,22 @@ class FinnaNonPresenterAuthor(models.Model):
         return get_author_wikidata_id(self.name)
 
     def get_creator_template(self):
-        wikidata_id=self.get_wikidata_id()
+        wikidata_id = self.get_wikidata_id()
         return get_creator_template_from_wikidata_id(wikidata_id)
 
-    def get_creator_category(self):
-        wikidata_id=self.get_wikidata_id()
-        return get_subject_image_category_from_wikidata_id(wikidata_id)
+    def get_creator_category(self, prefix=None):
+        wikidata_id = self.get_wikidata_id()
+        category = get_subject_image_category_from_wikidata_id(wikidata_id)
+        if not prefix:
+            category = category.replace('Category:', '')
+        return category
 
-    def get_creator_photo_category(self):
-        wikidata_id=self.get_wikidata_id()
-        return get_creator_image_category_from_wikidata_id(wikidata_id)
+    def get_photos_category(self, prefix=None):
+        wikidata_id = self.get_wikidata_id()
+        category = get_creator_image_category_from_wikidata_id(wikidata_id)
+        if not prefix:
+            category = category.replace('Category:', '')
+        return category
 
 
 class FinnaSummary(models.Model):
@@ -107,6 +128,17 @@ class FinnaSubjectActor(models.Model):
     def __str__(self):
         return self.name
 
+    def get_wikidata_id(self):
+        wikidata_id = get_subject_actors_wikidata_id(self.name)
+        return wikidata_id
+
+    def get_commons_category(self, prefix=None):
+        wikidata_id = self.get_wikidata_id()
+        category = get_subject_image_category_from_wikidata_id(wikidata_id)
+        if not prefix:
+            category = category.replace('Category:', '')
+        return category
+
 
 class FinnaSubjectDetail(models.Model):
     name = models.CharField(max_length=200)
@@ -130,10 +162,10 @@ class FinnaInstitution(models.Model):
         return self.value
 
     def get_wikidata_id(self):
-        return  get_institution_wikidata_id(self.translated)
+        return get_institution_wikidata_id(self.translated)
 
     def get_institution_template(self):
-        wikidata_id=self.get_wikidata_id()
+        wikidata_id = self.get_wikidata_id()
         return get_institution_template_from_wikidata_id(wikidata_id)
 
 
@@ -176,7 +208,7 @@ class FinnaRecordManager(models.Manager):
         if events:
             valmistus = record.pop('valmistus', None)
             if valmistus:
-                image.date_string=valmistus[0]['date']
+                image.date_string = valmistus[0]['date']
 
         # Data which is stored to separate tables
 
@@ -243,7 +275,7 @@ class FinnaRecordManager(models.Manager):
         image.save()
         return image
 
-    # First try 
+    # First try
     def create_from_data(self, data):
 
         # Extract and handle non_presenter_authors data
@@ -417,6 +449,27 @@ class FinnaImage(models.Model):
             exit(1)
 
     objects = FinnaRecordManager()
+
+    def __str__(self):
+        return self.finna_id
+
+    def get_creator_templates(self):
+        creator_templates = []
+        for creator in self.non_presenter_authors.filter(role='kuvaaja'):
+            creator_templates.append(creator.get_creator_template())
+        return "".join(creator_templates)
+
+    def get_institution_templates(self):
+        institution_templates = []
+        for institution in self.institutions.all():
+            institution_templates.append(institution.get_institution_template())
+        return "".join(institution_templates)
+
+    def get_permission_string(self):
+        return self.image_right.get_permission_string()
+
+    def get_copyright_template(self):
+        return self.image_right.get_copyright_template()
 
 
 class FinnaImageHash(models.Model):
