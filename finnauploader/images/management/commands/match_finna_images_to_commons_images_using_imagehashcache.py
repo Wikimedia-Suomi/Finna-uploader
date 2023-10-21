@@ -5,9 +5,8 @@ import pywikibot
 from pywikibot.data import sparql
 import requests
 import time
-from images.imagehash_helpers import compare_image_hashes
+from images.imagehash_helpers import compare_image_hashes, is_correct_finna_record
 from images.conversion import unsigned_to_signed, signed_to_unsigned
-from images.finna import is_correct_finna_record
 
 class Command(BaseCommand):
     help = 'Match Finna images to commons images using imagehash.'

@@ -2,7 +2,6 @@ import requests
 import urllib
 import re
 import json
-from images.imagehash_helpers import is_same_image
 
 s = requests.Session()
 s.headers.update({'User-Agent': 'FinnaUploader 0.1'})
@@ -102,35 +101,6 @@ def get_finna_record(id, full=False):
     except:
         print("Finna API query failed: " + url)
         exit(1)
-
-def is_correct_finna_record(finna_id, image_url):
-    finna_record = get_finna_record(finna_id, True)
-    
-    if finna_record['status']!='OK':
-        print('Finna status not OK')
-        return False    
-
-    if finna_record['resultCount']!=1:
-        print('Finna resultCount!=1')
-        return False
-
-    record_finna_id=finna_record['records'][0]['id']
-    if record_finna_id!=finna_id:
-        print(f'finna_id update: {finna_id} -> {record_finna_id}')
-    
-    for imageExtended in finna_record['records'][0]['imagesExtended']:
-        # Test copyright
-        allowed_copyrighs=['CC BY 4.0', 'CC0']
-        if imageExtended['rights']['copyright'] not in allowed_copyrighs:
-            print("Incorrect copyright: " + imageExtended['rights']['copyright'])
-            return False
-    
-        # Confirm that images are same using imagehash
-    
-        finna_thumbnail_url="https://finna.fi" + imageExtended['urls']['large']
-        
-        if is_same_image(finna_thumbnail_url, image_url):
-            return record_finna_id
 
 def get_finna_id_from_url(url):
      if "finna.fi" in url:

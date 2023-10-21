@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from images.models import Image, ImageURL
-from images.finna import is_correct_finna_record, get_finna_id_from_url, get_finna_record
+from images.finna import get_finna_id_from_url, get_finna_record
+from images.imagehash_helpers import is_correct_finna_record
 import pywikibot
 from pywikibot.data import sparql
 
