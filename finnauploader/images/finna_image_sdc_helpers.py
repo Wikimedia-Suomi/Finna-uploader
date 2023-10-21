@@ -14,6 +14,12 @@ from images.wikitext.creator import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id
 
 
+def get_labels(finna_image):
+    labels = {}
+    labels['fi'] = {'language': 'fi', 'value': finna_image.title}
+    return labels
+
+
 def get_P7482_source_of_file_claim(finna_image):
     operator = 'Q420747'    # National library
     publisher = 'Q3029524'  # Finnish Heritage Agency
@@ -81,3 +87,48 @@ def get_P571_timestamp_claim(finna_image):
         timestamp = datetime.strptime(parsed_timestamp, "+%Y-%m-%dT%H:%M:%SZ")
         claim = create_P571_timestamp(timestamp, precision)
         return claim
+
+
+def get_structured_data_for_new_image(finna_image):
+    labels = get_labels(finna_image)
+    claims = []
+
+    claim = get_P7482_source_of_file_claim(finna_image)
+    claims.append(claim)
+
+    claim = get_P275_licence_claim(finna_image)
+    claims.append(claim)
+
+    claim = get_P6216_copyright_state_claim(finna_image)
+    claims.append(claim)
+
+    claim = get_P9478_finna_id_claim(finna_image)
+    claims.append(claim)
+
+    claim = get_P571_timestamp_claim(finna_image)
+    claims.append(claim)
+
+    p170_claims = get_P170_author_claims(finna_image)
+    for claim in p170_claims:
+        claims.append(claim)
+
+    p195_claims = get_P195_collection_claims(finna_image)
+    for claim in p195_claims:
+        claims.append(claim)
+
+    p180_claims = get_P180_subject_actors_claims(finna_image)
+    for claim in p180_claims:
+        claims.append(claim)
+
+    json_claims = []
+    for claim in claims:
+        if claim:
+            claim = claim.toJSON()
+            json_claims.append(claim)
+
+    ret = {
+        'labels': labels,
+        'claims': json_claims
+    }
+
+    return ret

@@ -7,6 +7,8 @@ import time
 import json
 from images.finna import do_finna_search
 from images.serializer_helpers import finna_image_to_json
+from images.wikitext.photographer import get_photographer_template, get_copyright_template
+
 from images.finna_image_sdc_helpers import get_P7482_source_of_file_claim, \
                                            get_P275_licence_claim, \
                                            get_P6216_copyright_state_claim, \
@@ -20,10 +22,16 @@ class Command(BaseCommand):
 
     def process_finna_record(self, data):
          r=FinnaImage.objects.create_from_data(data)
+         print(r.finna_json)
+
+         print(get_photographer_template(r))
+         print(get_copyright_template(r))
+
+         if 1:
+             exit(1)
          print(finna_image_to_json(r))
          print('-----')
          print(r.url)
-         print(r.finna_json)
          print('-----')
 
          c=get_P7482_source_of_file_claim(r)

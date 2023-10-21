@@ -1,213 +1,58 @@
 from django.core.management.base import BaseCommand
-from images.models import Image, ImageURL, FinnaImageHash, FinnaNonPresenterAuthor, FinnaImage
+from images.models import FinnaImage
 import pywikibot
-from pywikibot.data import sparql
-import requests
-from django.db.models import Count
 import time
 from images.finna import do_finna_search
-import json
-import re
-from datetime import datetime
-from images.sdc_helpers import create_P7482_source_of_file, create_P275_licence, create_P6216_copyright_state, create_P9478_finna_id, create_P170_author, create_P195_collection, create_P571_timestamp, wbEditEntity, create_P180_depicts
-from images.wikitext.creator import get_institution_name, get_institution_wikidata_id, get_institution_template_from_wikidata_id, get_author_name, get_author_wikidata_id, get_creator_template_from_wikidata_id, get_subject_actors_wikidata_ids, get_collection_wikidata_id
-from images.wikitext.photographer import create_photographer_template
-from images.wikitext.categories import create_categories
-from images.wikitext.timestamps import parse_timestamp
+from images.wikitext.photographer import get_wikitext_for_new_image
 from images.duplicatedetection import is_already_in_commons
-
-def get_sdc_json(r):
-    url='https://www.finna.fi/Record/' + r['id']
-    operator='Q420747' # National library
-    publisher='Q3029524' # Finnish Heritage Agency
-
-    labels={}
-    labels['fi']={'language':'fi', 'value': r['title'] }
-
-    claims=[]
-    claim=create_P7482_source_of_file(url, operator, publisher)
-    claims.append(claim)
-
-    claim = create_P275_licence(value=r['copyright'])
-    claims.append(claim)
-
-    claim = create_P6216_copyright_state(value=r['copyright'])
-    claims.append(claim)
-
-    claim = create_P9478_finna_id(r['id'])
-    claims.append(claim)
-
-    claim = create_P170_author(r['creator_wikidata_id'], 'Q33231') # Kuvasiskot, kuvaaja
-    claims.append(claim)
-
-    for collection in r['collections']:
-        collection_wikidata_id=get_collection_wikidata_id(collection)
-        claim = create_P195_collection(collection_wikidata_id, r['identifierString'])
-        claims.append(claim)
-
-    for wikidata_id in r['subjectActors_wikidata_ids']:
-        claim = create_P180_depicts(wikidata_id)
-        claims.append(claim)
-
-    parsed_timestamp,precision=parse_timestamp(r['date'])
-    if parsed_timestamp:
-        timestamp=datetime.strptime(parsed_timestamp, "+%Y-%m-%dT%H:%M:%SZ")
-        claim = create_P571_timestamp(timestamp,precision)
-        claims.append(claim)
-
-    json_claims=[]
-    for claim in claims:
-        claim=claim.toJSON()
-        json_claims.append(claim)
-
-    ret={
-        'labels':labels,
-        'claims':json_claims
-    }
-    return ret
+from images.finna_image_sdc_helpers import get_structured_data_for_new_image
+from images.pywikibot_helpers import edit_commons_mediaitem, \
+                                     upload_file_to_commons
 
 
-def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
-    site = pywikibot.Site('commons', 'commons')  # The site we want to run our bot on
-    site.login()
+def get_comment_text(finna_image):
+    authors = list(finna_image.non_presenter_authors
+                              .filter(role='kuvaaja')
+                              .values_list('name', flat=True))
 
-    commons_file_name = "File:" + file_name
-    file_page = pywikibot.FilePage(site, commons_file_name)
-    file_page.text = wikitext
-        
-    # Check if the page exists
-    if file_page.exists():
-        print(f"The file {commons_file_name} exists.")
-        exit()
-        
-    # Load file from url
-    file_page.upload(source_file_url, comment=comment,asynchronous=True)
-    
-    return file_page
+    ret = "Uploading \'" + finna_image.short_title + "\'"
+    ret = ret + " by \'" + "; ".join(authors) + "\'"
 
-
-def get_comment_text(r):
-                     
-    ret = "Uploading \'" + r['shortTitle'] +"\'"
-    ret = ret + " by \'" + r['creator_name'] +"\'"
-                            
-    if "CC BY 4.0" in r['copyright']:
-        copyrighttemplate="CC-BY-4.0"
+    if "CC BY 4.0" in finna_image.image_right.copyright:
+        copyrighttemplate = "CC-BY-4.0"
     else:
         print("Copyright error")
-        print(r['copyright'])
+        print(finna_image.image_right.copyright)
         exit(1)
-                             
-    ret = ret + " with licence " + copyrighttemplate
-    ret = ret + " from " + r['source']
+
+    ret = f'{ret} with licence {copyrighttemplate}'
+    ret = f'{ret} from {finna_image.url}'
     return ret
 
-
-# Filter out duplicate placenames
-def get_subject_place(subjectPlaces):
-    parts = [part.strip() for part in subjectPlaces.split("; ")]
-
-    # Sort the parts by length in descending order
-    parts.sort(key=len, reverse=True)
-    # Iterate over the parts and check for each part if it's included in any of the parts that come after it
-    final_parts = []
-    for i in range(len(parts)):
-        if not parts[i] in "; ".join(final_parts):
-            final_parts.append(parts[i])
-    return "; ".join(final_parts)
-                
 
 class Command(BaseCommand):
     help = 'Upload kuvasiskot images'
 
-    def process_finna_record(self, record):        
-        site = pywikibot.Site('commons', 'commons')  # The site we want to run our bot on
-        site.login()
-
-        images=[]
+    def process_finna_record(self, record):
         print(record['id'])
         print(record['title'])
         print(record['summary'])
 
-        r={}
-        r['id']=record['id']
-        r['title']=record['title']
-        r['shortTitle']=record['shortTitle']
-        r['copyright']=record['imageRights']['copyright']
-        r['thumbnail']="https://finna.fi" + record['imagesExtended'][0]['urls']['small']
-        r['image_url']= record['imagesExtended'][0]['highResolution']['original'][0]['url']
-        r['image_format']= record['imagesExtended'][0]['highResolution']['original'][0]['format']
-        r['collections']=record['collections']
-        r['institutions']=record['institutions']
-        r['institution_name']=get_institution_name(r['institutions'])
-        r['institution_wikidata_id']=get_institution_wikidata_id(r['institution_name'])
-        r['institution_template']=get_institution_template_from_wikidata_id(r['institution_wikidata_id'])
-        r['identifierString']=record['identifierString']
-        r['subjectPlaces']=get_subject_place("; ".join(record['subjectPlaces']))
-        r['subjectActors']="; ".join(record['subjectActors'])
-        r['subjectActors_wikidata_ids']=get_subject_actors_wikidata_ids(record['subjectActors'])
+        finna_image = FinnaImage.objects.create_from_data(record)
+        file_name = finna_image.pseudo_filename
+        image_url = finna_image.master_url
 
-        if not r['subjectActors']:
-            return
+        structured_data = get_structured_data_for_new_image(finna_image)
+        wikitext = get_wikitext_for_new_image(finna_image)
+        comment = get_comment_text(finna_image)
 
-        try:
-            r['date']=record['events']['valmistus'][0]['date']
-        except:
-            r['date']=''
-        r['source']='https://finna.fi/Record/' + r['id']
-        r['subjects']=record['subjects']
-        r['measurements']=record['measurements']
-    
-        # Check copyright
-        if r['copyright'] == "CC BY 4.0":
-            r['copyright_template']="{{CC-BY-4.0}}\n{{FinnaReview}}"
-            r['copyright_description']=record['imagesExtended'][0]['rights']['description'][0]
-        else:
-            print("Unknown copyright: " + r['copyright'])
-            exit(1)
-
-        # Check format
-        if r['image_format'] == 'tif':
-           # Filename format is "tohtori,_varatuomari_Reino_Erma_(647F28).tif"
-#           r['file_name'] = r['shortTitle'].replace(" ", "_") + '_(' + r['id'][-6:] +  ').tif'
-           r['file_name'] = r['shortTitle'].replace(" ", "_") + '_(' + r['identifierString'].replace(":", "-") +  ').tif'
-           r['file_name'] = r['file_name'].replace(":", "_")
-        else:
-            print("Unknown format: " + r['image_format'])
-            exit(1)
-    
-        # Skip image already exits in Wikimedia Commons
-        #if check_imagehash(r['thumbnail']):
-        #    print("Skipping (already exists based on imagehash) : " + r['id'])
-        #    continue
-
-        r['creator_name']=get_author_name(record['nonPresenterAuthors'])    
-        r['creator_wikidata_id']=get_author_wikidata_id(r['creator_name'])
-        r['creator_template']=get_creator_template_from_wikidata_id(r['creator_wikidata_id'])
-        # titles and descriptions wrapped in language template
-        r['template_titles']=['{{fi|' + r['title'] + '}}']
-        r['template_descriptions']={}
-
-#        print(json.dumps(r, indent=3))
-#        print(record)
-
-        wikitext_parts=[]
-        wikitext_parts.append("== {{int:filedesc}} ==")
-        wikitext_parts.append(create_photographer_template(r) + '\n')
-        wikitext_parts.append("== {{int:license-header}} ==")
-        wikitext_parts.append(r['copyright_template'])
-        wikitext_parts.append(create_categories(r))        
-        wikitext = "\n".join(wikitext_parts)
-
-        structured_data=get_sdc_json(r)
-
-        comment=get_comment_text(r)
         pywikibot.info('')
         pywikibot.info(wikitext)
         pywikibot.info('')
         pywikibot.info(comment)
-        print(r['image_url'])
-        question='Do you want to upload this file?'
+        pywikibot.info(file_name)
+
+        question = 'Do you want to upload this file?'
 
         choice = pywikibot.input_choice(
             question,
@@ -215,35 +60,31 @@ class Command(BaseCommand):
             default='N',
             automatic_quit=False
         )
-        print(r['file_name'])
+
         if choice == 'y':
-            page=upload_file_to_commons(r['image_url'], r['file_name'], wikitext, comment)
-            wbEditEntity(site, page, structured_data)
+            page = upload_file_to_commons(image_url, file_name,
+                                          wikitext, comment)
+            ret = edit_commons_mediaitem(page, structured_data)
+            print(ret)
 
     def handle(self, *args, **kwargs):
-        lookfor=None
-        type=None
-        collection='Studio Kuvasiskojen kokoelma'
+        lookfor = None
+        type = None
+        collection = 'Studio Kuvasiskojen kokoelma'
 #        collection='JOKA Journalistinen kuva-arkisto'
-         
-        for page in range(1,201):
-             # Prevent looping too fast for Finna server
-             time.sleep(0.2)
-             data=do_finna_search(page, lookfor, type, collection )
-             if 'records' in data:
-                 for record in data['records']:
+
+        for page in range(1, 201):
+            # Prevent looping too fast for Finna server
+            time.sleep(0.2)
+            data = do_finna_search(page, lookfor, type, collection)
+            if 'records' in data:
+                for record in data['records']:
                     if 'Kekkonen, Urho Kaleva' not in str(record):
                         continue
-                    print(".")
                     # Not photo
-                    if not 'imagesExtended' in record:
+                    if 'imagesExtended' not in record:
                         continue
-    
+
+                    print(".")
                     if not is_already_in_commons(record['id']):
                         self.process_finna_record(record)
-
-             else:
-                 break
-
-
-
