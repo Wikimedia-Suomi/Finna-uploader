@@ -60,7 +60,7 @@ virtualenv	Virtuaaliympäristön käynnistys
 		virtuaaliympäristössä.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-asennusten 	MS windowsin powershell tai MS visual studio coden puthon-tulkki ei tunne
+asennusten 	MS windowsin powershell tai MS visual studio coden python-tulkki ei tunne
 eroja		'source' -komentoa. Linux-järjestelmän bin-hakemiston sijaan on scripts-hakemisto.
 		Windowsissa pythonin virtuaaliympäristän päällepanoon on 'activate.bat' ja 
 		poispäältä 'deactivate.bat'. Ne löytyvät hakemistosta scripts .
@@ -114,7 +114,15 @@ I		Tallenna kuvia Finnasta Wikimedia Commonsiin
 		Kun uusi kuva on tallennettu sitten ohjelma jatkaa seuraavaan kuvaan.
 -----------------------------------------------------------------------------------------------
 
-J		Kuvan katsominen
+J		Kuvan katsominen internetselaimessa (google chrome, ms edge yms.)
+Main page		commons.wikimedia.org 	<enter>
+Log in		kirjaudu sisään
+Contributions	Sivun yläreunasta valitse 'Contributions'. Tästä avautuu 'special page';
+		'User contributions for .. ' jossa on listattuna kuvat.
+                Listasta voi valita näytettävän kuvan.
+
+
+			
 
 
 
