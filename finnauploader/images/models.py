@@ -3,6 +3,12 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from images.finna import get_finna_record_url
+from images.wikitext.creator import get_author_wikidata_id, \
+                                    get_creator_template_from_wikidata_id, \
+                                    get_subject_image_category_from_wikidata_id, \
+                                    get_creator_image_category_from_wikidata_id, \
+                                    get_institution_wikidata_id, \
+                                    get_institution_template_from_wikidata_id
 
 # Create your models here.
 
@@ -58,6 +64,21 @@ class FinnaNonPresenterAuthor(models.Model):
     def __str__(self):
         return self.name
 
+    def get_wikidata_id(self):
+        return get_author_wikidata_id(self.name)
+
+    def get_creator_template(self):
+        wikidata_id=self.get_wikidata_id()
+        return get_creator_template_from_wikidata_id(wikidata_id)
+
+    def get_creator_category(self):
+        wikidata_id=self.get_wikidata_id()
+        return get_subject_image_category_from_wikidata_id(wikidata_id)
+
+    def get_creator_photo_category(self):
+        wikidata_id=self.get_wikidata_id()
+        return get_creator_image_category_from_wikidata_id(wikidata_id)
+
 
 class FinnaSummary(models.Model):
     text = models.TextField()
@@ -107,6 +128,14 @@ class FinnaInstitution(models.Model):
 
     def __str__(self):
         return self.value
+
+    def get_wikidata_id(self):
+        return  get_institution_wikidata_id(self.translated)
+
+    def get_institution_template(self):
+        wikidata_id=self.get_wikidata_id()
+        return get_institution_template_from_wikidata_id(wikidata_id)
+
 
 # Managers
 
@@ -369,7 +398,7 @@ class FinnaImage(models.Model):
         return url
 
     @property
-    def finna_json(self):
+    def finna_json_url(self):
         url = get_finna_record_url(self.finna_id, True)
         return url
 

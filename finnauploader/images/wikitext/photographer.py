@@ -77,18 +77,14 @@ def get_author_wikidata_ids(finna_image):
 def get_photographer_template(finna_image):
 
     r = {}
-    authors = get_author_wikidata_ids(finna_image)
-    if len(authors) == 1:
-        creator_wikidata_id = authors[0]
-        creator_template = get_creator_template_from_wikidata_id(creator_wikidata_id)
-    else:
-        print("Error: Multiple authors. only 1 expected")
-        exit(1)
 
-    # get institution template
-    institutions = list(finna_image.institutions.values_list('value', flat=True))
-    institution_wikidata_id = get_institution_wikidata_id(institutions[0])
-    institution_template = get_institution_template_from_wikidata_id(institution_wikidata_id)
+    creator_templates=[]
+    for creator in finna_image.non_presenter_authors.filter(role='kuvaaja'):
+        creator_templates.append(creator.get_creator_template())
+
+    institution_templates=[]
+    for institution in finna_image.institutions.all():
+        institution_templates.append(institution.get_institution_template())
 
     # depicted
     depicted_people = list(finna_image.subject_actors.values_list('name', flat=True))
@@ -98,14 +94,14 @@ def get_photographer_template(finna_image):
     collections = list(finna_image.collections.values_list('name', flat=True))
     wrapped_title = language_template_wrap('fi', finna_image.title)
 
-    r['creator_template'] = creator_template
+    r['creator_template'] = "".join(creator_templates)
     r['template_titles'] = [wrapped_title]
     r['template_descriptions'] = []
     r['subjectActors'] = "; ".join(depicted_people)
     r['subjectPlaces'] = "; ".join(depicted_places)
     r['date'] = finna_image.date_string
     r['measurements'] = finna_image.measurements
-    r['institution_template'] = institution_template
+    r['institution_template'] = "".join(institution_templates)
     r['collections'] = collections
     r['identifierString'] = finna_image.identifier_string
     r['source'] = finna_image.url

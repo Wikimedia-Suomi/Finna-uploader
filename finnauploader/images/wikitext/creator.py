@@ -88,7 +88,7 @@ def get_author_wikidata_id(name):
         wikidata_id=nonPresenterAuthorsCache[name]
         return wikidata_id
     else:
-        print(f'Unknown author: {author_name}')
+        print(f'Unknown author: {name}')
         exit(1)
 
 def get_creator_template_from_wikidata_id(wikidata_id):

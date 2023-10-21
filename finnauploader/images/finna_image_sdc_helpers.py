@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from images.wikitext.timestamps import parse_timestamp
 from .sdc_helpers import create_P7482_source_of_file, \
                          create_P275_licence, \

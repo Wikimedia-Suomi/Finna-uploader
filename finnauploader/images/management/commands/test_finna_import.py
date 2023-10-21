@@ -22,10 +22,13 @@ class Command(BaseCommand):
 
     def process_finna_record(self, data):
          r=FinnaImage.objects.create_from_data(data)
-         print(r.finna_json)
+         print(r.finna_json_url)
 
-         print(get_photographer_template(r))
-         print(get_copyright_template(r))
+         for institution in r.institutions.all():
+             print(f'{institution.get_institution_template()}')
+
+#         print(get_photographer_template(r))
+#         print(get_copyright_template(r))
 
          if 1:
              exit(1)
