@@ -165,3 +165,5 @@ finnauploader/pywikibot-FinnaUploadBot2.lwp
 finnauploader/throttle.ctrl
 finnauploader/images/migrations
 finnauploader/user-config.py
+apicache-py3
+throttle.ctrl
