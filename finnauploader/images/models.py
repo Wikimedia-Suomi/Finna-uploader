@@ -106,12 +106,115 @@ class FinnaInstitution(models.Model):
     translated = models.CharField(max_length=200)
 
     def __str__(self):
-        return self.name
+        return self.value
 
 # Managers
 
-
 class FinnaRecordManager(models.Manager):
+
+    # Second try to make this readable
+    def create_from_finna_record(self, record):
+
+        # copyright tag is mandatory information so it is added on creation
+        i = record['imageRights']
+        image_right, created = FinnaImageRight.objects.get_or_create(copyright=i['copyright'],
+                                                                     link=i['link'],
+                                                                     description=i['description'])
+
+        # created = True, False depending if the record was in the database already
+        image, created = FinnaImage.objects.get_or_create(finna_id=record['id'],
+                                                          defaults={'image_right': image_right})
+
+        image.title = record['title']
+        image.short_title = record['shortTitle']
+        image.image_right = image_right
+        image.number_of_images = len(record['images'])
+        image.year = record.pop('year', None)
+        image.identifier_string = record.pop('identifierString', None)
+        image.measurements = record.pop('measurements', None)
+
+        # Extract imagesExtended data
+        images_extended_data = record.pop('imagesExtended', None)
+        if images_extended_data:
+            image.master_url = images_extended_data[0]['highResolution']['original'][0]['url']
+            image.master_format = images_extended_data[0]['highResolution']['original'][0]['format']
+        else:
+            print("Error: imagesExtended missing")
+            exit(1)
+
+        # Extract date string from events
+        events = record.pop('events', None)
+        if events:
+            valmistus = record.pop('valmistus', None)
+            if valmistus:
+                image.date_string=valmistus[0]['date']
+
+        # Data which is stored to separate tables
+
+        if 'summary' in record:
+            image.summary, created = FinnaSummary.objects.get_or_create(text=record['summary'])
+
+        if 'subjects' in record:
+            obj = FinnaSubject.objects
+            for subject in record['subjects']:
+                finna_subject, created = obj.get_or_create(name=subject)
+                image.subjects.add(finna_subject)
+
+        if 'subjectPlaces' in record:
+            obj = FinnaSubjectPlace.objects
+            for subject in record['subjectPlaces']:
+                finna_subject, created = obj.get_or_create(name=subject)
+                image.subject_places.add(finna_subject)
+
+        if 'subjectActors' in record:
+            obj = FinnaSubjectActor.objects
+            for subject in record['subjectActors']:
+                finna_subject, created = obj.get_or_create(name=subject)
+                image.subject_actors.add(finna_subject)
+
+        if 'subjectDetails' in record:
+            obj = FinnaSubjectDetail.objects
+            for subject in record['subjectDetails']:
+                finna_subject, created = obj.get_or_create(name=subject)
+                image.subject_details.add(finna_subject)
+
+        if 'collections' in record:
+            obj = FinnaCollection.objects
+            for collection in record['collections']:
+                finna_collection, created = obj.get_or_create(name=collection)
+                image.collections.add(finna_collection)
+
+        if 'buildings' in record:
+            obj = FinnaBuilding.objects
+            for building in record['buildings']:
+                value = building['value']
+                defaults = {"translated": building['translated']}
+                finna_building, created = obj.get_or_create(value=value, defaults=defaults)
+                image.buildings.add(finna_building)
+
+        if 'institutions' in record:
+            obj = FinnaInstitution.objects
+            for institution in record['institutions']:
+                value = institution['value']
+                defaults = {"translated": institution['translated']}
+                finna_institution, created = obj.get_or_create(
+                                   value=value,
+                                   defaults=defaults
+                                )
+                image.institutions.add(finna_institution)
+
+        if 'nonPresenterAuthors' in record:
+            obj = FinnaNonPresenterAuthor.objects
+            for author in record['nonPresenterAuthors']:
+                name = author['name']
+                role = author['role']
+                finna_author, created = obj.get_or_create(name=name, role=role)
+                image.non_presenter_authors.add(finna_author)
+
+        image.save()
+        return image
+
+    # First try 
     def create_from_data(self, data):
 
         # Extract and handle non_presenter_authors data
@@ -180,15 +283,15 @@ class FinnaRecordManager(models.Manager):
         record, created = self.get_or_create(finna_id=data['id'], defaults={'image_right': image_rights})
         record.title = data['title']
         record.short_title = data['shortTitle']
-        record.identifier_string = data['identifierString']
-        record.year = data['year']
+        record.identifier_string = data.pop('identifierString', None)
+        record.year = data.pop('year', None)
         record.number_of_images = len(images_data)
         record.master_url = master_url
         record.master_format = master_format
         record.measurements = data['measurements']
 
         try:
-            record.date_string = record['events']['valmistus'][0]['date']
+            record.date_string = data['events']['valmistus'][0]['date']
         except:
             print("Skipping date_string")
 
