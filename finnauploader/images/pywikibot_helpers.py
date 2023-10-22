@@ -50,3 +50,22 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
     file_page.upload(source_file_url, comment=comment, asynchronous=True)
 
     return file_page
+
+def get_comment_text(finna_image):
+    authors = list(finna_image.non_presenter_authors
+                              .filter(role='kuvaaja')
+                              .values_list('name', flat=True))
+
+    ret = "Uploading \'" + finna_image.short_title + "\'"
+    ret = ret + " by \'" + "; ".join(authors) + "\'"   
+            
+    if "CC BY 4.0" in finna_image.image_right.copyright:
+        copyrighttemplate = "CC-BY-4.0"
+    else:
+        print("Copyright error")
+        print(finna_image.image_right.copyright)
+        exit(1)
+                    
+    ret = f'{ret} with licence {copyrighttemplate}'
+    ret = f'{ret} from {finna_image.url}'
+    return ret

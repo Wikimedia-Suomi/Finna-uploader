@@ -7,36 +7,71 @@ from images.wikitext.photographer import get_wikitext_for_new_image
 from images.duplicatedetection import is_already_in_commons
 from images.finna_image_sdc_helpers import get_structured_data_for_new_image
 from images.pywikibot_helpers import edit_commons_mediaitem, \
-                                     upload_file_to_commons
-
-
-def get_comment_text(finna_image):
-    authors = list(finna_image.non_presenter_authors
-                              .filter(role='kuvaaja')
-                              .values_list('name', flat=True))
-
-    ret = "Uploading \'" + finna_image.short_title + "\'"
-    ret = ret + " by \'" + "; ".join(authors) + "\'"
-
-    if "CC BY 4.0" in finna_image.image_right.copyright:
-        copyrighttemplate = "CC-BY-4.0"
-    else:
-        print("Copyright error")
-        print(finna_image.image_right.copyright)
-        exit(1)
-
-    ret = f'{ret} with licence {copyrighttemplate}'
-    ret = f'{ret} from {finna_image.url}'
-    return ret
+                                     upload_file_to_commons, \
+                                     get_comment_text
 
 
 class Command(BaseCommand):
     help = 'Upload kuvasiskot images'
 
+    def add_arguments(self, parser):
+        # Named (optional) arguments
+        parser.add_argument(
+            '--type',
+            type=str,
+            choices=['AllFields', 'Subjects'],
+            help=('Finna type argument. '
+                  'Argument selects where lookfor matches.')
+        )
+
+        parser.add_argument(
+            '--lookfor',
+            type=str,
+            help='Finna lookfor argument.',
+        )
+
+        parser.add_argument(
+            '--require-text',
+            action='append',
+            type=str,
+            help=('Include record only if text is in Finna record. '
+                  'This option can be defined multiple times.')
+        )
+
+        parser.add_argument(
+            '--skip-text',
+            action='append',
+            type=str,
+            help=('Skip record if text is in Finna record. '
+                  'This option can be defined multiple times.')
+        )
+
+    # Return True if all inputs are found or there is no input
+    def find_all_texts(self, texts, record):
+        record_text = str(record)
+
+        if not texts:
+            return True
+
+        for text in texts:
+            if text not in record_text:
+                return False
+        return True
+
+    # Return True if any of the inputs are found
+    def find_any_text(self, texts, record):
+        record_text = str(record)
+
+        if not texts:
+            return False
+
+        for text in texts:
+            if text in record_text:
+                return True
+        return False
+
     def process_finna_record(self, record):
         print(record['id'])
-        print(record['title'])
-        print(record['summary'])
 
         finna_image = FinnaImage.objects.create_from_data(record)
         file_name = finna_image.pseudo_filename
@@ -67,9 +102,12 @@ class Command(BaseCommand):
             ret = edit_commons_mediaitem(page, structured_data)
             print(ret)
 
-    def handle(self, *args, **kwargs):
-        lookfor = None
-        type = None
+    def handle(self, *args, **options):
+        lookfor = options['lookfor'] or None
+        type = options['type'] or None
+        required_filter = options['require_text']
+        skip_filter = options['skip_text']
+
         collection = 'Studio Kuvasiskojen kokoelma'
 #        collection='JOKA Journalistinen kuva-arkisto'
 
@@ -77,12 +115,22 @@ class Command(BaseCommand):
             # Prevent looping too fast for Finna server
             time.sleep(0.2)
             data = do_finna_search(page, lookfor, type, collection)
-            if 'records' in data:
+
+            # If no results from Finna then exit
+            if not 'records' in data:
+                break
+            else:
                 for record in data['records']:
-                    if 'Kekkonen, Urho Kaleva' not in str(record):
-                        continue
                     # Not photo
                     if 'imagesExtended' not in record:
+                        continue
+
+                    # skip if no required text is found
+                    if not self.find_all_texts(required_filter, record):
+                        continue
+
+                    # skip if skip filter text is found
+                    if self.find_any_text(skip_filter, record):
                         continue
 
                     print(".")

@@ -390,6 +390,8 @@ class FinnaRecordManager(models.Manager):
 
 
 class FinnaImage(models.Model):
+    objects = FinnaRecordManager()
+
     finna_id = models.CharField(max_length=200, null=False, blank=False, db_index=True, unique=True)
     title = models.CharField(max_length=200)
     year = models.PositiveIntegerField(unique=False, null=True, blank=True)
@@ -447,8 +449,6 @@ class FinnaImage(models.Model):
         else:
             print(f'Unknown format: {self.master_format}')
             exit(1)
-
-    objects = FinnaRecordManager()
 
     def __str__(self):
         return self.finna_id
