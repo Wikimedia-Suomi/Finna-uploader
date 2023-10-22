@@ -5,11 +5,9 @@ from pywikibot.data import sparql
 
 def finna_exists(id):
     url='https://imagehash.toolforge.org/finnasearch?finna_id=' + str(id)
-    print(url)
     response = requests.get(url)
     response.raise_for_status()  # Raise an exception for HTTP errors
     data = response.json()
-    print(data)
     if len(data):
         return True
     else:

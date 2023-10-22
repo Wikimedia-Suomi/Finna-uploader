@@ -46,6 +46,18 @@ class Command(BaseCommand):
                   'This option can be defined multiple times.')
         )
 
+        parser.add_argument(
+            '--list',
+            action='store_true',
+            help='Show only list of matched photos which would be uploaded.'
+        )
+
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='Run the command without making actual changes to Wikimedia Commons.'
+        )
+
     # Return True if all inputs are found or there is no input
     def find_all_texts(self, texts, record):
         record_text = str(record)
@@ -70,7 +82,7 @@ class Command(BaseCommand):
                 return True
         return False
 
-    def process_finna_record(self, record):
+    def process_finna_record(self, record, dry_run=None):
         print(record['id'])
 
         finna_image = FinnaImage.objects.create_from_data(record)
@@ -97,6 +109,9 @@ class Command(BaseCommand):
         )
 
         if choice == 'y':
+            if dry_run:
+                print("Dry_run selected. Skipping the actual upload.")
+                return
             page = upload_file_to_commons(image_url, file_name,
                                           wikitext, comment)
             ret = edit_commons_mediaitem(page, structured_data)
@@ -107,6 +122,8 @@ class Command(BaseCommand):
         type = options['type'] or None
         required_filter = options['require_text']
         skip_filter = options['skip_text']
+        dry_run = options['dry_run']
+        list_only = options['list']
 
         collection = 'Studio Kuvasiskojen kokoelma'
 #        collection='JOKA Journalistinen kuva-arkisto'
@@ -133,6 +150,11 @@ class Command(BaseCommand):
                     if self.find_any_text(skip_filter, record):
                         continue
 
-                    print(".")
                     if not is_already_in_commons(record['id']):
-                        self.process_finna_record(record)
+                        if list_only:
+                            id=record['id']
+                            year=record['year']
+                            title=record['title']
+                            print(f'Uploading: {id} {year} {title}')
+                        else:
+                            self.process_finna_record(record, dry_run)
