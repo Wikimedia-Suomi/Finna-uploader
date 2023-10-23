@@ -47,6 +47,36 @@ class Command(BaseCommand):
         )
 
         parser.add_argument(
+            '--add_depict_and_cat',
+            action='append',
+            type=str,
+            help=('Add this value to categories '
+                  'and P180 (depicts) values of the uploaded photo.'
+                  'Value can be Wikimedia Commons category name, '
+                  'Wikidata item or Wikipedia page.')
+
+        )
+
+        parser.add_argument(
+            '--add_category',
+            action='append',
+            type=str,
+            help=('Add this category to the uploaded photo. '
+                  'Value can be Wikimedia Commons category name, '
+                  'Wikidata item or Wikipedia page.')
+        )
+
+        parser.add_argument(
+            '--add_depict',
+            action='append',
+            type=str,
+            help=('Add this P180 depicts value to the uploaded photo.'
+                  'Value can be Wikimedia Commons category name, '
+                  'Wikidata item or Wikipedia page.')
+
+        )
+
+        parser.add_argument(
             '--list',
             action='store_true',
             help='Show only list of matched photos which would be uploaded.'
@@ -55,7 +85,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--dry-run',
             action='store_true',
-            help='Run the command without making actual changes to Wikimedia Commons.'
+            help='Run the command without writing to Wikimedia Commons.'
         )
 
     # Return True if all inputs are found or there is no input
@@ -82,10 +112,10 @@ class Command(BaseCommand):
                 return True
         return False
 
-    def process_finna_record(self, record, dry_run=None):
+    def process_finna_record(self, record, local_data, dry_run=None):
         print(record['id'])
 
-        finna_image = FinnaImage.objects.create_from_data(record)
+        finna_image = FinnaImage.objects.create_from_data(record, local_data)
         file_name = finna_image.pseudo_filename
         image_url = finna_image.master_url
 
@@ -125,6 +155,23 @@ class Command(BaseCommand):
         dry_run = options['dry_run']
         list_only = options['list']
 
+        add_categories = []
+        add_depicts = []
+        if options['add_category']:
+            add_categories += options['add_category']
+
+        if options['add_depict']:
+            add_depicts += options['add_depict']
+
+        if options['add_depict_and_cat']:
+            add_categories += options['add_depict_and_cat']
+            add_depicts += options['add_depict_and_cat']
+
+        local_data = {
+            'add_categories': add_categories,
+            'add_depicts': add_depicts
+        }
+
         collection = 'Studio Kuvasiskojen kokoelma'
 #        collection='JOKA Journalistinen kuva-arkisto'
 
@@ -134,7 +181,7 @@ class Command(BaseCommand):
             data = do_finna_search(page, lookfor, type, collection)
 
             # If no results from Finna then exit
-            if not 'records' in data:
+            if 'records' not in data:
                 break
             else:
                 for record in data['records']:
@@ -152,9 +199,11 @@ class Command(BaseCommand):
 
                     if not is_already_in_commons(record['id']):
                         if list_only:
-                            id=record['id']
-                            year=record['year']
-                            title=record['title']
+                            id = record['id']
+                            year = record['year']
+                            title = record['title']
                             print(f'Uploading: {id} {year} {title}')
                         else:
-                            self.process_finna_record(record, dry_run)
+                            self.process_finna_record(record,
+                                                      local_data,
+                                                      dry_run)

@@ -3,6 +3,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from images.finna import get_finna_record_url
+from images.pywikibot_helpers import get_wikidata_id_from_url
 from images.wikitext.creator import get_author_wikidata_id, \
                                     get_creator_template_from_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
@@ -12,7 +13,6 @@ from images.wikitext.creator import get_author_wikidata_id, \
                                     get_institution_template_from_wikidata_id
 
 # Create your models here.
-
 
 # Commons image
 class Image(models.Model):
@@ -168,13 +168,46 @@ class FinnaInstitution(models.Model):
         wikidata_id = self.get_wikidata_id()
         return get_institution_template_from_wikidata_id(wikidata_id)
 
+# Dynamic subjects based on wiki categories / wikidata items
+class FinnaLocalSubject(models.Model):
+    value = models.CharField(max_length=400)
+    normalized_name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.value
+
+    def get_wikidata_id(self):
+        return get_wikidata_id_from_url(self.value)
+
+    def get_category_name(self, prefix=None):
+        self.value=self.value.replace('category:', 'Category:')
+
+        if 'https://commons.wikimedia.org/wiki/Category:' in self.value:
+            return self.value.replace('https://commons.wikimedia.org/wiki/Category:','')
+
+        if 'http://commons.wikimedia.org/wiki/category:' in self.value:
+            return self.value.replace('http://commons.wikimedia.org/wiki/Category:','')
+
+        if '^Category:' in self.value:
+            return self.value.replace('Category:','')
+        
+        wikidata_id = self.get_wikidata_id()
+        if wikidata_id:
+            category = get_subject_image_category_from_wikidata_id(wikidata_id)
+            if category:
+                if not prefix:
+                    category = category.replace('Category:', '')
+                return category
+        return None
+
+
 
 # Managers
 
 class FinnaRecordManager(models.Manager):
 
     # Second try to make this readable
-    def create_from_finna_record(self, record):
+    def create_from_finna_record(self, record, local_data={}):
 
         # copyright tag is mandatory information so it is added on creation
         i = record['imageRights']
@@ -276,7 +309,7 @@ class FinnaRecordManager(models.Manager):
         return image
 
     # First try
-    def create_from_data(self, data):
+    def create_from_data(self, data, local_data={}):
 
         # Extract and handle non_presenter_authors data
         non_presenter_authors_data = data.pop('nonPresenterAuthors', [])
@@ -340,6 +373,14 @@ class FinnaRecordManager(models.Manager):
         else:
             summary = None
 
+        # Extract local add_categories data
+        add_categories_data = local_data.pop('add_categories', [])        
+        add_categories = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_categories_data]
+
+        add_depicts_data = local_data.pop('add_depicts', [])        
+        add_depicts = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_depicts_data]
+
+
         # Create the book instance
         record, created = self.get_or_create(finna_id=data['id'], defaults={'image_right': image_rights})
         record.title = data['title']
@@ -383,8 +424,18 @@ class FinnaRecordManager(models.Manager):
         for institution in institutions:
             record.institutions.add(institution)
 
+        record.add_categories.clear()
+        for add_category in add_categories:
+            record.add_categories.add(add_category)
+
+        record.add_depicts.clear()
+        for add_depict in add_depicts:
+            record.add_depicts.add(add_depict)
+
         record.image_right = image_rights
+
         record.save()
+
 
         return record
 
@@ -410,6 +461,8 @@ class FinnaImage(models.Model):
     buildings = models.ManyToManyField(FinnaBuilding)
     institutions = models.ManyToManyField(FinnaInstitution)
     image_right = models.ForeignKey(FinnaImageRight, on_delete=models.RESTRICT)
+    add_categories = models.ManyToManyField(FinnaLocalSubject, related_name="category_images")
+    add_depicts = models.ManyToManyField(FinnaLocalSubject, related_name="depict_images")
 
     # Accession number or similar identifier
     identifier_string = models.CharField(max_length=64, null=True, blank=True)

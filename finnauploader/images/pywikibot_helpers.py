@@ -1,6 +1,7 @@
 import pywikibot
+from pywikibot.exceptions import NoPageError
 import json
-
+import re
 
 site = pywikibot.Site('commons', 'commons')
 site.login()
@@ -69,3 +70,71 @@ def get_comment_text(finna_image):
     ret = f'{ret} with licence {copyrighttemplate}'
     ret = f'{ret} from {finna_image.url}'
     return ret
+
+
+def is_qid(page_title):
+    return bool(re.match(r'^Q\d+$', page_title))
+
+
+def parse_qid_from_wikidata_url(url):
+    ret = None
+
+    if 'https://wikidata.org/wiki/Q' in url:
+        ret = url.replace('https://wikidata.org/wiki/', '')
+    elif 'http://wikidata.org/wiki/Q' in url:
+        ret = url.replace('http://wikidata.org/wiki/', '')
+    elif '//wikidata.org/wiki/Q' in url:
+        ret = url.replace('//wikidata.org/wiki/', '')
+    return ret
+
+def parse_qid_from_commons_category(url):
+    ret = None
+
+    if '//' not in url and 'category:' in url.lower():
+        try:
+            site = pywikibot.Site('commons')
+            page = pywikibot.Page(site, url)
+            data_item = page.data_item()
+            # Get the associated DataItem (Wikidata item) for the page
+            ret = data_item.id
+        except:
+            pass
+    return ret
+
+
+def parse_wikidata_id_from_url(url):
+    try:
+        # Create a Site object from the URL
+        site = pywikibot.Site(url=url)
+
+        # Extract the page title from the URL and get the Page object
+        title = url.split('/')[-1]  # This assumes the title is the last segment of the URL
+        page = pywikibot.Page(site, title)
+        data_item = page.data_item()
+
+        # Get the associated DataItem (Wikidata item) for the page
+        return data_item.id
+    except NoPageError:
+        return None
+    except IndexError:
+        return False
+    return None
+
+def get_wikidata_id_from_url(url):
+    if is_qid(url):
+        return url
+
+    ret = parse_qid_from_commons_category(url)
+    if ret:
+        return ret
+
+    ret = parse_qid_from_wikidata_url(url)
+    if ret:
+        return ret
+
+    ret = parse_wikidata_id_from_url(url)
+    if ret:
+        return ret
+
+    return None
+

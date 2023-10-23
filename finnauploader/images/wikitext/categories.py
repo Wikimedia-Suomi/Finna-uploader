@@ -28,6 +28,11 @@ def create_categories_new(finna_image):
         if subject.name in subject_categories:
             categories.add(subject_categories[subject.name])
 
+    for add_category in finna_image.add_categories.all():
+        category_name = add_category.get_category_name()
+        if category_name:
+            categories.add(category_name)
+
     if finna_image.year:
         if 'Portrait photographs' in categories:
             categories.add('People of Finland in ' + finna_image.year)
