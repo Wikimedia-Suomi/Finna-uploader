@@ -9,10 +9,6 @@ from .sdc_helpers import create_P7482_source_of_file, \
                          create_P180_depicts, \
                          create_P571_timestamp
 
-from images.wikitext.creator import get_author_wikidata_id, \
-                                    get_collection_wikidata_id, \
-                                    get_subject_actors_wikidata_id
-
 
 def get_labels(finna_image):
     labels = {}
@@ -48,7 +44,7 @@ def get_P170_author_claims(finna_image):
         if author.role == 'reprokuvaaja':
             continue
         elif author.role == 'kuvaaja':
-            wikidata_id = get_author_wikidata_id(author.name)
+            wikidata_id = author.get_wikidata_id()
             # Q33231 = kuvaaja
             claim = create_P170_author(wikidata_id, 'Q33231')
             ret.append(claim)
@@ -60,7 +56,7 @@ def get_P170_author_claims(finna_image):
 def get_P195_collection_claims(finna_image):
     ret = []
     for collection in finna_image.collections.all():
-        wikidata_id = get_collection_wikidata_id(collection.name)
+        wikidata_id = collection.get_wikidata_id()
         identifier = finna_image.identifier_string
         claim = create_P195_collection(wikidata_id, identifier)
         ret.append(claim)
@@ -70,9 +66,20 @@ def get_P195_collection_claims(finna_image):
 def get_P180_subject_actors_claims(finna_image):
     ret = []
     for subject in finna_image.subject_actors.all():
-        wikidata_id = get_subject_actors_wikidata_id(subject.name)
+        wikidata_id = subject.get_wikidata_id()
         claim = create_P180_depicts(wikidata_id)
         ret.append(claim)
+
+    return ret
+
+
+def get_P180_add_depicts_claims(finna_image):
+    ret = []
+    for add_depict in finna_image.add_depicts.all():
+        wikidata_id = add_depict.get_wikidata_id()
+        claim = create_P180_depicts(wikidata_id)
+        ret.append(claim)
+
     return ret
 
 
@@ -117,6 +124,10 @@ def get_structured_data_for_new_image(finna_image):
         claims.append(claim)
 
     p180_claims = get_P180_subject_actors_claims(finna_image)
+    for claim in p180_claims:
+        claims.append(claim)
+
+    p180_claims = get_P180_add_depicts_claims(finna_image)
     for claim in p180_claims:
         claims.append(claim)
 

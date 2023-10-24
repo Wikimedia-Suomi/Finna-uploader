@@ -10,7 +10,9 @@ from images.wikitext.creator import get_author_wikidata_id, \
                                     get_subject_image_category_from_wikidata_id, \
                                     get_creator_image_category_from_wikidata_id, \
                                     get_institution_wikidata_id, \
-                                    get_institution_template_from_wikidata_id
+                                    get_institution_template_from_wikidata_id, \
+                                    get_collection_wikidata_id
+
 
 # Create your models here.
 
@@ -153,6 +155,9 @@ class FinnaCollection(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_wikidata_id(self):
+        return get_collection_wikidata_id(self.name)
 
 
 class FinnaInstitution(models.Model):
