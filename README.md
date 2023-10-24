@@ -120,6 +120,14 @@ rm db.sqlite3
 rm -rf images/migrations/000*.py
 ```
 
+### Running flake8
+Flake8 is code syntax and formatting checker.
+
+
+```bash
+flake8 images/models.py
+```
+
 ### Switching to PostgreSQL
 For instructions on using PostgreSQL instead of SQLite, see: [README_postgresql](README_postgresql).
 
