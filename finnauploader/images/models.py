@@ -14,6 +14,7 @@ from images.wikitext.creator import get_author_wikidata_id, \
 
 # Create your models here.
 
+
 # Commons image
 class Image(models.Model):
     page_id = models.PositiveIntegerField(unique=True)
@@ -88,7 +89,7 @@ class FinnaNonPresenterAuthor(models.Model):
 
     def get_creator_category(self, prefix=None):
         wikidata_id = self.get_wikidata_id()
-        category = get_subject_image_category_from_wikidata_id(wikidata_id)
+        category = get_subject_image_category_from_wikidata_id(wikidata_id, True)
         if not prefix:
             category = category.replace('Category:', '')
         return category
@@ -134,7 +135,7 @@ class FinnaSubjectActor(models.Model):
 
     def get_commons_category(self, prefix=None):
         wikidata_id = self.get_wikidata_id()
-        category = get_subject_image_category_from_wikidata_id(wikidata_id)
+        category = get_subject_image_category_from_wikidata_id(wikidata_id, True)
         if not prefix:
             category = category.replace('Category:', '')
         return category
@@ -168,6 +169,7 @@ class FinnaInstitution(models.Model):
         wikidata_id = self.get_wikidata_id()
         return get_institution_template_from_wikidata_id(wikidata_id)
 
+
 # Dynamic subjects based on wiki categories / wikidata items
 class FinnaLocalSubject(models.Model):
     value = models.CharField(max_length=400)
@@ -180,17 +182,17 @@ class FinnaLocalSubject(models.Model):
         return get_wikidata_id_from_url(self.value)
 
     def get_category_name(self, prefix=None):
-        self.value=self.value.replace('category:', 'Category:')
+        self.value = self.value.replace('category:', 'Category:')
 
         if 'https://commons.wikimedia.org/wiki/Category:' in self.value:
-            return self.value.replace('https://commons.wikimedia.org/wiki/Category:','')
+            return self.value.replace('https://commons.wikimedia.org/wiki/Category:', '')
 
         if 'http://commons.wikimedia.org/wiki/category:' in self.value:
-            return self.value.replace('http://commons.wikimedia.org/wiki/Category:','')
+            return self.value.replace('http://commons.wikimedia.org/wiki/Category:', '')
 
         if '^Category:' in self.value:
-            return self.value.replace('Category:','')
-        
+            return self.value.replace('Category:', '')
+
         wikidata_id = self.get_wikidata_id()
         if wikidata_id:
             category = get_subject_image_category_from_wikidata_id(wikidata_id)
@@ -201,9 +203,7 @@ class FinnaLocalSubject(models.Model):
         return None
 
 
-
 # Managers
-
 class FinnaRecordManager(models.Manager):
 
     # Second try to make this readable
@@ -374,12 +374,11 @@ class FinnaRecordManager(models.Manager):
             summary = None
 
         # Extract local add_categories data
-        add_categories_data = local_data.pop('add_categories', [])        
+        add_categories_data = local_data.pop('add_categories', [])
         add_categories = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_categories_data]
 
-        add_depicts_data = local_data.pop('add_depicts', [])        
+        add_depicts_data = local_data.pop('add_depicts', [])
         add_depicts = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_depicts_data]
-
 
         # Create the book instance
         record, created = self.get_or_create(finna_id=data['id'], defaults={'image_right': image_rights})
@@ -435,7 +434,6 @@ class FinnaRecordManager(models.Manager):
         record.image_right = image_rights
 
         record.save()
-
 
         return record
 
