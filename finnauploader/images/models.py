@@ -373,7 +373,7 @@ class FinnaRecordManager(models.Manager):
         # Extract the Summary
         summary_data = data.pop('summary', '')
         if summary_data:
-            summary = FinnaSummary(text=summary_data)
+            summary = FinnaSummary.objects.get_or_create(text=summary_data)
             summary.save()
         else:
             summary = None
