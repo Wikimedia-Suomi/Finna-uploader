@@ -34,7 +34,7 @@ IMPORT DATA
 - Commands are executed from the ./finnauploader directory
 - Order of execution of scropts is important as scripts will refine the data in database
 
-Quicstart for uploading images.
+Quickstart for uploading images.
 
 ```bash
 # Import JOKA journalistic photo archive records to Finna
