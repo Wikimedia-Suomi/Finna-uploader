@@ -34,6 +34,24 @@ IMPORT DATA
 - Commands are executed from the ./finnauploader directory
 - Order of execution of scropts is important as scripts will refine the data in database
 
+Quicstart for uploading images.
+
+```bash
+# Import JOKA journalistic photo archive records to Finna
+python manage.py finna_search
+
+# Imagehash images linked from Finna records
+python manage.py imagehash_finna_images
+
+# Export imagehashes
+python manage.py dump_finna_imagehashes
+
+# Upload images
+python manage.py upload_kuvasiskot
+```
+
+
+FULL IMPORT
 
 ```bash
 
@@ -72,6 +90,22 @@ python manage.py dump_finna_imagehashes
 # Check the current number of the images in the database
 python manage.py image_status
 ```
+
+### Upload_kuvasiskot.py parameters
+```bash
+python manage.py image_status --lookfor KEYWORD --require-text KEYWORD --skip-text KEYWORD --add_category ADDED_CATEGORY --add_depict ADDED_DEPICT --add_depict_and_cat ADDED_VALUE
+```
+
+
+Parameters
+- lookfor = Finna search keyword
+- require-text = text needs to be found in Finna record. Parameter can be defined multiple times. 
+- skip-text = if text is found in record then record is skipped. Parameter can be defined multiple times.
+- add_category = add this category to the photos. Value is QID, link to wikipedia/wikimedia page, link to commons category or commons category name. Parameter can be defined multiple times. 
+- add_depict = add this depict to the photos. Value is QID, link to wikipedia/wikimedia page, link to commons category or commons category name. Parameter can be defined multiple times.
+- add_depict_and_cat = add this value to depicts and categories.
+
+
 ### Database operations
 Howto connect to sqlite3 db from commandline
 
