@@ -105,6 +105,29 @@ DATABASES = {
     }
 }
 
+== bktree ==
+1. tarvitset postgresql:n header-tiedostot: sudo apt-get install postgresql-server-dev-16
+- asentaa samalla clang-15
+
+2. hae lähdekoodit: git clone https://github.com/fake-name/pg-spgist_hamming.git
+- cd pg-spgist_hamming/bktree
+- make
+- sudo make install
+
+3. huom. installcheck epäonnistuu roottina, aseta käyttäjä ja host yhteydelle envin kautta:
+- PGUSER=postgres PGHOST=127.0.0.1 make installcheck
+
+4. bktree asennus tietokantaan psq:ssä:
+- \connect djangodb
+- CREATE EXTENSION bktree;
+
+5. tee indeksit django-tauluihin ja kenttiin:
+- CREATE INDEX bk_index_toolforgeimagedhash ON images_toolforgeimagehashcache USING spgist (dhash bktree_ops);
+- CREATE INDEX bk_index_toolforgeimagephash ON images_toolforgeimagehashcache USING spgist (phash bktree_ops);
+
+- CREATE INDEX bk_index_finnaimagedhash ON images_finnaimagehash USING spgist (dhash bktree_ops);
+- CREATE INDEX bk_index_finnaimagephash ON images_finnaimagehash USING spgist (phash bktree_ops);
+
 
 == spgist ==
 TODO
