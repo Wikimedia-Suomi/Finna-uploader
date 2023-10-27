@@ -40,8 +40,9 @@ Quickstart for uploading images.
 # Import JOKA journalistic photo archive records to Finna
 python manage.py finna_search
 
-# Imagehash images linked from Finna records
-python manage.py imagehash_finna_images
+# Import precalculated imagehashes for Finna records
+python manage.py import_finna_imagehashes
+python manage.py import_toolforge_imagehashes
 
 # Export imagehashes
 python manage.py dump_finna_imagehashes
