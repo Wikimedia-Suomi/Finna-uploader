@@ -4,6 +4,16 @@ from django.dispatch import receiver
 from django.utils import timezone
 from images.finna import get_finna_record_url
 from images.pywikibot_helpers import get_wikidata_id_from_url
+from images.wikitext.timestamps import parse_timestamp
+from images.sdc_helpers import create_P571_inception
+from images.sdc_helpers import create_P275_licence, \
+                                           create_P6216_copyright_state, \
+                                           create_P9478_finna_id, \
+                                           create_P195_collection, \
+                                           create_P180_depict, \
+                                           create_P7482_source_of_file, \
+                                           create_P170_author
+
 from images.wikitext.creator import get_author_wikidata_id, \
                                     get_creator_template_from_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
@@ -74,6 +84,12 @@ class FinnaImageRight(models.Model):
             ret = f'{self.copyright}; {self.description}'
         return ret
 
+    def get_licence_claim(self):
+        return create_P275_licence(value=self.copyright)
+
+    def get_copyright_state_claim(self):
+        return create_P6216_copyright_state(value=self.copyright)
+
 
 class FinnaNonPresenterAuthor(models.Model):
     name = models.CharField(max_length=64)
@@ -103,12 +119,22 @@ class FinnaNonPresenterAuthor(models.Model):
             category = category.replace('Category:', '')
         return category
 
+    def get_photographer_author_claim(self):
+        if self.role != 'kuvaaja':
+            print(f'{self} is not photographer')
+            exit(1)
+
+        wikidata_id = self.get_wikidata_id()
+        role = 'Q33231'  # kuvaaja
+        claim = create_P170_author(wikidata_id, role)
+        return claim
+
 
 class FinnaSummary(models.Model):
     text = models.TextField()
 
     def __str__(self):
-        return self.name
+        return self.text
 
 
 class FinnaSubject(models.Model):
@@ -142,6 +168,10 @@ class FinnaSubjectActor(models.Model):
             category = category.replace('Category:', '')
         return category
 
+    def get_depict_claim(self):
+        wikidata_id = self.get_wikidata_id()
+        return create_P180_depict(wikidata_id)
+
 
 class FinnaSubjectDetail(models.Model):
     name = models.CharField(max_length=200)
@@ -158,6 +188,10 @@ class FinnaCollection(models.Model):
 
     def get_wikidata_id(self):
         return get_collection_wikidata_id(self.name)
+
+    def get_collection_claim(self, identifier=None):
+        wikidata_id = self.get_wikidata_id()
+        return create_P195_collection(wikidata_id, identifier)
 
 
 class FinnaInstitution(models.Model):
@@ -206,6 +240,10 @@ class FinnaLocalSubject(models.Model):
                     category = category.replace('Category:', '')
                 return category
         return None
+
+    def get_depict_claim(self):
+        wikidata_id = self.get_wikidata_id()
+        return create_P180_depict(wikidata_id)
 
 
 # Managers
@@ -373,8 +411,7 @@ class FinnaRecordManager(models.Manager):
         # Extract the Summary
         summary_data = data.pop('summary', '')
         if summary_data:
-            summary = FinnaSummary.objects.get_or_create(text=summary_data)
-            summary.save()
+            summary, created = FinnaSummary.objects.get_or_create(text=summary_data)
         else:
             summary = None
 
@@ -526,6 +563,33 @@ class FinnaImage(models.Model):
 
     def get_copyright_template(self):
         return self.image_right.get_copyright_template()
+
+    def get_sdc_labels(self):
+        labels = {}
+        labels['fi'] = {'language': 'fi', 'value': self.title}
+        return labels
+
+    def get_finna_id_claim(self):
+        return create_P9478_finna_id(self.finna_id)
+
+    def get_inception_claim(self):
+        timestamp, precision = parse_timestamp(self.date_string)
+
+        if timestamp:
+            claim = create_P571_inception(timestamp, precision)
+            return claim
+
+    def get_source_of_file_claim(self):
+        operator = 'Q420747'    # National library
+        publisher = 'Q3029524'  # Finnish Heritage Agency
+        url = self.url
+
+        # FIXME: Only Finnish heritage agency images are supported now
+        for institution in self.institutions.all():
+            if institution.get_wikidata_id() != publisher:
+                print(f'{institution} wikidata id is not {publisher}')
+                exit(1)
+        return create_P7482_source_of_file(url, operator, publisher)
 
 
 class FinnaImageHash(models.Model):
