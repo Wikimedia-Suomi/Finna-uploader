@@ -3,6 +3,8 @@ from datetime import datetime
 
 
 def parse_timestamp(datestr):
+    if not datestr:
+        return None, None
     # str = "valmistusaika: 22.06.2015"
     match_string = "valmistusaika:? (\d\d)\.(\d\d)\.(\d\d\d\d)"
     m = re.match(match_string, datestr)
@@ -22,9 +24,6 @@ def parse_timestamp(datestr):
         timestamp = datetime.strptime(timestamp_string, "+%Y-%m-%dT%H:%M:%SZ")
         precision = 9
         return timestamp, precision
-
-    if not datestr:
-        return None, None
 
     exit(f'Parse_timestamp failed: {datestr}')
 
