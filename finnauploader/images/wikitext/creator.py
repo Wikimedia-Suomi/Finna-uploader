@@ -177,6 +177,11 @@ def get_creator_image_category_from_wikidata_id(wikidata_id):
     if 'P373' in claims:
         commons_category_claim = claims['P373'][0]
         commons_category = commons_category_claim.getTarget()
+
+        # Photogategory is main category
+        if 'Photographs by' in commons_category:
+            return commons_category
+
         photo_category_name = f"Category:Photographs by {commons_category}"
         photo_category = pywikibot.Category(commons_site, photo_category_name)
 

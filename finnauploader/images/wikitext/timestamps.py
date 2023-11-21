@@ -17,7 +17,26 @@ def parse_timestamp(datestr):
         precision = 11
         return timestamp, precision
 
+    match_string = "kuvausaika:? (\d\d)\.(\d\d)\.(\d\d\d\d),"
+    m = re.match(match_string, datestr)
+    if m is not None:
+        year = m.group(3)
+        month = m.group(2)
+        day = m.group(1)
+        timestamp_string = f'+{year}-{month}-{day}T00:00:00Z'
+        timestamp = datetime.strptime(timestamp_string, "+%Y-%m-%dT%H:%M:%SZ")
+        precision = 11
+        return timestamp, precision
+
     m = re.match("valmistusaika:? (\d\d\d\d)", datestr)
+    if m is not None:
+        year = m.group(1)
+        timestamp_string = f'+{year}-01-01T00:00:00Z'
+        timestamp = datetime.strptime(timestamp_string, "+%Y-%m-%dT%H:%M:%SZ")
+        precision = 9
+        return timestamp, precision
+
+    m = re.match("kuvausaika:? (\d\d\d\d),", datestr)
     if m is not None:
         year = m.group(1)
         timestamp_string = f'+{year}-01-01T00:00:00Z'

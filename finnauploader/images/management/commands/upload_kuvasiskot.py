@@ -17,6 +17,17 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         # Named (optional) arguments
         parser.add_argument(
+            '--collection',
+            type=str,
+            choices=['Kuvasiskot',
+                     'Studio Kuvasiskojen kokoelma',
+                     'JOKA',
+                     'JOKA Journalistinen kuva-arkisto'],
+            help=('Finna type argument. '
+                  'Argument selects where lookfor matches.')
+        )
+
+        parser.add_argument(
             '--type',
             type=str,
             choices=['AllFields', 'Subjects'],
@@ -172,8 +183,13 @@ class Command(BaseCommand):
             'add_depicts': add_depicts
         }
 
-        collection = 'Studio Kuvasiskojen kokoelma'
-#        collection='JOKA Journalistinen kuva-arkisto'
+        default_collection = 'Studio Kuvasiskojen kokoelma'
+        collection = options['collection'] or default_collection
+
+        if collection == 'JOKA':
+            collection = 'JOKA Journalistinen kuva-arkisto'
+        elif collection == 'Kuvasiskot':
+            collection = 'Studio Kuvasiskojen kokoelma'
 
         for page in range(1, 201):
             # Prevent looping too fast for Finna server
