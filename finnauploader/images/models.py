@@ -273,8 +273,13 @@ class FinnaRecordManager(models.Manager):
         # Extract imagesExtended data
         images_extended_data = record.pop('imagesExtended', None)
         if images_extended_data:
-            image.master_url = images_extended_data[0]['highResolution']['original'][0]['url']
-            image.master_format = images_extended_data[0]['highResolution']['original'][0]['format']
+            try:
+                image.master_url = images_extended_data[0]['highResolution']['original'][0]['url']
+                image.master_format = images_extended_data[0]['highResolution']['original'][0]['format']
+            except:
+                # If no highResolution or original image
+                image.master_url = images_extended_data[0]['urls']['large']
+                image.master_format = 'image/jpeg'
         else:
             print("Error: imagesExtended missing")
             exit(1)
@@ -402,8 +407,14 @@ class FinnaRecordManager(models.Manager):
         # Extract imagesExtended data
         images_extended_data = data.pop('imagesExtended', None)
         if images_extended_data:
-            master_url = images_extended_data[0]['highResolution']['original'][0]['url']
-            master_format = images_extended_data[0]['highResolution']['original'][0]['format']
+            try:
+                master_url = images_extended_data[0]['highResolution']['original'][0]['url']
+                master_format = images_extended_data[0]['highResolution']['original'][0]['format']
+            except:
+                # If no highResolution or original image
+                master_url = images_extended_data[0]['urls']['large']
+                master_format = 'image/jpeg'
+
         else:
             print("Error: imagesExtended missing")
             exit(1)

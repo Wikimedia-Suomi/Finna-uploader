@@ -85,7 +85,8 @@ def get_author_name(nonPresenterAuthors):
                 print(f'Name {name} is missing from {url}')
 
     if not ret:
-        print("Unknown author")
+        url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors' # noqa
+        print(f'Unknown author. Add it to the {url}')
         print(nonPresenterAuthors)
         exit(1)
 
@@ -97,7 +98,8 @@ def get_author_wikidata_id(name):
         wikidata_id = nonPresenterAuthorsCache[name]
         return wikidata_id
     else:
-        print(f'Unknown author: {name}')
+        url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors' # noqa
+        print(f'Unknown author: "{name}". Add author to {url}')
         exit(1)
 
 
