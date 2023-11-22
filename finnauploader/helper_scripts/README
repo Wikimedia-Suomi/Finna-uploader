@@ -1,5 +1,12 @@
 This directory contains command line scripts which doesn't need Django enviroment to run.
 
-Running
-# source ../venv/bin/activate
-# python3 create_subject_actor_cats.py Q123 "Lastname, Firstname"
+Usage:
+
+# Activate virtual env
+source ../venv/bin/activate
+
+# create_subject_actor_cats creates missing person categories to Wikidata item
+python3 create_subject_actor_cats.py Q123 "Lastname, Firstname"
+
+# create_subject_actor_cats creates missing person categories and creator template to Wikidata item
+python3 create_creator_cats.py Q123 "Lastname, Firstname"
