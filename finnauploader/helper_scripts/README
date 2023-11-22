@@ -6,7 +6,9 @@ Usage:
 source ../venv/bin/activate
 
 # create_subject_actor_cats creates missing person categories to Wikidata item
+# and adds it to the https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/subjectActors
 python3 create_subject_actor_cats.py Q123 "Lastname, Firstname"
 
 # create_subject_actor_cats creates missing person categories and creator template to Wikidata item
+# and adds these to https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors
 python3 create_creator_cats.py Q123 "Lastname, Firstname"
