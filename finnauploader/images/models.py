@@ -2,7 +2,9 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
-from images.finna import get_finna_record_url
+import re
+from datetime import datetime
+from images.finna import get_finna_record_url, parse_full_record
 from images.pywikibot_helpers import get_wikidata_id_from_url
 from images.wikitext.timestamps import parse_timestamp
 from images.sdc_helpers import create_P571_inception
@@ -24,8 +26,29 @@ from images.wikitext.creator import get_author_wikidata_id, \
                                     get_collection_wikidata_id
 
 
-# Create your models here.
+def update_dates_in_filename(input_str):
+    # Regular expression to find the date in the format d.m.yyyy
+    date_pattern = r"\d{1,2}\.\d{1,2}\.\d{4}"
+    found_date = re.search(date_pattern, input_str)
 
+    if found_date:
+        # Extract the date
+        date_str = found_date.group()
+
+        # Parse the date
+        date_obj = datetime.strptime(date_str, "%d.%m.%Y")
+
+        # Format the date into the desired format
+        formatted_date = date_obj.strftime("%Y-%m-%d")
+
+        # Replace the old date in the string with the new formatted date
+        output_str = input_str.replace(date_str, formatted_date)
+    else:
+        output_str = input_str
+    return output_str
+
+
+# Create your models here.
 
 # Commons image
 class Image(models.Model):
@@ -130,8 +153,19 @@ class FinnaNonPresenterAuthor(models.Model):
         return claim
 
 
+class FinnaAlternativeTitle(models.Model):
+    text = models.TextField()
+    lang = models.CharField(max_length=6)
+    pref = models.CharField(max_length=16)
+
+    def __str__(self):
+        return self.text
+
+
 class FinnaSummary(models.Model):
     text = models.TextField()
+    lang = models.CharField(max_length=6)
+    order = models.PositiveIntegerField(unique=False)
 
     def __str__(self):
         return self.text
@@ -292,13 +326,56 @@ class FinnaRecordManager(models.Manager):
                 image.date_string = valmistus[0]['date']
 
         # Data which is stored to separate tables
+        full_record_data = parse_full_record(record['fullRecord'])
 
-        if 'summary' in record:
-            image.summary, created = FinnaSummary.objects.get_or_create(text=record['summary'])
+        image.summaries.clear()
+        obj = FinnaSummary.objects
+        for s in full_record_data['summary']:
+            if 'text' not in s:
+                continue
+            if not s['text']:
+                continue
+
+            # Summary is currently supported only in JOKA collection
+            if 'JOKA' not in record['collections']:
+                continue
+
+            try:
+                summary, created = obj.get_or_create(text=s['text'], lang=s['attributes']['lang'], defaults={'order': 1})
+
+            except:
+                print(s)
+                print(full_record_data['summary'])
+                print(record['collections'])
+                exit(1)
+            image.summaries.add(summary)
+
+        image.alternative_titles.clear()
+        obj = FinnaAlternativeTitle.objects
+        for s in full_record_data['title']:
+            if 'text' not in s:
+                continue
+            if not s['text']:
+                continue
+
+            if 'label' not in s['attributes']:
+                continue
+
+            alt_title, created = obj.get_or_create(text=s['text'], lang=s['attributes']['lang'], pref=s['attributes']['pref'])
+            image.alternative_titles.add(alt_title)
 
         if 'subjects' in record:
             obj = FinnaSubject.objects
+            print(record['subjects'])
             for subject in record['subjects']:
+                if isinstance(subject, list):
+                    if len(subject) == 1:
+                        subject = subject[0]
+                    else:
+                        print("Error: Unexpected subject format")
+                        print(subject)
+                        exit(1)
+
                 finna_subject, created = obj.get_or_create(name=subject)
                 image.subjects.add(finna_subject)
 
@@ -420,11 +497,36 @@ class FinnaRecordManager(models.Manager):
             exit(1)
 
         # Extract the Summary
-        summary_data = data.pop('summary', '')
-        if summary_data:
-            summary, created = FinnaSummary.objects.get_or_create(text=summary_data)
-        else:
-            summary = None
+        # Data which is stored to separate tables
+        full_record_data = parse_full_record(data['fullRecord'])
+
+        summaries = []
+        obj = FinnaSummary.objects
+        for s in full_record_data['summary']:
+            if 'text' not in s:
+                continue
+            if not s['text']:
+                continue
+
+            summary, created = obj.get_or_create(text=s['text'],
+                                                 lang=s['attributes']['lang'],
+                                                 defaults={'order': 1})
+            summaries.append(summary)
+
+        alternative_titles = []
+        obj = FinnaAlternativeTitle.objects
+        for s in full_record_data['title']:
+            if 'text' not in s:
+                continue
+            if not s['text']:
+                continue
+            if 'label' not in s['attributes']:
+                continue
+
+            alt_title, created = obj.get_or_create(text=s['text'],
+                                                   lang=s['attributes']['lang'],
+                                                   pref=s['attributes']['pref'])
+            alternative_titles.append(alt_title)
 
         # Extract local add_categories data
         add_categories_data = local_data.pop('add_categories', [])
@@ -449,8 +551,13 @@ class FinnaRecordManager(models.Manager):
         except:
             print("Skipping date_string")
 
-        if summary:
-            record.summary = summary
+        record.summaries.clear()
+        for summary in summaries:
+            record.summaries.add(summary)
+
+        record.alternative_titles.clear()
+        for alternative_title in alternative_titles:
+            record.alternative_titles.add(alternative_title)
 
         for non_presenter_author in non_presenter_authors:
             record.non_presenter_authors.add(non_presenter_author)
@@ -496,6 +603,7 @@ class FinnaImage(models.Model):
 
     finna_id = models.CharField(max_length=200, null=False, blank=False, db_index=True, unique=True)
     title = models.CharField(max_length=200)
+    alternative_titles = models.ManyToManyField(FinnaAlternativeTitle)
     year = models.PositiveIntegerField(unique=False, null=True, blank=True)
     date_string = models.CharField(max_length=200, null=True, blank=True)
     number_of_images = models.PositiveIntegerField(unique=False, null=True, blank=True)
@@ -503,7 +611,7 @@ class FinnaImage(models.Model):
     master_format = models.CharField(max_length=16)
     measurements = models.CharField(max_length=32)
     non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor)
-    summary = models.ForeignKey(FinnaSummary, related_name='summary', blank=True, null=True, on_delete=models.CASCADE)
+    summaries = models.ManyToManyField(FinnaSummary)
     subjects = models.ManyToManyField(FinnaSubject)
     subject_places = models.ManyToManyField(FinnaSubjectPlace)
     subject_actors = models.ManyToManyField(FinnaSubjectActor)
@@ -543,11 +651,33 @@ class FinnaImage(models.Model):
     @property
     def pseudo_filename(self):
         if self.master_format == 'tif':
-            name = self.short_title
+            summaries_name = self.summaries.filter(lang='en').first()
+            alt_title_name = self.alternative_titles.filter(lang='en').first()
+
+            name = None
+            if summaries_name and alt_title_name:
+                if len(str(summaries_name)) > len(str(alt_title_name)):
+                    name = alt_title_name
+                else:
+                    name = summaries_name
+
+            if not name:
+                name = self.short_title
+            else:
+                name = name.text
+            name = update_dates_in_filename(name)
+            name = name.replace('content description: ', '')
+            name = name.replace(".", "_")
             name = name.replace(" ", "_")
             name = name.replace(":", "_")
+            name = name.replace("_", " ").strip()
             identifier = self.identifier_string.replace(":", "-")
-            file_name = f'{name}_({identifier}).tif'
+            if self.year and self.year not in name:
+                year = f'{self.year}_'
+            else:
+                year = ''
+            name = name.replace(" ", "_")
+            file_name = f'{name}_{year}({identifier}).tif'
             return file_name
 
         else:
@@ -578,6 +708,18 @@ class FinnaImage(models.Model):
     def get_sdc_labels(self):
         labels = {}
         labels['fi'] = {'language': 'fi', 'value': self.title}
+
+        for title in self.alternative_titles.all():
+            labels[title.lang] = {'language': title.lang, 'value': title.text}
+
+        for summary in self.summaries.all():
+            text = str(summary.text)
+            text = text.replace('sisällön kuvaus: ', '')
+            text = text.replace('innehållsbeskrivning: ', '')
+            text = text.replace('content description: ', '')
+
+            labels[summary.lang] = {'language': summary.lang, 'value': text}
+
         return labels
 
     def get_finna_id_claim(self):

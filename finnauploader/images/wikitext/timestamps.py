@@ -16,8 +16,8 @@ def parse_timestamp(datestr):
         timestamp = datetime.strptime(timestamp_string, "+%Y-%m-%dT%H:%M:%SZ")
         precision = 11
         return timestamp, precision
-
-    match_string = "kuvausaika:? (\d\d)\.(\d\d)\.(\d\d\d\d),"
+    # kuvausaika 04.03.1958,
+    match_string = "kuvausaika:? (\d\d)\.(\d\d)\.(\d\d\d\d),?"
     m = re.match(match_string, datestr)
     if m is not None:
         year = m.group(3)
@@ -50,6 +50,15 @@ def parse_timestamp(datestr):
 def parse_timestamp_string(datestr):
     if not datestr:
         return ''
+
+    match_string = "kuvausaika:? (\d\d)\.(\d\d)\.(\d\d\d\d)"
+    m = re.match(match_string, datestr.strip())
+    if m is not None:
+        year = m.group(3)
+        month = m.group(2)
+        day = m.group(1)
+        timestamp = f'{year}-{month}-{day}'
+        return timestamp
 
     match_string = "valmistusaika:? (\d\d)\.(\d\d)\.(\d\d\d\d)$"
     m = re.match(match_string, datestr.strip())

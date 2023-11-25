@@ -2,6 +2,9 @@ import mwparserfromhell
 
 
 def create_categories_new(finna_image):
+    subject_places = finna_image.subject_places.values_list('name', flat=True)
+    depicted_places = str(list(subject_places))
+
     # Create a new WikiCode object
     wikicode = mwparserfromhell.parse("")
 
@@ -36,7 +39,10 @@ def create_categories_new(finna_image):
     if finna_image.year:
         if 'Portrait photographs' in categories:
             categories.add('People of Finland in ' + finna_image.year)
-        else:
+        
+        if 'Helsinki' in depicted_places:
+            categories.add(finna_image.year + ' in Helsinki')
+        elif 'Suomi' in depicted_places:
             categories.add(finna_image.year + ' in Finland')
 
     categories.add('Files uploaded by FinnaUploadBot')
