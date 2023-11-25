@@ -286,6 +286,16 @@ class FinnaRecordManager(models.Manager):
     # Second try to make this readable
     def create_from_finna_record(self, record, local_data={}):
 
+        def clean_subject_name(subject):
+            if isinstance(subject, list):
+                if len(subject) == 1:
+                    subject = subject[0]
+                else:
+                    print("Error: Unexpected subject format")
+                    print(subject)
+                    exit(1)
+            return subject
+
         # copyright tag is mandatory information so it is added on creation
         i = record['imageRights']
         image_right, created = FinnaImageRight.objects.get_or_create(copyright=i['copyright'],
@@ -337,7 +347,7 @@ class FinnaRecordManager(models.Manager):
                 continue
 
             # Summary is currently supported only in JOKA collection
-            if 'JOKA' not in record['collections']:
+            if 'JOKA' not in str(record['collections']):
                 continue
 
             try:
@@ -366,17 +376,8 @@ class FinnaRecordManager(models.Manager):
 
         if 'subjects' in record:
             obj = FinnaSubject.objects
-            print(record['subjects'])
             for subject in record['subjects']:
-                if isinstance(subject, list):
-                    if len(subject) == 1:
-                        subject = subject[0]
-                    else:
-                        print("Error: Unexpected subject format")
-                        print(subject)
-                        exit(1)
-
-                finna_subject, created = obj.get_or_create(name=subject)
+                finna_subject, created = obj.get_or_create(name=clean_subject_name(subject))
                 image.subjects.add(finna_subject)
 
         if 'subjectPlaces' in record:
@@ -436,6 +437,16 @@ class FinnaRecordManager(models.Manager):
     # First try
     def create_from_data(self, data, local_data={}):
 
+        def clean_subject_name(subject):
+            if isinstance(subject, list):
+                if len(subject) == 1:
+                    subject = subject[0]
+                else:
+                    print("Error: Unexpected subject format")
+                    print(subject)
+                    exit(1)
+            return subject
+
         # Extract and handle non_presenter_authors data
         non_presenter_authors_data = data.pop('nonPresenterAuthors', [])
         non_presenter_authors = []
@@ -452,7 +463,7 @@ class FinnaRecordManager(models.Manager):
 
         # Extract and handle subjects data
         subjects_data = data.pop('subjects', [])
-        subjects = [FinnaSubject.objects.get_or_create(name=subject_name)[0] for subject_name in subjects_data]
+        subjects = [FinnaSubject.objects.get_or_create(name=clean_subject_name(subject_name))[0] for subject_name in subjects_data]
 
         # Extract and handle subjectPlaces data
         subject_places_data = data.pop('subjectPlaces', [])
@@ -506,6 +517,9 @@ class FinnaRecordManager(models.Manager):
             if 'text' not in s:
                 continue
             if not s['text']:
+                continue
+
+            if 'JOKA' not in str(collections_data):
                 continue
 
             summary, created = obj.get_or_create(text=s['text'],
