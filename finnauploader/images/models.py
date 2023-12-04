@@ -346,8 +346,14 @@ class FinnaRecordManager(models.Manager):
             if not s['text']:
                 continue
 
+
             # Summary is currently supported only in JOKA collection
             if 'JOKA' not in str(record['collections']):
+                continue
+
+            if s['attributes'] == {}:
+                continue
+            if 'lang' not in s['attributes']:
                 continue
 
             try:

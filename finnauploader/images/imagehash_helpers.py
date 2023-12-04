@@ -1,4 +1,7 @@
+import os
 import urllib
+from urllib.parse import urlparse
+import hashlib
 import imagehash
 from images.finna import get_finna_record
 from PIL import Image
@@ -26,9 +29,39 @@ def calculate_dhash_vertical(im):
     return hash_int
 
 
-def get_imagehashes(url, thumbnail=False):
-    # Open the image1 with Pillow
-    im = Image.open(urllib.request.urlopen(url))
+def get_imagehashes(url, thumbnail=False, filecache=False):
+    if filecache:
+        print("filecache")
+        md5_hash = hashlib.md5(url.encode()).hexdigest()
+        # Extract the domain from the URL
+        domain = urlparse(url).netloc.replace('www.', '')
+
+        # Use the first two characters of the hash for the directory name
+        directory = os.path.join('cache', domain, md5_hash[:1], md5_hash[:2])
+
+        # Create the directory if it doesn't exist
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        # The path where the image will be saved
+        file_path = os.path.join(directory, md5_hash + '.jpg')
+        print(file_path)
+
+        # Check if the file already exists
+        if not os.path.exists(file_path):
+            with urllib.request.urlopen(url) as response, open(file_path, 'wb') as out_file:
+                data = response.read()
+                out_file.write(data)
+
+        # Open the image1 with Pillow
+        im = Image.open(file_path)
+
+    else:
+        print("no filecache")
+
+        # If no filecaching then open image from url
+        im = Image.open(urllib.request.urlopen(url))
+
     # Get width and height
     width, height = im.size
 
