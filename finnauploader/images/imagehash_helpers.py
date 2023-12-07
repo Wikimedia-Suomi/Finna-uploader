@@ -47,6 +47,17 @@ def get_imagehashes(url, thumbnail=False, filecache=False):
         parsed_url = urlparse(url)
         domain = parsed_url.netloc.replace('www.', '')
 
+        # Cached files should be in human readable directories
+        # and using human readable filenames. Files in directories
+        # should be spread to multiple dirs so that there
+        # is no directories with 100k files.
+
+        # Target filename syntax
+        # Finna: finna_id_index.jog
+        # Finna: museovirasto.0F80A4CD84098203075256A6A395EE41_0.jpg
+        # Commons: M123456.jpg
+        # Ajapaik: ajapaik.123456.jpg
+
         if domain == 'finna.fi':
             query_components = parse_qs(parsed_url.query)
             # Extract the 'id' and 'index' parameters
@@ -72,6 +83,12 @@ def get_imagehashes(url, thumbnail=False, filecache=False):
                 print(url)
                 exit(1)
         else:
+            # Limit filecached hashing to specific domains for
+            if 1:
+                print("ERROR: Unknown domain in imagehash_helpers.py")
+                print(url)
+                exit(1)
+
             # Use the first two characters of the hash for the directory name
             md5_hash = hashlib.md5(url.encode()).hexdigest()
             directory = os.path.join('cache',
