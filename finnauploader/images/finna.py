@@ -9,6 +9,8 @@ s = requests.Session()
 s.headers.update({'User-Agent': 'FinnaUploader 0.1'})
 
 
+# Allowed --collections values
+# See also finna.py: do_finna_search()
 def get_collection_names():
     collections = [
                   'Kuvasiskot',
@@ -21,6 +23,7 @@ def get_collection_names():
     return collections
 
 
+# Shortcut -> long-name translations
 def get_collection_name_from_alias(name):
     aliases = {
              'Kuvasiskot': 'Studio Kuvasiskojen kokoelma',
