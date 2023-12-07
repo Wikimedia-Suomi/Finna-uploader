@@ -1,6 +1,7 @@
 import os
+import re
 import urllib
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 import hashlib
 import imagehash
 from images.finna import get_finna_record
@@ -29,30 +30,77 @@ def calculate_dhash_vertical(im):
     return hash_int
 
 
+def is_valid_path_and_filename(parts):
+    # Regular expression pattern to match only allowed characters
+    # (0-9, a-z, A-Z, ., _, -)
+    pattern = r'^[0-9a-zA-Z._-]+$'
+    for part in parts:
+        if not bool(re.match(pattern, part)):
+            return False
+    return True
+
+
 def get_imagehashes(url, thumbnail=False, filecache=False):
     if filecache:
         print("filecache")
-        md5_hash = hashlib.md5(url.encode()).hexdigest()
         # Extract the domain from the URL
-        domain = urlparse(url).netloc.replace('www.', '')
+        parsed_url = urlparse(url)
+        domain = parsed_url.netloc.replace('www.', '')
 
-        # Use the first two characters of the hash for the directory name
-        directory = os.path.join('cache', domain, md5_hash[:1], md5_hash[:2])
+        if domain == 'finna.fi':
+            query_components = parse_qs(parsed_url.query)
+            # Extract the 'id' and 'index' parameters
+            id_param = query_components.get('id', [None])[0]
+            organization = id_param.split(".")[0]
+            index_param = query_components.get('index', [None])[0]
+            organizations = ['museovirasto']
+            if organization in organizations:
+                filename = f'{id_param}_{index_param}.jpg'
+                md5_hash = hashlib.md5(filename.encode()).hexdigest()
+                parts = [domain, organization, filename]
+                if not is_valid_path_and_filename(parts):
+                    print('ERROR: filename test failed')
+                    print(parts)
+                    exit(1)
+
+                directory = os.path.join('cache',
+                                         domain,
+                                         organization,
+                                         md5_hash[:1], md5_hash[:2])
+            else:
+                print("ERROR: Unknown org")
+                print(url)
+                exit(1)
+        else:
+            # Use the first two characters of the hash for the directory name
+            md5_hash = hashlib.md5(url.encode()).hexdigest()
+            directory = os.path.join('cache',
+                                     domain,
+                                     md5_hash[:1], md5_hash[:2])
+            filename = md5_hash + '.jpg'
+            parts = [domain, filename]
+            if not is_valid_path_and_filename(parts):
+                print('ERROR: filename test failed')
+                print(parts)
+                exit(1)
 
         # Create the directory if it doesn't exist
         if not os.path.exists(directory):
             os.makedirs(directory)
 
         # The path where the image will be saved
-        file_path = os.path.join(directory, md5_hash + '.jpg')
+        file_path = os.path.join(directory, filename)
         print(file_path)
 
         # Check if the file already exists
         if not os.path.exists(file_path):
-            with urllib.request.urlopen(url) as response, open(file_path, 'wb') as out_file:
+            print("creating file")
+            with urllib.request.urlopen(url) as response, \
+                 open(file_path, 'wb') as out_file:
                 data = response.read()
                 out_file.write(data)
-
+        else:
+            print("cached")
         # Open the image1 with Pillow
         im = Image.open(file_path)
 

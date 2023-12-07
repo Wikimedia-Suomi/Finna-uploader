@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from images.models import FinnaImage
 import pywikibot
 import time
-from images.finna import do_finna_search
+from images.finna import do_finna_search, get_collection_names
 from images.wikitext.photographer import get_wikitext_for_new_image
 from images.duplicatedetection import is_already_in_commons
 from images.finna_image_sdc_helpers import get_structured_data_for_new_image
@@ -19,10 +19,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--collection',
             type=str,
-            choices=['Kuvasiskot',
-                     'Studio Kuvasiskojen kokoelma',
-                     'JOKA',
-                     'JOKA Journalistinen kuva-arkisto'],
+            choices=get_collection_names(),
             help=('Finna type argument. '
                   'Argument selects where lookfor matches.')
         )
@@ -187,11 +184,6 @@ class Command(BaseCommand):
 
         default_collection = 'Studio Kuvasiskojen kokoelma'
         collection = options['collection'] or default_collection
-
-        if collection == 'JOKA':
-            collection = 'JOKA Journalistinen kuva-arkisto'
-        elif collection == 'Kuvasiskot':
-            collection = 'Studio Kuvasiskojen kokoelma'
 
         for page in range(1, 201):
             # Prevent looping too fast for Finna server

@@ -9,6 +9,32 @@ s = requests.Session()
 s.headers.update({'User-Agent': 'FinnaUploader 0.1'})
 
 
+def get_collection_names():
+    collections = [
+                  'Kuvasiskot',
+                  'Studio Kuvasiskojen kokoelma',
+                  'JOKA',
+                  'JOKA Journalistinen kuva-arkisto',
+                  'SA-kuva',
+                  'Kansallisgalleria Ateneumin taidemuseo'
+                  ]
+    return collections
+
+
+def get_collection_name_from_alias(name):
+    aliases = {
+             'Kuvasiskot': 'Studio Kuvasiskojen kokoelma',
+             'JOKA': 'JOKA Journalistinen kuva-arkisto',
+             'SA-kuva': '0/SA-kuva/',
+             'Kansallisgalleria Ateneumin taidemuseo':
+             '0/Kansallisgalleria Ateneumin taidemuseo/'
+    }
+    if name in aliases:
+        return aliases[name]
+    else:
+        return name
+
+
 # urlencode Finna parameters
 def finna_api_parameter(name, value):
     name = urllib.parse.quote_plus(name)
@@ -69,15 +95,23 @@ def add_finna_api_default_field_parameters():
     return url
 
 
-def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None):
+def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, full=True): # noqa
     data = None
     url = "https://api.finna.fi/v1/search?"
     url += add_finna_api_free_images_only_parameters()
-    url += add_finna_api_default_field_parameters()
+    if full:
+        url += add_finna_api_default_field_parameters()
     url += finna_api_parameter('limit', '100')
     url += finna_api_parameter('page', str(page))
 
-    if collection:
+    collection = get_collection_name_from_alias(collection)
+    if collection == '0/SA-kuva/':
+        collection_rule = f'~building:"{collection}"'
+        url += finna_api_parameter('filter[]', collection_rule)
+    elif collection == '0/Kansallisgalleria Ateneumin taidemuseo/':
+        collection_rule = f'~building:"{collection}"'
+        url += finna_api_parameter('filter[]', collection_rule)
+    elif collection:
         collection_rule = f'~hierarchy_parent_title:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
 
@@ -88,7 +122,6 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None):
     # Where lookfor is targeted. Known values 'AllFields', 'Subjects'
     if type:
         url += finna_api_parameter('type', f'{type}')
-
     with urllib.request.urlopen(url) as file:
         try:
             data = json.loads(file.read().decode())
@@ -110,7 +143,6 @@ def get_finna_record_url(id, full=False, lang=None):
 
     if lang:
         url += f'&lng={lang}'
-    print(url)
     return url
 
 

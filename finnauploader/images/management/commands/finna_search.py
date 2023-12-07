@@ -2,7 +2,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 import time
 from images.models import FinnaImage
-from images.finna import do_finna_search
+from images.finna import do_finna_search, \
+                         get_collection_names
 
 
 class Command(BaseCommand):
@@ -13,10 +14,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--collection',
             type=str,
-            choices=['Kuvasiskot',
-                     'Studio Kuvasiskojen kokoelma',
-                     'JOKA',
-                     'JOKA Journalistinen kuva-arkisto'],
+            choices=get_collection_names(),
             help=('Finna type argument. '
                   'Argument selects where lookfor matches.')
         )

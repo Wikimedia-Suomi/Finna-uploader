@@ -298,16 +298,16 @@ class FinnaRecordManager(models.Manager):
 
         # copyright tag is mandatory information so it is added on creation
         i = record['imageRights']
+        description = i.get('description', '')
         image_right, created = FinnaImageRight.objects.get_or_create(copyright=i['copyright'],
                                                                      link=i['link'],
-                                                                     description=i['description'])
-
+                                                                     description=description)
         # created = True, False depending if the record was in the database already
         image, created = FinnaImage.objects.get_or_create(finna_id=record['id'],
                                                           defaults={'image_right': image_right})
 
-        image.title = record['title']
-        image.short_title = record['shortTitle']
+        image.title = record.get('title', '')
+        image.short_title = record.get('shortTitle', '')
         image.image_right = image_right
         image.number_of_images = len(record['images'])
         image.year = record.pop('year', None)
@@ -345,7 +345,6 @@ class FinnaRecordManager(models.Manager):
                 continue
             if not s['text']:
                 continue
-
 
             # Summary is currently supported only in JOKA collection
             if 'JOKA' not in str(record['collections']):

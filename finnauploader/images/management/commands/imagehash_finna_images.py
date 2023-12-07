@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
 from images.models import FinnaImage, FinnaImageHash, FinnaImageHashURL
-import time
 from images.imagehash_helpers import get_imagehashes
 from images.conversion import unsigned_to_signed
 
@@ -29,28 +28,32 @@ class Command(BaseCommand):
 
             for index in range(photo.number_of_images):
                 imagehash_url = FinnaImageHashURL.objects\
-                                                 .filter(imagehash=imagehash, index=index)\
+                                                 .filter(imagehash=imagehash,
+                                                         index=index)\
                                                  .first()
                 if imagehash_url:
                     print(f'skipping: {photo.finna_id} {index}')
                     continue
 
-                url = f'https://finna.fi/Cover/Show?source=Solr&id={photo.finna_id}&index={index}&size=large'
+                url = 'https://finna.fi/Cover/Show?source=Solr&size=large'
+                url += f'&id={photo.finna_id}'
+                url += f'&index={index}'
                 print(photo.title)
                 print(url)
 
                 i = get_imagehashes(url, thumbnail=True, filecache=filecache)
 
                 imagehash, created = FinnaImageHash.objects.get_or_create(
-                                  finna_image=photo,
-                                  phash=unsigned_to_signed(i['phash']),
-                                  dhash=unsigned_to_signed(i['dhash']),
-                                  dhash_vertical=unsigned_to_signed(i['dhash_vertical'])
-                               )
+                       finna_image=photo,
+                       phash=unsigned_to_signed(i['phash']),
+                       dhash=unsigned_to_signed(i['dhash']),
+                       dhash_vertical=unsigned_to_signed(i['dhash_vertical'])
+                       )
                 if created:
                     imagehash.save()
 
-                imagehash_url, created = FinnaImageHashURL.objects.get_or_create(
+                obj = FinnaImageHashURL.objects
+                imagehash_url, created = obj.get_or_create(
                                        imagehash=imagehash,
                                        url=url,
                                        width=i['width'],
@@ -61,6 +64,4 @@ class Command(BaseCommand):
                 if created:
                     imagehash_url.save()
 
-                time.sleep(0.2)
-
-        self.stdout.write(self.style.SUCCESS(f'Images counted succesfully!'))
+        self.stdout.write(self.style.SUCCESS('Images hashed succesfully!'))
