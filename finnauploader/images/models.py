@@ -4,6 +4,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 import re
 from datetime import datetime
+# from images.locations import parse_subject_place_string
 from images.finna import get_finna_record_url, parse_full_record
 from images.pywikibot_helpers import get_wikidata_id_from_url
 from images.wikitext.timestamps import parse_timestamp
@@ -49,6 +50,49 @@ def update_dates_in_filename(input_str):
 
 
 # Create your models here.
+
+class FintoYsoLabel(models.Model):
+    value = models.CharField(max_length=64)
+    lang = models.CharField(max_length=8)
+
+
+class FintoYsoMMLPlaceType(models.Model):
+    uri = models.URLField(max_length=500)
+
+
+class FintoYsoWikidataPlaceType(models.Model):
+    uri = models.URLField(max_length=500)
+
+
+class FintoYsoCloseMatch(models.Model):
+    uri = models.URLField(max_length=500)
+
+
+class FintoYsoPlace(models.Model):
+    yso_id = models.CharField(max_length=8)
+    labels = models.ManyToManyField(FintoYsoLabel, related_name='places')
+    close_matches = models.ManyToManyField(FintoYsoCloseMatch)
+    wikidata_place_types = models.ManyToManyField(FintoYsoWikidataPlaceType)
+    mml_place_types = models.ManyToManyField(FintoYsoMMLPlaceType)
+    lat = models.DecimalField(max_digits=22, decimal_places=16, blank=True, null=True)
+    long = models.DecimalField(max_digits=22, decimal_places=16, blank=True, null=True)
+
+
+class LocationTestCache(models.Model):
+    location = models.URLField(max_length=500)
+    entity = models.URLField(max_length=500)
+    value = models.BooleanField()
+
+
+class CacheSparqlBool(models.Model):
+    query_id = models.CharField(max_length=64)
+    value = models.BooleanField()
+
+
+class FintoYsoMissingCache(models.Model):
+    value = models.CharField(max_length=64)
+    finna_id = models.CharField(max_length=200, null=False, blank=False)
+
 
 # Commons image
 class Image(models.Model):
@@ -283,162 +327,6 @@ class FinnaLocalSubject(models.Model):
 # Managers
 class FinnaRecordManager(models.Manager):
 
-    # Second try to make this readable
-    def create_from_finna_record(self, record, local_data={}):
-
-        def clean_subject_name(subject):
-            if isinstance(subject, list):
-                if len(subject) == 1:
-                    subject = subject[0]
-                else:
-                    print("Error: Unexpected subject format")
-                    print(subject)
-                    exit(1)
-            return subject
-
-        # copyright tag is mandatory information so it is added on creation
-        i = record['imageRights']
-        description = i.get('description', '')
-        image_right, created = FinnaImageRight.objects.get_or_create(copyright=i['copyright'],
-                                                                     link=i['link'],
-                                                                     description=description)
-        # created = True, False depending if the record was in the database already
-        image, created = FinnaImage.objects.get_or_create(finna_id=record['id'],
-                                                          defaults={'image_right': image_right})
-
-        image.title = record.get('title', '')
-        image.short_title = record.get('shortTitle', '')
-        image.image_right = image_right
-        image.number_of_images = len(record['images'])
-        image.year = record.pop('year', None)
-        image.identifier_string = record.pop('identifierString', None)
-        image.measurements = record.pop('measurements', None)
-
-        # Extract imagesExtended data
-        images_extended_data = record.pop('imagesExtended', None)
-        if images_extended_data:
-            try:
-                image.master_url = images_extended_data[0]['highResolution']['original'][0]['url']
-                image.master_format = images_extended_data[0]['highResolution']['original'][0]['format']
-            except:
-                # If no highResolution or original image
-                image.master_url = images_extended_data[0]['urls']['large']
-                image.master_format = 'image/jpeg'
-        else:
-            print("Error: imagesExtended missing")
-            exit(1)
-
-        # Extract date string from events
-        events = record.pop('events', None)
-        if events:
-            valmistus = record.pop('valmistus', None)
-            if valmistus:
-                image.date_string = valmistus[0]['date']
-
-        # Data which is stored to separate tables
-        full_record_data = parse_full_record(record['fullRecord'])
-
-        image.summaries.clear()
-        obj = FinnaSummary.objects
-        for s in full_record_data['summary']:
-            if 'text' not in s:
-                continue
-            if not s['text']:
-                continue
-
-            # Summary is currently supported only in JOKA collection
-            if 'JOKA' not in str(record['collections']):
-                continue
-
-            if s['attributes'] == {}:
-                continue
-            if 'lang' not in s['attributes']:
-                continue
-
-            try:
-                summary, created = obj.get_or_create(text=s['text'], lang=s['attributes']['lang'], defaults={'order': 1})
-
-            except:
-                print(s)
-                print(full_record_data['summary'])
-                print(record['collections'])
-                exit(1)
-            image.summaries.add(summary)
-
-        image.alternative_titles.clear()
-        obj = FinnaAlternativeTitle.objects
-        for s in full_record_data['title']:
-            if 'text' not in s:
-                continue
-            if not s['text']:
-                continue
-
-            if 'label' not in s['attributes']:
-                continue
-
-            alt_title, created = obj.get_or_create(text=s['text'], lang=s['attributes']['lang'], pref=s['attributes']['pref'])
-            image.alternative_titles.add(alt_title)
-
-        if 'subjects' in record:
-            obj = FinnaSubject.objects
-            for subject in record['subjects']:
-                finna_subject, created = obj.get_or_create(name=clean_subject_name(subject))
-                image.subjects.add(finna_subject)
-
-        if 'subjectPlaces' in record:
-            obj = FinnaSubjectPlace.objects
-            for subject in record['subjectPlaces']:
-                finna_subject, created = obj.get_or_create(name=subject)
-                image.subject_places.add(finna_subject)
-
-        if 'subjectActors' in record:
-            obj = FinnaSubjectActor.objects
-            for subject in record['subjectActors']:
-                finna_subject, created = obj.get_or_create(name=subject)
-                image.subject_actors.add(finna_subject)
-
-        if 'subjectDetails' in record:
-            obj = FinnaSubjectDetail.objects
-            for subject in record['subjectDetails']:
-                finna_subject, created = obj.get_or_create(name=subject)
-                image.subject_details.add(finna_subject)
-
-        if 'collections' in record:
-            obj = FinnaCollection.objects
-            for collection in record['collections']:
-                finna_collection, created = obj.get_or_create(name=collection)
-                image.collections.add(finna_collection)
-
-        if 'buildings' in record:
-            obj = FinnaBuilding.objects
-            for building in record['buildings']:
-                value = building['value']
-                defaults = {"translated": building['translated']}
-                finna_building, created = obj.get_or_create(value=value, defaults=defaults)
-                image.buildings.add(finna_building)
-
-        if 'institutions' in record:
-            obj = FinnaInstitution.objects
-            for institution in record['institutions']:
-                value = institution['value']
-                defaults = {"translated": institution['translated']}
-                finna_institution, created = obj.get_or_create(
-                                   value=value,
-                                   defaults=defaults
-                                )
-                image.institutions.add(finna_institution)
-
-        if 'nonPresenterAuthors' in record:
-            obj = FinnaNonPresenterAuthor.objects
-            for author in record['nonPresenterAuthors']:
-                name = author['name']
-                role = author['role']
-                finna_author, created = obj.get_or_create(name=name, role=role)
-                image.non_presenter_authors.add(finna_author)
-
-        image.save()
-        return image
-
     # First try
     def create_from_data(self, data, local_data={}):
 
@@ -492,7 +380,12 @@ class FinnaRecordManager(models.Manager):
 
         # Extract and handle image_right data
         image_rights_data = data.pop('imageRights', {})
-        image_rights = FinnaImageRight.objects.get_or_create(copyright=image_rights_data['copyright'], link=image_rights_data['link'], description=image_rights_data['description'][0])[0]
+        image_rights_copyright = image_rights_data['copyright']
+        image_rights_link = image_rights_data['link']
+        image_rights_description = image_rights_data.get('description', '')
+        image_right, created = FinnaImageRight.objects.get_or_create(copyright=image_rights_copyright,
+                                                                     link=image_rights_link,
+                                                                     description=image_rights_description)
 
         # Extract images data
         images_data = data.pop('images', [])
@@ -527,9 +420,17 @@ class FinnaRecordManager(models.Manager):
             if 'JOKA' not in str(collections_data):
                 continue
 
-            summary, created = obj.get_or_create(text=s['text'],
+            if 'lang' not in s:
+                continue
+
+            try:
+                summary, created = obj.get_or_create(
+                                                 text=s['text'],
                                                  lang=s['attributes']['lang'],
                                                  defaults={'order': 1})
+            except:
+                print(s)
+                exit(1)
             summaries.append(summary)
 
         alternative_titles = []
@@ -555,9 +456,9 @@ class FinnaRecordManager(models.Manager):
         add_depicts = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_depicts_data]
 
         # Create the book instance
-        record, created = self.get_or_create(finna_id=data['id'], defaults={'image_right': image_rights})
-        record.title = data['title']
-        record.short_title = data['shortTitle']
+        record, created = self.get_or_create(finna_id=data['id'], defaults={'image_right': image_right})
+        record.title = data.get('title', '')
+        record.short_title = data.get('shortTitle', '')
         record.identifier_string = data.pop('identifierString', None)
         record.year = data.pop('year', None)
         record.number_of_images = len(images_data)
@@ -610,7 +511,7 @@ class FinnaRecordManager(models.Manager):
         for add_depict in add_depicts:
             record.add_depicts.add(add_depict)
 
-        record.image_right = image_rights
+        record.image_right = image_right
 
         record.save()
 

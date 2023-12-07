@@ -1,93 +1,432 @@
 from django.core.management.base import BaseCommand
-from images.models import Image, ImageURL, FinnaImage
+from images.models import FinnaImage, FintoYsoPlace, FintoYsoLabel, \
+                          CacheSparqlBool
 import pywikibot
-from pywikibot.data import sparql
-import requests
 import time
-import json
 from images.finna import do_finna_search
-from images.serializer_helpers import finna_image_to_json
-from images.wikitext.photographer import get_photographer_template, get_copyright_template
+from images.locations import is_location_within_administrative_entity, \
+                             parse_subject_place_string, \
+                             update_yso_places, test_property_value, \
+                             get_p31_values, get_wikidata_items_using_yso, \
+                             FintoYsoMissingCache, get_location_override
+from images.wikitext.creator import parse_cache_page
 
-from images.finna_image_sdc_helpers import get_P7482_source_of_file_claim, \
-                                           get_P275_licence_claim, \
-                                           get_P6216_copyright_state_claim, \
-                                           get_P9478_finna_id_claim, \
-                                           get_P170_author_claims, \
-                                           get_P195_collection_claims, \
-                                           get_P180_subject_actors_claims, \
-                                           get_P571_timestamp_claim
+CacheSparqlBool.objects.all().delete()
+# FintoYsoMissingCache.objects.all().delete()
+page_title = 'User:FinnaUploadBot/data/locationOverride'
+locationOverrideCache = parse_cache_page(page_title)
+print(locationOverrideCache)
+#if 1:
+#    exit(1)
+
+# Function to update the list on Wikimedia Commons
+def update_commons_list(name, wikidata_id):
+    commons_site = pywikibot.Site('commons', 'commons')
+    wikidata_id = wikidata_id.replace('http://www.wikidata.org/entity/', '')
+    page_title = "User:FinnaUploadBot/data/locationOverride"
+    page = pywikibot.Page(commons_site, page_title)
+    target_text = f"\n* {name} : {{{{Q|{wikidata_id}}}}}"
+    if target_text not in page.text:
+        page.text += f"\n* {name} : {{{{Q|{wikidata_id}}}}}"
+        page.save("Adding new entry for %s" % name)
+
+
+def find_wikidata_url(data):
+    if not data:
+        return None
+
+    # Check if data is a list of dictionaries
+    if isinstance(data, list):
+        # Iterate through each dictionary in the list
+        for item in data:
+            # Check if 'uri' key exists and contains 'wikidata.org'
+            if 'uri' in item and 'wikidata.org' in item['uri']:
+                return item
+    # Check if data is a single dictionary
+    elif isinstance(data, dict):
+        # Check if 'uri' key exists and contains 'wikidata.org'
+        if 'uri' in data and 'wikidata.org' in data['uri']:
+            return data
+
+    # Return None if no matching URL is found
+    return None
+
+
+def is_in_haystack(qids, types):
+    for qid in qids:
+        qid = qid.replace('http://www.wikidata.org/entity/', '')
+        if qid in types:
+            return True
+    return False
+
+
+def is_maanosa(place, wikidata_types, mml_types, other_types):
+    known_place_ids = ['http://www.wikidata.org/entity/Q21195',
+                       'http://www.wikidata.org/entity/Q1156427',
+                       'http://www.wikidata.org/entity/Q98']
+    maanosa_qids = ['Q113965177', 'Q1620908', 'Q5107']
+    types = wikidata_types + mml_types + other_types
+
+    if 'Q39731' in place:
+        return True
+    if place in known_place_ids:
+        return True
+    elif is_in_haystack(types, maanosa_qids):
+        return True
+    elif test_property_value(place, '(wdt:P279|wdt:P31)*', 'Q15646667'):
+        return True
+    elif test_property_value(place, 'wdt:P361/wdt:P31', 'Q15646667'):
+        return True
+    return False
+
+
+def is_valtio(place, wikidata_types, mml_types, other_types):
+    valtio_qids = ['Q7275', 'Q6256', 'Q3024240', 'Q788046']
+    types = wikidata_types + mml_types + other_types
+    if is_in_haystack(types, valtio_qids):
+        return True
+    return False
+
+
+def is_maakunta(place, wikidata_types, mml_types, other_types):
+    maakunta_qids = ['Q113965203', 'Q10742', 'Q629870', 'Q217691', 'Q853697']
+    types = wikidata_types + mml_types + other_types
+    if is_in_haystack(types, maakunta_qids):
+        return True
+    return False
+
+
+def is_luonto(place, wikidata_types, mml_types, other_types):
+    luonto_qids = ['Q355304', 'Q106589819', 'Q39594', 'Q113965178']
+    types = wikidata_types + mml_types + other_types
+    if is_in_haystack(types, luonto_qids):
+        return True
+    if test_property_value(place, '(wdt:P279|wdt:P31)*', 'Q33837'):
+        return True
+    if test_property_value(place, '(wdt:P279|wdt:P31)*', 'Q23397'):
+        return True
+    if 'Q6305010' in place:
+        return True
+    if 'Q1129324' in place:
+        return True
+    if 'Q209010' in place:
+        return True
+    return False
+
+
+def is_kunta(place, wikidata_types, mml_types, other_types):
+    kunta_qids = ['Q515', 'Q113965206', 'Q127448']
+    types = wikidata_types + mml_types + other_types
+    if is_in_haystack(types, kunta_qids):
+        return True
+    if test_property_value(place, '(wdt:P279|wdt:P31)*', 'Q515'):
+        return True
+    return False
+
+
+def is_kaupunginosa(place, wikidata_types, mml_types, other_types):
+    kaupunginosa_qids = ['Q103910131', 'Q103910453', 'Q103910131',
+                         'Q103910177', 'Q63135009', 'Q63134896',
+                         'Q17468533', 'Q60495698', 'Q6566301',
+                         'Q1523821', 'Q12813115', 'Q532', 'Q5084']
+    types = wikidata_types + mml_types + other_types
+    if is_in_haystack(types, kaupunginosa_qids):
+        return True
+
+    # Pasila
+    if 'Q1636613' in place:
+        return True
+    return False
+
+
+def is_paikka(place, wikidata_types, mml_types, other_types):
+    place_qids = ['Q618123', 'Q113965186', 'Q113965195', 'Q113965279',
+                  'Q107549321', 'Q811979']
+    types = wikidata_types + mml_types + other_types
+
+    # Ahvenanmaa
+    if 'Q5689' in place:
+        return False
+    if 'Q10426741' in place:
+        return True
+    if 'Q3087729' in place:
+        return True
+    if 'Q2298076' in place:
+        return True
+
+    if is_in_haystack(types, place_qids):
+        return True
+    if test_property_value(place, '(wdt:P279|wdt:P31)*', 'Q83620'):
+        return True
+    if test_property_value(place, '(wdt:P279|wdt:P31)*', 'Q41176'):
+        return True
+    if test_property_value(place, '(wdt:P279|wdt:P31)*', 'Q18247357'):
+        return True
+    if test_property_value(place, '(wdt:P279|wdt:P31)*', 'Q811979'):
+        return True
+
+    return False
+
+
+def detect_place_type(place, wikidata_types, mml_types):
+    other_types = []
+    wikidata_types = list(wikidata_types)
+    mml_types = list(mml_types)
+    if len(mml_types) + len(wikidata_types) == 0:
+        other_types = get_p31_values(place)
+    ret = {
+        'maanosa': is_maanosa(place, wikidata_types, mml_types, other_types),
+        'valtio': is_valtio(place, wikidata_types, mml_types, other_types),
+        'maakunta': is_maakunta(place, wikidata_types, mml_types, other_types),
+        'luonto': is_luonto(place, wikidata_types, mml_types, other_types),
+        'kunta': is_kunta(place, wikidata_types, mml_types, other_types),
+        'kaupunginosa': is_kaupunginosa(place, wikidata_types,
+                                        mml_types, other_types),
+        'paikka': is_paikka(place, wikidata_types, mml_types, other_types),
+    }
+
+    found = False
+    for k in ret:
+        if ret[k]:
+            found = True
+
+    if not found:
+        print(f'No wikidata ids: {place}')
+        print(mml_types)
+        print(wikidata_types)
+        print(get_p31_values(place))
+        exit(1)
+
+    return ret
+
+
+def location_test(row, key1, key2, slow_mode=False):
+    # If unable to test then return True
+    key1_len=len(row[key1])
+    key2_len=len(row[key2])
+
+    # return True if there is no location 
+    # ( Nothing to test )
+    if not key1_len:
+        return True
+    
+    # return false if location is defined but no admin area
+    if not key2_len:
+       return True
+
+    # Return False if any of the locations is not found
+    # in admin areas
+
+    for location in row[key1]:
+        ret = False
+        for administrative_entity in row[key2]:
+            if is_location_within_administrative_entity(
+                                                 location,
+                                                 administrative_entity,
+                                                 slow_mode):
+                ret = True
+                break
+        if not ret:
+            break
+
+    return ret
+
+
+def validate_location_row2(row):
+    # Test maakunta & valtio
+    tests = [
+        ['maakunta', 'valtio'],
+        ['luonto', 'maakunta'],
+        ['kunta', 'valtio'],
+        ['kunta', 'maakunta'],
+        ['kaupunginosa', 'kunta'],
+        ['kaupunginosa', 'maakunta'],
+        ['kaupunginosa', 'valtio'],
+        ['paikka', 'kaupunginosa'],
+        ['paikka', 'kunta'],
+        ['paikka', 'maakunta'],
+        ['paikka', 'valtio']
+    ]
+    for test in tests:
+        location = test[0]
+        administrative_entity = test[1]
+        ok = location_test(row, location, administrative_entity, False)
+        if not ok:
+            ok = location_test(row, location, administrative_entity, True)
+
+        if ok:
+            print(f'test: {location} {administrative_entity} OK')
+        else:
+            print(f'test: {location} {administrative_entity} not OK')
+            print(row)
+            exit(1)
+
+
+def convert_finto_to_wikidata(subject_places):
+
+#    namedplaces = ['http://www.wikidata.org/entity/Q1386673',
+#                 'http://www.wikidata.org/entity/Q2744984',
+#                 'http://www.wikidata.org/entity/Q957236',
+#                 'http://www.wikidata.org/entity/Q541933',
+#                 'http://www.wikidata.org/entity/Q1329554',
+#                 'http://www.wikidata.org/entity/Q1402724',
+#                 'http://www.wikidata.org/entity/Q10549843',
+#                 'http://www.wikidata.org/entity/Q3745222',
+#                 'http://www.wikidata.org/entity/Q3745222']
+    ignore = ['http://www.wikidata.org/entity/Q18681872']
+    row = {
+            'maanosa': set(),
+            'valtio': set(),
+            'maakunta': set(),
+            'luonto': set(),
+            'kunta': set(),
+            'kaupunginosa': set(),
+            'paikka': set()
+    }
+
+    for subject_place in subject_places:
+        wikidata_uris = set()
+        wikidata_type_uris = set()
+        mml_type_uris = set()
+
+        keyword = str(subject_place)
+        qs = FintoYsoLabel.objects.filter(value=keyword)
+
+        for r in qs:
+            for place in r.places.all():
+                print(f'{r.lang} {r.value} {place.yso_id}')
+                wikidata_uri_qs = place.close_matches.filter(
+                                        uri__icontains="wikidata.org"
+                                        )
+                if wikidata_uri_qs.exists():
+                    for u in wikidata_uri_qs.distinct():
+                        if u.uri in ignore:
+                            continue
+                        u.uri = u.uri.replace('www.wikidata.org/wiki/',
+                                              'www.wikidata.org/entity/')
+                        wikidata_uris.add(u.uri)
+                else:
+                    uris = get_wikidata_items_using_yso(place.yso_id)
+                    for uri in uris:
+                        wikidata_uris.add(uri)
+                    if len(uris) == 0:
+                        print(f'Error: No wikidata uris for {place.yso_id}')
+                        exit(1)
+
+                for u in place.wikidata_place_types.all():
+                    wikidata_type_uris.add(u.uri)
+                for u in place.mml_place_types.all():
+                    mml_type_uris.add(u.uri)
+
+        print("---")
+        print(wikidata_uris)
+        for wikidata_uri in wikidata_uris:
+            detected_types = detect_place_type(wikidata_uri,
+                                               wikidata_type_uris,
+                                               mml_type_uris)
+            for detected_type in detected_types:
+                if detected_types[detected_type]:
+                    row[detected_type].add(wikidata_uri)
+
+    validate_location_row2(row)
+    return row
+
+
+def get_best_location_ids(row):
+
+    types = ['paikka', 'kaupunginosa', 'kunta', 'maakunta', 'valtio']
+    best_ids=[]
+    for type in types:
+        if len(row[type]):
+            best_ids=row[type]
+            break
+
+    if not best_ids:
+        print("ERROR: no best location ids")
+        print(row)
+        exit(1)
+
+    alt_ids=[]
+    slow_mode=False
+    for location in row['luonto']:
+        for administrative_entity in best_ids:
+            if is_location_within_administrative_entity(
+                                                 location,
+                                                 administrative_entity,
+                                                 slow_mode):
+                alt_ids.append(location)
+    if len(alt_ids):
+        print("ALT_IDS:")
+        print(alt_ids)
+        known_ids=['http://www.wikidata.org/entity/Q1636182',
+                   'http://www.wikidata.org/entity/Q10426741'] 
+
+        for known_id in known_ids:
+            if known_id in alt_ids:
+                best_ids=alt_ids
+                return
+        exit(1)
+    return best_ids
+ 
+
 class Command(BaseCommand):
     help = 'Testing Finna record parsing and converting to SDC'
 
+    def add_arguments(self, parser):
+        # Named (optional) arguments
+
+        parser.add_argument(
+            '--lookfor',
+            type=str,
+            help='Finna lookfor argument.',
+        )
+
+        parser.add_argument(
+            '--seek',
+            type=str,
+            help='Finna lookfor argument.',
+        )
+
+
     def process_finna_record(self, data):
-         r=FinnaImage.objects.create_from_data(data)
-         print(r.finna_json_url)
+        print(data['id'])
+        r = FinnaImage.objects.create_from_data(data)
+        print(r.finna_json_url)
 
-         for institution in r.institutions.all():
-             print(f'{institution.get_institution_template()}')
+        subject_places = parse_subject_place_string(r)
+        update_yso_places(subject_places, r.finna_id)
 
-#         print(get_photographer_template(r))
-#         print(get_copyright_template(r))
+        wikidata_location_ids = get_location_override(r)
+        if not wikidata_location_ids:
+            print("FOOOOOOOOO")
+            row = convert_finto_to_wikidata(subject_places)
+            print(row)
+            wikidata_location_ids = get_best_location_ids(row)
+        print(wikidata_location_ids)
 
-         if 1:
-             exit(1)
-         print(finna_image_to_json(r))
-         print('-----')
-         print(r.url)
-         print('-----')
+    def handle(self, *args, **options):
+        seek = options['seek'] or None
+        lookfor = options['lookfor'] or None
 
-         c=get_P7482_source_of_file_claim(r)
-         print(c)
-         print('---')
-         c=get_P275_licence_claim(r)
-         print(c)
-         print('---')
+        type = None
+#        collection = 'Studio Kuvasiskojen kokoelma'
+        collection = 'JOKA Journalistinen kuva-arkisto'
+        n = 0
 
-         c=get_P6216_copyright_state_claim(r)
-         print(c)
-         print('---')
+        for page in range(1, 201):
+            # Prevent looping too fast for Finna server
+            time.sleep(1)
+            data = do_finna_search(page, lookfor, type, collection)
+            if 'records' in data:
+                for record in data['records']:
+                    n += 1
+                    if seek and seek != record['id']:
+                        print(f'{n} skipping ' + str(record['id']))
+                        continue
+                    seek = ''
+                    self.process_finna_record(record)
+            else:
+                print("XXX")
+                break
 
-         c=get_P9478_finna_id_claim(r)
-         print(c)
-         print('---')
-
-         c=get_P170_author_claims(r)
-         print(c)
-         print('---')
-
-         c=get_P195_collection_claims(r)
-         print(c)
-         print('---')
-
-         c=get_P571_timestamp_claim(r)
-         print(c)
-         print('---')
-
-         c=get_P180_subject_actors_claims(r)
-         print(c)
-         print('---')
-
-#         s=FinnaImageSerializer(r)
-#         print(r.toJSON())
-         exit(1)
-
-   
-    def handle(self, *args, **kwargs):
-        lookfor=None
-        type=None
-        collection='Studio Kuvasiskojen kokoelma'
-#        collection='JOKA Journalistinen kuva-arkisto'
-       
-        for page in range(1,201):
-             # Prevent looping too fast for Finna server
-             time.sleep(1)
-             data=do_finna_search(page, lookfor, type, collection )
-             if 'records' in data:
-                 for record in data['records']:
-                     self.process_finna_record(record)
-             else:
-                 break
-
-
-        self.stdout.write(self.style.SUCCESS(f'Images counted succesfully!'))
+        self.stdout.write(self.style.SUCCESS('Images counted succesfully!'))

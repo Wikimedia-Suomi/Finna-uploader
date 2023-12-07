@@ -124,7 +124,6 @@ class Command(BaseCommand):
         print('https://finna.fi/Record/' + str(record['id']))
 
         finna_image = FinnaImage.objects.create_from_data(record, local_data)
-        print(finna_image.title)
 
         file_name = finna_image.pseudo_filename
         image_url = finna_image.master_url

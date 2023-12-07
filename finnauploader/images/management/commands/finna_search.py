@@ -52,7 +52,7 @@ class Command(BaseCommand):
                 with transaction.atomic():
                     for record in data['records']:
                         # Import code is in images/models.py
-                        r = FinnaImage.objects.create_from_finna_record(record)
+                        r = FinnaImage.objects.create_from_data(record)
                         print(f'{r.id} {r.finna_id} {r.title} saved')
             else:
                 break
