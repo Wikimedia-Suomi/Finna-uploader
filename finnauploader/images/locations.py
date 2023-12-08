@@ -5,12 +5,14 @@ from images.models import LocationTestCache, FintoYsoMissingCache, \
                           FintoYsoPlace, FintoYsoCloseMatch, \
                           FintoYsoMMLPlaceType, FintoYsoWikidataPlaceType, \
                           FintoYsoLabel, CacheSparqlBool
-from images.finto import finto_search
+from images.finto import finto_search, get_finto_term_information
 
 
 sparql = SparqlQuery()
 page_title = 'User:FinnaUploadBot/data/locationOverride'
 locationOverrideCache = parse_cache_page(page_title)
+page_title = "User:FinnaUploadBot/data/locationKeywords"
+locationKeywords = parse_cache_page(page_title)
 
 
 def get_wikidata_items_using_yso(yso_id):
@@ -22,6 +24,23 @@ def get_wikidata_items_using_yso(yso_id):
     rows = sparql.select(query)
     for row in rows:
         ret.append(row['item'])
+    return ret
+
+
+def get_yso_using_wikidata_id(qid):
+    qid = qid.replace('http://www.wikidata.org/entity/', '')
+    qid = qid.replace('https://www.wikidata.org/wiki/', '')
+
+    ret = []
+    query = f'SELECT * WHERE {{ wd:{qid} wdt:P2347 ?yso }}'
+    rows = sparql.select(query)
+    if len(rows) > 1:
+        print("ERROR: get_yso_using_wikidata_id(): Multiple results")
+        print(query)
+        exit(1)
+    for row in rows:
+        uri = 'http://www.yso.fi/onto/yso/p' + str(row['yso'])
+        ret.append(uri)
     return ret
 
 
@@ -172,6 +191,19 @@ def get_location_override(finna_image):
     return ret
 
 
+def translate_location_keyword(keyword):
+    lang = 'fi'
+    if keyword in locationKeywords:
+        finto_uri = get_yso_using_wikidata_id(locationKeywords[keyword])[0]
+        f = get_finto_term_information('yso', finto_uri)
+        for graph in f['graph']:
+            if 'prefLabel' in graph:
+                for label in graph['prefLabel']:
+                    if label['lang'] == lang:
+                        keyword = label['value']
+    return keyword
+
+
 def parse_subject_place_string(finna_image):
     subject_places = []
     for subject_place in finna_image.subject_places.all():
@@ -180,9 +212,11 @@ def parse_subject_place_string(finna_image):
             uri += locationOverrideCache[subject_place.name]
             subject_places.append(uri)
             continue
+
         for subject_place_part in str(subject_place).split('; '):
             for place_name in subject_place_part.split(', '):
                 place_name = place_name.strip()
+                place_name = translate_location_keyword(place_name)
                 if place_name and place_name not in subject_places:
                     subject_places.append(place_name)
 
@@ -200,15 +234,17 @@ def update_yso_places(subject_places, finna_id):
 
 
 def add_finto_location(keyword, finna_id, lang):
+    f = None
     ret = False
     missing_test = FintoYsoMissingCache.objects.filter(
                                                 value=keyword,
                                                 finna_id=finna_id)
-    if missing_test.exists():
+    if not f and missing_test.exists():
         print('Cached missing: {keyword}')
         return ret
 
-    f = finto_search(keyword, vocab='yso-paikat')
+    if not f:
+        f = finto_search(keyword, vocab='yso-paikat')
     if not f:
         f = finto_search(keyword, vocab='yso')
 
@@ -225,6 +261,10 @@ def add_finto_location(keyword, finna_id, lang):
 
     for graph in f['graph']:
         if 'prefLabel' in graph:
+            print(graph['prefLabel'])
+            if 'lang' in graph['prefLabel']:
+                graph['prefLabel'] = [graph['prefLabel']]
+
             for label in graph['prefLabel']:
                 if label['value'] == keyword and label['lang'] == lang:
                     print(graph['prefLabel'])

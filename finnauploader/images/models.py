@@ -222,6 +222,13 @@ class FinnaSubject(models.Model):
         return self.name
 
 
+class FinnaSubjectWikidataPlace(models.Model):
+    uri = models.URLField(max_length=500)
+
+    def __str__(self):
+        return self.uri
+
+
 class FinnaSubjectPlace(models.Model):
     name = models.CharField(max_length=200)
 
@@ -469,7 +476,9 @@ class FinnaRecordManager(models.Manager):
         try:
             record.date_string = data['events']['valmistus'][0]['date']
         except:
-            print("Skipping date_string")
+            print(record.finna_json_url)
+            print('Skipping date_string')
+#            exit(1)
 
         record.summaries.clear()
         for summary in summaries:
@@ -542,6 +551,7 @@ class FinnaImage(models.Model):
     image_right = models.ForeignKey(FinnaImageRight, on_delete=models.RESTRICT)
     add_categories = models.ManyToManyField(FinnaLocalSubject, related_name="category_images")
     add_depicts = models.ManyToManyField(FinnaLocalSubject, related_name="depict_images")
+    best_wikidata_location = models.ManyToManyField(FinnaSubjectWikidataPlace)
 
     # Accession number or similar identifier
     identifier_string = models.CharField(max_length=64, null=True, blank=True)

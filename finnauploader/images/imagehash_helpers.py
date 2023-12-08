@@ -64,7 +64,7 @@ def get_imagehashes(url, thumbnail=False, filecache=False):
             id_param = query_components.get('id', [None])[0]
             organization = id_param.split(".")[0]
             index_param = query_components.get('index', [None])[0]
-            organizations = ['museovirasto']
+            organizations = ['museovirasto', 'kansallisgalleria']
             if organization in organizations:
                 filename = f'{id_param}_{index_param}.jpg'
                 md5_hash = hashlib.md5(filename.encode()).hexdigest()

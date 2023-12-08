@@ -1,9 +1,9 @@
 from django.core.management.base import BaseCommand
 from images.models import FinnaImage, FintoYsoPlace, FintoYsoLabel, \
-                          CacheSparqlBool
+                          CacheSparqlBool, FinnaSubjectWikidataPlace
 import pywikibot
 import time
-from images.finna import do_finna_search
+from images.finna import do_finna_search, get_collection_names
 from images.locations import is_location_within_administrative_entity, \
                              parse_subject_place_string, \
                              update_yso_places, test_property_value, \
@@ -11,13 +11,12 @@ from images.locations import is_location_within_administrative_entity, \
                              FintoYsoMissingCache, get_location_override
 from images.wikitext.creator import parse_cache_page
 
-CacheSparqlBool.objects.all().delete()
+# CacheSparqlBool.objects.all().delete()
 # FintoYsoMissingCache.objects.all().delete()
 page_title = 'User:FinnaUploadBot/data/locationOverride'
 locationOverrideCache = parse_cache_page(page_title)
 print(locationOverrideCache)
-#if 1:
-#    exit(1)
+
 
 # Function to update the list on Wikimedia Commons
 def update_commons_list(name, wikidata_id):
@@ -202,17 +201,18 @@ def detect_place_type(place, wikidata_types, mml_types):
 
 def location_test(row, key1, key2, slow_mode=False):
     # If unable to test then return True
-    key1_len=len(row[key1])
-    key2_len=len(row[key2])
 
-    # return True if there is no location 
+    key1_len = len(row[key1])
+    key2_len = len(row[key2])
+
+    # return True if there is no location
     # ( Nothing to test )
     if not key1_len:
         return True
-    
+
     # return false if location is defined but no admin area
     if not key2_len:
-       return True
+        return True
 
     # Return False if any of the locations is not found
     # in admin areas
@@ -264,15 +264,6 @@ def validate_location_row2(row):
 
 def convert_finto_to_wikidata(subject_places):
 
-#    namedplaces = ['http://www.wikidata.org/entity/Q1386673',
-#                 'http://www.wikidata.org/entity/Q2744984',
-#                 'http://www.wikidata.org/entity/Q957236',
-#                 'http://www.wikidata.org/entity/Q541933',
-#                 'http://www.wikidata.org/entity/Q1329554',
-#                 'http://www.wikidata.org/entity/Q1402724',
-#                 'http://www.wikidata.org/entity/Q10549843',
-#                 'http://www.wikidata.org/entity/Q3745222',
-#                 'http://www.wikidata.org/entity/Q3745222']
     ignore = ['http://www.wikidata.org/entity/Q18681872']
     row = {
             'maanosa': set(),
@@ -335,10 +326,10 @@ def convert_finto_to_wikidata(subject_places):
 def get_best_location_ids(row):
 
     types = ['paikka', 'kaupunginosa', 'kunta', 'maakunta', 'valtio']
-    best_ids=[]
+    best_ids = []
     for type in types:
         if len(row[type]):
-            best_ids=row[type]
+            best_ids = row[type]
             break
 
     if not best_ids:
@@ -346,8 +337,8 @@ def get_best_location_ids(row):
         print(row)
         exit(1)
 
-    alt_ids=[]
-    slow_mode=False
+    alt_ids = []
+    slow_mode = False
     for location in row['luonto']:
         for administrative_entity in best_ids:
             if is_location_within_administrative_entity(
@@ -358,22 +349,29 @@ def get_best_location_ids(row):
     if len(alt_ids):
         print("ALT_IDS:")
         print(alt_ids)
-        known_ids=['http://www.wikidata.org/entity/Q1636182',
-                   'http://www.wikidata.org/entity/Q10426741'] 
+        known_ids = ['http://www.wikidata.org/entity/Q1636182',
+                     'http://www.wikidata.org/entity/Q10426741']
 
         for known_id in known_ids:
             if known_id in alt_ids:
-                best_ids=alt_ids
-                return
+                best_ids = alt_ids
+                return best_ids
         exit(1)
     return best_ids
- 
+
 
 class Command(BaseCommand):
     help = 'Testing Finna record parsing and converting to SDC'
 
     def add_arguments(self, parser):
         # Named (optional) arguments
+        parser.add_argument(
+            '--collection',
+            type=str,
+            choices=get_collection_names(),
+            help=('Finna type argument. '
+                  'Argument selects where lookfor matches.')
+        )
 
         parser.add_argument(
             '--lookfor',
@@ -387,30 +385,32 @@ class Command(BaseCommand):
             help='Finna lookfor argument.',
         )
 
-
     def process_finna_record(self, data):
         print(data['id'])
         r = FinnaImage.objects.create_from_data(data)
+        if r.best_wikidata_location.exists():
+            print("Skipping: best_wikidata_location.exists()")
         print(r.finna_json_url)
 
-        subject_places = parse_subject_place_string(r)
-        update_yso_places(subject_places, r.finna_id)
+        parsed_subject_places = parse_subject_place_string(r)
+        update_yso_places(parsed_subject_places, r.finna_id)
 
         wikidata_location_ids = get_location_override(r)
-        if not wikidata_location_ids:
-            print("FOOOOOOOOO")
-            row = convert_finto_to_wikidata(subject_places)
+        if len(parsed_subject_places) and not wikidata_location_ids:
+            row = convert_finto_to_wikidata(parsed_subject_places)
             print(row)
             wikidata_location_ids = get_best_location_ids(row)
-        print(wikidata_location_ids)
+        obj = FinnaSubjectWikidataPlace.objects
+        for wikidata_location_id in wikidata_location_ids:
+            location, created = obj.get_or_create(uri=wikidata_location_id)
+            r.best_wikidata_location.add(location)
 
     def handle(self, *args, **options):
         seek = options['seek'] or None
         lookfor = options['lookfor'] or None
+        collection = options['collection'] or None
 
         type = None
-#        collection = 'Studio Kuvasiskojen kokoelma'
-        collection = 'JOKA Journalistinen kuva-arkisto'
         n = 0
 
         for page in range(1, 201):
