@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-bgu#1pihe8c-lxlg5g7*l37qmaqjxa9cknnazrc%uk@%yehzv4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.1.109']
 
 
 # Application definition
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',              # graph_models requires this
+    'rest_framework',
     'images'
 ]
 

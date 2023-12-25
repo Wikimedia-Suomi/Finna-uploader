@@ -14,9 +14,22 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.views.generic.base import RedirectView
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import FinnaImageViewSet, HelloWorldAPI
+from finnauploader import settings
+
+router = DefaultRouter()
+router.register(r'finna', FinnaImageViewSet)
 
 urlpatterns = [
+    path('', include(router.urls)),
     path('admin/', admin.site.urls),
+    path('api/hello/', HelloWorldAPI.as_view()),
 ]
+
+if settings.DEBUG:
+    urlpatterns += path('vue', RedirectView.as_view(url='/static/index.html'))
+    urlpatterns += path('vue/', RedirectView.as_view(url='/static/index.html'))

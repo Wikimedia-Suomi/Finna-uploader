@@ -1,0 +1,31 @@
+.photocontainer {
+   margin:0.25em;
+   width:300px;
+   float:left;
+}
+
+.imagebuttons {
+   position:relative;
+   display:flex;
+   height:0;
+   justify-content: space-between;
+     
+}
+
+.imagebuttons > .deletebutton {
+  height:2em;
+  margin:0.25em;
+
+}
+
+.imagebuttons > .likebutton {
+
+  height:2em;
+  margin:0.25em;
+
+}
+
+.thumbnail {
+  object-fit: contain;
+  width:300px;
+}

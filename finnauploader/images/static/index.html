@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello World Vue App</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <link rel="stylesheet" type="text/css" href="css/vue.css">
+
+
+<script type="text/x-template" id="photos-template">
+  <div>
+    <div v-for="(photo, index) in photos" class='photocontainer'>
+      <div class='imagebuttons'>
+         <button @click="uploadclick(index)" class='likebutton' :value='photo.finna_id'>Upload</button>
+         <button @click="deleteclick(index)" class='deletebutton' :value='photo.finna_id'>Remove</button>
+      </div>
+      <img
+         class="thumbnail"
+         :src="'https://finna.fi/Cover/Show?source=Solr&index=0&size=small&id=' + photo.finna_id" />
+      <h3>{{ photo.title }}</h3>
+      <ul>
+         <li v-if="photo.year">{{photo.year}}</li>
+         <li><small><a :href="'https://www.finna.fi/Record/' + photo.finna_id" target="_blank">{{photo.finna_id}}</a></small></li>
+      </ul>
+    </div>
+  </div>
+</script>
+</head>
+<body>
+
+    <div id="app">
+        {{ message }}
+  <photos-component v-bind:photos='photos' ></photos-component>
+
+    </div>
+
+
+
+
+</body>
+    <script src="vue/app.js"></script>
+
+</html>
