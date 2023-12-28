@@ -25,8 +25,9 @@ SECRET_KEY = 'django-insecure-bgu#1pihe8c-lxlg5g7*l37qmaqjxa9cknnazrc%uk@%yehzv4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.1.109']
+ALLOWED_HOSTS = ['127.0.0.1', '192.168.1.109']
 
+APPEND_SLASH = True
 
 # Application definition
 
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',              # graph_models requires this
     'rest_framework',
+    'watson',
     'images'
 ]
 
@@ -51,6 +53,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100,  # Default number of items per page
+}
 
 ROOT_URLCONF = 'finnauploader.urls'
 

@@ -38,12 +38,12 @@ def create_categories_new(finna_image):
 
     if finna_image.year:
         if 'Portrait photographs' in categories:
-            categories.add('People of Finland in ' + finna_image.year)
-        
+            categories.add(f'People of Finland in {finna_image.year}')
+
         if 'Helsinki' in depicted_places:
-            categories.add(finna_image.year + ' in Helsinki')
+            categories.add(f'{finna_image.year} in Helsinki')
         elif 'Suomi' in depicted_places:
-            categories.add(finna_image.year + ' in Finland')
+            categories.add(f'{finna_image.year} in Finland')
 
     categories.add('Files uploaded by FinnaUploadBot')
 

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,6 +8,36 @@
     <link rel="stylesheet" type="text/css" href="css/vue.css">
 
 
+<script type="text/x-template" id="topbar-template">
+    <div>
+    <form v-bind="params" action='' type='get'>
+       <input type='text' :value='params.searchkey' size=40 name='searchkey'>
+       <input type='submit' value='search' name='submit'>
+       <select v-model='params.limit' name='limit'>
+          <option v-bind:value="15" selected=selected>15</option>
+          <option v-bind:value="30">30</option>
+          <option v-bind:value="50">50</option>
+          <option v-bind:value="100">100</option>
+          <option v-bind:value="1000">1000</option>
+       </select>
+
+       <input type='button' value='random' @click="random(params.limit)">
+       <a :href='params.searchurl'>json</a>
+       <div class='floatright'>Kuvat: Finna / Museovirasto / Journalistinen kuva-arkisto</div>
+       <div class='floatright'>{{ params.submitted }} / {{params.confirmed}} </div>
+    </form>
+    </div>
+</script>
+
+<script type="text/x-template" id="logging-template">
+    <ul>
+    <li v-for="(filename, index) in logrows" >
+    <a :href="'https://commons.wikimedia.org/wiki/file:' + filename" target="top">{{filename}}</a>
+    </li>
+    </ul>
+</script>
+
+
 <script type="text/x-template" id="photos-template">
   <div>
     <div v-for="(photo, index) in photos" class='photocontainer'>
@@ -14,13 +45,16 @@
          <button @click="uploadclick(index)" class='likebutton' :value='photo.finna_id'>Upload</button>
          <button @click="deleteclick(index)" class='deletebutton' :value='photo.finna_id'>Remove</button>
       </div>
-      <img
+      <a :href="'https://finna.fi/Record/' + photo.finna_id" target="_new"><img
          class="thumbnail"
-         :src="'https://finna.fi/Cover/Show?source=Solr&index=0&size=small&id=' + photo.finna_id" />
-      <h3>{{ photo.title }}</h3>
+         :src="'https://finna.fi/Cover/Show?source=Solr&index=0&size=small&id=' + photo.finna_id" /></a>
+      <h5>{{ photo.title }}</h5>
       <ul>
+         <li v-for="(summary, index2) in photo.summaries" v-if="summary.lang === 'fi'">{{summary.text}}</li>
+         <li v-for="(non_presenter_author, index2) in photo.non_presenter_authors" :class="{ 'missing': !non_presenter_author.wikidata_id }">{{non_presenter_author.name}} ({{non_presenter_author.role}})</li>
          <li v-if="photo.year">{{photo.year}}</li>
-         <li><small><a :href="'https://www.finna.fi/Record/' + photo.finna_id" target="_blank">{{photo.finna_id}}</a></small></li>
+         <li v-for="(subject_actor, index2) in photo.subject_actors" :class="{ 'missing': !subject_actor.wikidata_id }">{{subject_actor.name}}</li>
+         <li><small><a :href="'https://www.finna.fi/Record/' + photo.finna_id" target="_blank">{{photo.identifier_string}}</a></small></li>
       </ul>
     </div>
   </div>
@@ -29,8 +63,9 @@
 <body>
 
     <div id="app">
-        {{ message }}
-  <photos-component v-bind:photos='photos' ></photos-component>
+        <topbar-component v-bind:params='params' ></topbar-component>
+        <logging-component v-bind:logrows='logrows' ></logging-component>
+        <photos-component v-bind:photos='photos' ></photos-component>
 
     </div>
 

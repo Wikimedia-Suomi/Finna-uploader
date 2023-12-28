@@ -26,7 +26,7 @@ def create_photographer_template(r):
     template.add('depicted place', lang_template('fi', r['subjectPlaces']))
     template.add('date', parse_timestamp_string(r['date']))
     template.add('medium', '')
-    template.add('dimensions', "\n".join(r['measurements']))
+    template.add('dimensions', str(r['measurements']))
     template.add('institution', r['institution_template'])
     template.add('department', lang_template('fi', "; ".join(r['collections'])))
     template.add('references', '')

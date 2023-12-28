@@ -1,6 +1,7 @@
 .photocontainer {
    margin:0.25em;
    width:300px;
+   height:600px;
    float:left;
 }
 
@@ -28,4 +29,8 @@
 .thumbnail {
   object-fit: contain;
   width:300px;
+}
+
+.missing {
+   background-color:LightPink
 }

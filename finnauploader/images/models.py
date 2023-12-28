@@ -1,3 +1,4 @@
+from watson import search as watson
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -9,6 +10,7 @@ from images.finna import get_finna_record_url, parse_full_record
 from images.pywikibot_helpers import get_wikidata_id_from_url
 from images.wikitext.timestamps import parse_timestamp
 from images.sdc_helpers import create_P571_inception
+from images.duplicatedetection import is_already_in_commons
 from images.sdc_helpers import create_P275_licence, \
                                            create_P6216_copyright_state, \
                                            create_P9478_finna_id, \
@@ -103,6 +105,12 @@ class Image(models.Model):
     finna_id_confirmed_at = models.DateTimeField(null=True, blank=True)
 
 
+class WikimediaCommonsImage(models.Model):
+    page_id = models.PositiveIntegerField(unique=True)
+    page_title = models.CharField(max_length=200)
+    match_type = models.CharField(max_length=16, db_index=True)
+
+
 # Commons external links linked from image
 class ImageURL(models.Model):
     image = models.ForeignKey(Image, related_name="urls", on_delete=models.CASCADE)
@@ -161,6 +169,7 @@ class FinnaImageRight(models.Model):
 class FinnaNonPresenterAuthor(models.Model):
     name = models.CharField(max_length=64)
     role = models.CharField(max_length=64)
+    wikidata_id = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -238,6 +247,7 @@ class FinnaSubjectPlace(models.Model):
 
 class FinnaSubjectActor(models.Model):
     name = models.CharField(max_length=200)
+    wikidata_id = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -334,6 +344,37 @@ class FinnaLocalSubject(models.Model):
 # Managers
 class FinnaRecordManager(models.Manager):
 
+    def update_wikidata_ids(self):
+        authors = FinnaNonPresenterAuthor.objects.all()
+        for author in authors:
+            try:
+                wikidata_id = author.get_wikidata_id()
+                if author.wikidata_id != wikidata_id:
+                    author.wikidata_id = wikidata_id
+                    author.save(update_fields=['wikidata_id'])
+            except:
+                pass
+
+        actors = FinnaSubjectActor.objects.all()
+        for actor in actors:
+            try:
+                wikidata_id = actor.get_wikidata_id()
+                if actor.wikidata_id != wikidata_id:
+                    actor.wikidata_id = wikidata_id
+                    actor.save(update_fields=['wikidata_id'])
+            except:
+                pass
+
+        images = FinnaImage.objects.filter(already_in_commons=False)
+        for image in images:
+            print(image.pk)
+            if 1:
+                exit(1)
+            uploaded = is_already_in_commons(image.finna_id, fast=True)
+            if uploaded:
+                image.already_in_commons = uploaded
+                image.save(update_fields=['already_in_commons'])
+
     # First try
     def create_from_data(self, data, local_data={}):
 
@@ -355,6 +396,15 @@ class FinnaRecordManager(models.Manager):
                 name=non_presenter_author_data['name'],
                 role=non_presenter_author_data['role']
                 )[0]
+            try:
+                # Update wikidata id
+                wikidata_id = author.get_wikidata_id()
+                if author.wikidata_id != wikidata_id:
+                    author.wikidata_id = wikidata_id
+                    author.save(update_fields=['wikidata_id'])
+            except:
+                pass
+
             non_presenter_authors.append(author)
 
         # Extract and handle buildings data
@@ -372,6 +422,15 @@ class FinnaRecordManager(models.Manager):
         # Extract and handle subjectActors data
         subject_actors_data = data.pop('subjectActors', [])
         subject_actors = [FinnaSubjectActor.objects.get_or_create(name=subject_actor_name)[0] for subject_actor_name in subject_actors_data]
+        for subject_actor in subject_actors:
+            try:
+                # Update wikidata id
+                wikidata_id = subject_actor.get_wikidata_id()
+                if subject_actor.wikidata_id != wikidata_id:
+                    subject_actor.wikidata_id = wikidata_id
+                    subject_actor.save(update_fields=['wikidata_id'])
+            except:
+                pass
 
         # Extract and handle subjectDetails data
         subject_details_data = data.pop('subjectDetails', [])
@@ -427,7 +486,7 @@ class FinnaRecordManager(models.Manager):
             if 'JOKA' not in str(collections_data):
                 continue
 
-            if 'lang' not in s:
+            if 'lang' not in s['attributes']:
                 continue
 
             try:
@@ -471,7 +530,7 @@ class FinnaRecordManager(models.Manager):
         record.number_of_images = len(images_data)
         record.master_url = master_url
         record.master_format = master_format
-        record.measurements = data['measurements']
+        record.measurements = "\n".join(data['measurements'])
 
         try:
             record.date_string = data['events']['valmistus'][0]['date']
@@ -522,9 +581,16 @@ class FinnaRecordManager(models.Manager):
 
         record.image_right = image_right
 
+        search_index, created = FinnaRecordSearchIndex.objects.get_or_create(datatext=str(data))
+        record.data = search_index
+
         record.save()
 
         return record
+
+
+class FinnaRecordSearchIndex(models.Model):
+    datatext = models.TextField()
 
 
 class FinnaImage(models.Model):
@@ -552,6 +618,10 @@ class FinnaImage(models.Model):
     add_categories = models.ManyToManyField(FinnaLocalSubject, related_name="category_images")
     add_depicts = models.ManyToManyField(FinnaLocalSubject, related_name="depict_images")
     best_wikidata_location = models.ManyToManyField(FinnaSubjectWikidataPlace)
+    commons_images = models.ManyToManyField(WikimediaCommonsImage)
+    already_in_commons = models.BooleanField(default=False)
+    skipped = models.BooleanField(default=False)
+    data = models.ForeignKey(FinnaRecordSearchIndex, on_delete=models.RESTRICT, null=True, blank=True)
 
     # Accession number or similar identifier
     identifier_string = models.CharField(max_length=64, null=True, blank=True)
@@ -602,7 +672,7 @@ class FinnaImage(models.Model):
             name = name.replace(":", "_")
             name = name.replace("_", " ").strip()
             identifier = self.identifier_string.replace(":", "-")
-            if self.year and self.year not in name:
+            if self.year and str(self.year) not in name:
                 year = f'{self.year}_'
             else:
                 year = ''
@@ -709,3 +779,6 @@ def update_timestamp(sender, instance, **kwargs):
         old_instance = Image.objects.get(pk=instance.pk)
         if old_instance.finna_id_confirmed != instance.finna_id_confirmed:
             instance.finna_id_confirmed_at = timezone.now()
+
+
+watson.register(FinnaRecordSearchIndex)

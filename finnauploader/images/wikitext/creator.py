@@ -1,3 +1,6 @@
+from images.exceptions import MissingNonPresenterAuthorError, \
+                              MultipleNonPresenterAuthorError, \
+                              MissingSubjectActorError
 import pywikibot
 import re
 
@@ -77,18 +80,17 @@ def get_author_name(nonPresenterAuthors):
                 if not ret:
                     ret = name
                 else:
-                    print("Multiple authors")
-                    print(nonPresenterAuthors)
-                    exit(1)
+                    raise MultipleNonPresenterAuthorError
             else:
                 url =  'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors' # noqa
                 print(f'Name {name} is missing from {url}')
+                raise MissingNonPresenterAuthorError
 
     if not ret:
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors' # noqa
         print(f'Unknown author. Add it to the {url}')
         print(nonPresenterAuthors)
-        exit(1)
+        raise MissingNonPresenterAuthorError
 
     return ret
 
@@ -208,7 +210,7 @@ def get_subject_actors_wikidata_ids(subjectActors):
         else:
             url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/subjectActors' # noqa
             print('Error: Unknown actor "{subjectActor}". Add actor to {url}')
-            exit(1)
+            raise MissingSubjectActorError
     return ret
 
 
@@ -218,7 +220,7 @@ def get_subject_actors_wikidata_id(subject_actor):
     else:
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/subjectActors' # noqa
         print(f'Error: Unknown actor "{subject_actor}". Add actor to {url}')
-        exit(1)
+        raise MissingSubjectActorError
 
 
 def parse_cache_page(page_title):

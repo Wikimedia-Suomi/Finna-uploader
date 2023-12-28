@@ -86,12 +86,13 @@ class FinnaImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FinnaImage
-        fields = ['finna_id', 'title', 'year', 'number_of_images',
+
+        fields = ['id', 'finna_id', 'title', 'year', 'number_of_images',
                   'non_presenter_authors', 'summaries', 'subjects',
                   'subject_places', 'subject_actors', 'subject_details',
                   'collections', 'buildings', 'image_right', 'identifier_string',
                   'short_title', 'alternative_titles', 'date_string',
-                  'measurements', 'institutions']
+                  'measurements', 'institutions', 'skipped']
 
 #    finna_id = models.CharField(max_length=200, null=False, blank=False, db_index=True, unique=True)
 #    title = models.CharField(max_length=200)

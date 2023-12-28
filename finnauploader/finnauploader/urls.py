@@ -25,11 +25,10 @@ router = DefaultRouter()
 router.register(r'finna', FinnaImageViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('api/', include(router.urls)),
     path('admin/', admin.site.urls),
     path('api/hello/', HelloWorldAPI.as_view()),
 ]
 
 if settings.DEBUG:
-    urlpatterns += path('vue', RedirectView.as_view(url='/static/index.html'))
-    urlpatterns += path('vue/', RedirectView.as_view(url='/static/index.html'))
+    urlpatterns += path('', RedirectView.as_view(url='/static/index.html')),

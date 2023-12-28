@@ -2,10 +2,12 @@ import requests
 import pywikibot
 from pywikibot.data import sparql
 
+s = requests.Session()
+
 
 def finna_exists(id):
     url = f'https://imagehash.toolforge.org/finnasearch?finna_id={id}'
-    response = requests.get(url)
+    response = s.get(url)
     response.raise_for_status()  # Raise an exception for HTTP errors
     data = response.json()
     if len(data):
@@ -67,7 +69,7 @@ def get_upload_summary():
     return uploadsummary
 
 
-def is_already_in_commons(finna_id):
+def is_already_in_commons(finna_id, fast=False):
     # Check if image is already uploaded
     if finna_id in sparql_finna_ids:
         print(f'Skipping 1: {finna_id} already uploaded based on sparql')
@@ -77,9 +79,11 @@ def is_already_in_commons(finna_id):
         print(f'Skipping 2: {finna_id} already uploaded based on summaries')
         return True
 
-    if finna_exists(finna_id):
-        print(f'Skipping 3: {finna_id} already uploaded based on imagehash')
-        return True
+    if not fast:
+        if finna_exists(finna_id):
+            msg = f'Skipping 3: {finna_id} already uploaded based on imagehash'
+            print(msg)
+            return True
     return False
 
 
