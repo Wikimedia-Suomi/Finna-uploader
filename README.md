@@ -11,7 +11,7 @@ source venv/bin/activate
 ```
 Install packages
 ```bash
-pip install --upgrade pip
+pip install --upgrade pip setuptools wheel
 pip install pywikibot imagehash django django-extensions djangorestframework flake8 beautifulsoup4
 
 Setup the user-config.py
