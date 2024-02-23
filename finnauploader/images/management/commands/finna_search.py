@@ -57,4 +57,5 @@ class Command(BaseCommand):
             else:
                 break
 
+        FinnaImage.objects.update_wikidata_ids()
         self.stdout.write(self.style.SUCCESS('Images saved succesfully!'))

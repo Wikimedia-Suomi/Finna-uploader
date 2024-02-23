@@ -367,9 +367,6 @@ class FinnaRecordManager(models.Manager):
 
         images = FinnaImage.objects.filter(already_in_commons=False)
         for image in images:
-            print(image.pk)
-            if 1:
-                exit(1)
             uploaded = is_already_in_commons(image.finna_id, fast=True)
             if uploaded:
                 image.already_in_commons = uploaded

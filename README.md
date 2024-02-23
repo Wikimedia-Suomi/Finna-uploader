@@ -24,7 +24,6 @@ makemigrations will generate SQL change files based on models.py changes
 - See https://docs.djangoproject.com/en/4.2/topics/migrations/
 ```bash
 python manage.py makemigrations
-python manage.py sqlmigrate images 0002
 python manage.py migrate
 python manage.py showmigrations
 ```
@@ -38,19 +37,18 @@ Quickstart for uploading images.
 
 ```bash
 # Import JOKA journalistic photo archive records to Finna
-python manage.py finna_search
+python manage.py finna_search --collection JOKA
 
 # Import precalculated imagehashes for Finna records
 python manage.py import_finna_imagehashes
 python manage.py import_toolforge_imagehashes
 
-# Export imagehashes
-python manage.py dump_finna_imagehashes
+# Start webserver for uploading
+python manage.py runserver 
 
-# Upload images
-python manage.py upload_kuvasiskot
+# Open web ui
+http://127.0.0.1:8000/
 ```
-
 
 FULL IMPORT
 
@@ -78,7 +76,7 @@ python manage.py set_finna_id_to_latest_from_finna.py
 # ** Finna records ( THESE DOESNT NEED Commons image info to work ) **
 
 # Import JOKA journalistic photo archive records to Finna
-python manage.py finna_search
+python manage.py finna_search --collection JOKA
 
 # Imagehash images linked from Finna records
 python manage.py imagehash_finna_images
