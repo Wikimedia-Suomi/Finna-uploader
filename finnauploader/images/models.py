@@ -594,10 +594,10 @@ class FinnaImage(models.Model):
     objects = FinnaRecordManager()
 
     finna_id = models.CharField(max_length=200, null=False, blank=False, db_index=True, unique=True)
-    title = models.CharField(max_length=200)
+    title = models.TextField()
     alternative_titles = models.ManyToManyField(FinnaAlternativeTitle)
     year = models.PositiveIntegerField(unique=False, null=True, blank=True)
-    date_string = models.CharField(max_length=200, null=True, blank=True)
+    date_string = models.TextField()
     number_of_images = models.PositiveIntegerField(unique=False, null=True, blank=True)
     master_url = models.URLField(max_length=500)
     master_format = models.CharField(max_length=16)
@@ -622,7 +622,7 @@ class FinnaImage(models.Model):
 
     # Accession number or similar identifier
     identifier_string = models.CharField(max_length=64, null=True, blank=True)
-    short_title = models.CharField(max_length=200, null=True, blank=True)
+    short_title = models.TextField()
 
     # Pseudo properties
     @property
