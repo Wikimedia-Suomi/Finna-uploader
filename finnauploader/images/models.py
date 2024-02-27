@@ -727,11 +727,14 @@ class FinnaImage(models.Model):
         return create_P9478_finna_id(self.finna_id)
 
     def get_inception_claim(self):
-        timestamp, precision = parse_timestamp(self.date_string)
+        try:
+            timestamp, precision = parse_timestamp(self.date_string)
 
-        if timestamp:
-            claim = create_P571_inception(timestamp, precision)
-            return claim
+            if timestamp and precision:
+                claim = create_P571_inception(timestamp, precision)
+                return claim
+        except:
+            return None
 
     def get_source_of_file_claim(self):
         operator = 'Q420747'    # National library
