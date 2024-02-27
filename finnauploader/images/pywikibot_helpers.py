@@ -41,7 +41,9 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
 
     # Check if the page exists
     if site.userinfo['messages']:
-        talk_page = site.user.getUserTalkPage()
+        #talk_page = site.user.getUserTalkPage()
+        user = pywikibot.User(site, site.username())
+        talk_page=user.getUserTalkPage()
         page_name = talk_page.title()
         msg = f'Warning: You have received a {page_name} message. Exiting.'
         print(msg)
