@@ -2,9 +2,12 @@ import pywikibot
 from pywikibot.exceptions import NoPageError
 import json
 import re
+from datetime import datetime
 
 site = pywikibot.Site('commons', 'commons')
 site.login()
+
+dtstart = datetime.now()
 
 
 # Edit Wikimedia Commons mediaitem using wbeditentity
@@ -43,11 +46,13 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
     if site.userinfo['messages']:
         #talk_page = site.user.getUserTalkPage()
         user = pywikibot.User(site, site.username())
-        talk_page=user.getUserTalkPage()
-        page_name = talk_page.title()
-        msg = f'Warning: You have received a {page_name} message. Exiting.'
-        print(msg)
-        exit()
+        talk_page = user.getUserTalkPage()
+        latestdt = talk_page.latest_revision.timestamp
+        if (latestdt > dtstart):
+            page_name = talk_page.title()
+            msg = f'Warning: You have received a {page_name} message. Exiting.'
+            print(msg)
+            exit()
 
     # Load file from url
     file_page.upload(source_file_url, comment=comment, asynchronous=True)
