@@ -581,7 +581,11 @@ class FinnaRecordManager(models.Manager):
         search_index, created = FinnaRecordSearchIndex.objects.get_or_create(datatext=str(data))
         record.data = search_index
 
-        record.save()
+        try:
+            record.save()
+        except django.db.utils.DataError as e:
+            print('Error: {}'.format(e))
+            exit(1)
 
         return record
 
@@ -600,8 +604,8 @@ class FinnaImage(models.Model):
     date_string = models.TextField()
     number_of_images = models.PositiveIntegerField(unique=False, null=True, blank=True)
     master_url = models.URLField(max_length=500)
-    master_format = models.CharField(max_length=16)
-    measurements = models.CharField(max_length=32)
+    master_format = models.CharField(max_length=200)
+    measurements = models.CharField(max_length=200)
     non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor)
     summaries = models.ManyToManyField(FinnaSummary)
     subjects = models.ManyToManyField(FinnaSubject)
