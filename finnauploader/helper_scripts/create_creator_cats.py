@@ -32,7 +32,12 @@ def is_human(item):
 
 # Function to create a creator template in Wikimedia Commons
 def create_creator_template(name, wikidata_id):
-    template_text = "{{Creator|wikidata=%s}}" % wikidata_id
+    template_text = "{{Creator\n"
+    template_text += "| Linkback = Creator:%s\n" % name
+    template_text += "| Alternative names =\n"
+    template_text += "| Wikidata = %s\n" % wikidata_id
+    template_text += "| Option = {{{1|}}}\n"
+    template_text += "}}"
     page = pywikibot.Page(commons_site, 'Creator:%s' % name)
     page.text = template_text
     page.save("Creating new creator template for %s" % name)
