@@ -651,39 +651,47 @@ class FinnaImage(models.Model):
 
     @property
     def pseudo_filename(self):
-        if self.master_format == 'tif':
-            summaries_name = self.summaries.filter(lang='en').first()
-            alt_title_name = self.alternative_titles.filter(lang='en').first()
-
-            name = None
-            if summaries_name and alt_title_name:
-                if len(str(summaries_name)) > len(str(alt_title_name)):
-                    name = alt_title_name
-                else:
-                    name = summaries_name
-
-            if not name:
-                name = self.short_title
-            else:
-                name = name.text
-            name = update_dates_in_filename(name)
-            name = name.replace('content description: ', '')
-            name = name.replace(".", "_")
-            name = name.replace(" ", "_")
-            name = name.replace(":", "_")
-            name = name.replace("_", " ").strip()
-            identifier = self.identifier_string.replace(":", "-")
-            if self.year and str(self.year) not in name:
-                year = f'{self.year}_'
-            else:
-                year = ''
-            name = name.replace(" ", "_")
-            file_name = f'{name}_{year}({identifier}).tif'
-            return file_name
-
-        else:
+        if self.master_format != 'tif' and self.master_format != 'jpg':
             print(f'Unknown format: {self.master_format}')
             exit(1)
+            
+        summaries_name = self.summaries.filter(lang='en').first()
+        alt_title_name = self.alternative_titles.filter(lang='en').first()
+
+        name = None
+        if summaries_name and alt_title_name:
+            if len(str(summaries_name)) > len(str(alt_title_name)):
+                name = alt_title_name
+            else:
+                name = summaries_name
+
+        if not name:
+            name = self.short_title
+        else:
+            name = name.text
+        name = update_dates_in_filename(name)
+        name = name.replace('content description: ', '')
+        name = name.replace(".", "_")
+        name = name.replace(" ", "_")
+        name = name.replace(":", "_")
+        name = name.replace("_", " ").strip()
+        identifier = self.identifier_string.replace(":", "-")
+        if self.year and str(self.year) not in name:
+            year = f'{self.year}_'
+        else:
+            year = ''
+        name = name.replace(" ", "_")
+        name = name.replace("/", "_") # don't allow slash in names
+        name = name.replace("\n", " ") # don't allow newline in names
+        name = name.replace("\t", " ") # don't allow tabulator in names
+        
+        file_name = ""
+        if self.master_format == 'tif':
+            file_name = f'{name}_{year}({identifier}).tif'
+        if self.master_format == 'jpg':
+            file_name = f'{name}_{year}({identifier}).jpg'
+        return file_name
+
 
     def __str__(self):
         return self.finna_id
