@@ -126,9 +126,11 @@ def get_photographer_template(finna_image):
 
 
 def get_wikitext_for_new_image(finna_image):
+    creator = get_photographer_template(finna_image)
+    
     wikitext_parts = []
     wikitext_parts.append("== {{int:filedesc}} ==")
-    wikitext_parts.append(get_photographer_template(finna_image) + '\n')
+    wikitext_parts.append(creator + '\n')
     wikitext_parts.append("== {{int:license-header}} ==")
     wikitext_parts.append(finna_image.get_copyright_template())
     wikitext_parts.append(create_categories_new(finna_image))
