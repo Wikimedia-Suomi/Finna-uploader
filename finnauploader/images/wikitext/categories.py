@@ -24,7 +24,8 @@ def create_categories_new(finna_image):
         'muotokuvat': 'Portrait photographs',
         'henkilökuvat': 'Portrait photographs',
         'professorit': 'Professors from Finland',
-        'miesten puvut': 'Men wearing suits in Finland'
+        'miesten puvut': 'Men wearing suits in Finland',
+        'Osuusliike Elanto': 'Elanto'
     }
 
     for subject in finna_image.subjects.all():
