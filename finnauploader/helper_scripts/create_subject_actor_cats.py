@@ -19,14 +19,6 @@ def is_human(item):
     return any(claim.getTarget().id == human_qid for claim in instance_of)
 
 
-# Function to create a creator template in Wikimedia Commons
-def create_creator_template(name):
-    template_text = "{{Creator:%s}}" % name
-    page = pywikibot.Page(commons_site, 'Template:Creator:%s' % name)
-    page.text = template_text
-    page.save("Creating new creator template for %s" % name)
-
-
 # Function to create a commons category and a subcategory for photographs
 def create_commons_category(name):
     # Main category
