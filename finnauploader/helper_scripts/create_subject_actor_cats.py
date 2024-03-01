@@ -24,9 +24,9 @@ def create_commons_category(name):
     # Main category
     category_name = "Category:%s" % name
     category_page = pywikibot.Page(commons_site, category_name)
-    category_page.text = '{{Wikidata Infobox}}'
-    category_page.save("Creating new category: %s" % category_name)
-
+    if not category_page.exists():
+        category_page.text = "{{Wikidata Infobox}}\n\n"
+        category_page.save("Creating new category: %s" % category_name)
     return category_name
 
 
