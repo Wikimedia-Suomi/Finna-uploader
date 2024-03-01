@@ -699,13 +699,15 @@ class FinnaImage(models.Model):
     def get_creator_templates(self):
         creator_templates = []
         for creator in self.non_presenter_authors.filter(role='kuvaaja'):
-            creator_templates.append(creator.get_creator_template())
+            template = creator.get_creator_template()
+            creator_templates.append(template)
         return "".join(creator_templates)
 
     def get_institution_templates(self):
         institution_templates = []
         for institution in self.institutions.all():
-            institution_templates.append(institution.get_institution_template())
+            template = institution.get_institution_template()
+            institution_templates.append(template)
         return "".join(institution_templates)
 
     def get_permission_string(self):
