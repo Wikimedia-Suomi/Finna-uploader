@@ -717,19 +717,22 @@ class FinnaImage(models.Model):
         return self.image_right.get_copyright_template()
 
     def get_sdc_labels(self):
+        
         labels = {}
         labels['fi'] = {'language': 'fi', 'value': self.title}
 
         for title in self.alternative_titles.all():
             labels[title.lang] = {'language': title.lang, 'value': title.text}
 
-        for summary in self.summaries.all():
-            text = str(summary.text)
-            text = text.replace('sisällön kuvaus: ', '')
-            text = text.replace('innehållsbeskrivning: ', '')
-            text = text.replace('content description: ', '')
+        # TODO if label exceeds max length use title or short title instead,
+        # use long description only if known to fit in 250 character limit
+        #for summary in self.summaries.all():
+            #text = str(summary.text)
+            #text = text.replace('sisällön kuvaus: ', '')
+            #text = text.replace('innehållsbeskrivning: ', '')
+            #text = text.replace('content description: ', '')
 
-            labels[summary.lang] = {'language': summary.lang, 'value': text}
+            #labels[summary.lang] = {'language': summary.lang, 'value': text}
 
         return labels
 
