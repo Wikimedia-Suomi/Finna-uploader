@@ -148,6 +148,8 @@ class FinnaImageRight(models.Model):
     def get_copyright_template(self):
         if self.copyright == "CC BY 4.0":
             return "{{CC-BY-4.0}}\n{{FinnaReview}}"
+        elif self.copyright == "CC BY-SA 4.0":
+            return "{{CC BY-SA 4.0}}\n{{FinnaReview}}"
         else:
             print("Unknown copyright: " + self.copyright)
             exit(1)

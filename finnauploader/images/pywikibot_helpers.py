@@ -69,6 +69,8 @@ def get_comment_text(finna_image):
             
     if "CC BY 4.0" in finna_image.image_right.copyright:
         copyrighttemplate = "CC-BY-4.0"
+    if "CC BY-SA 4.0" in finna_image.image_right.copyright:
+        copyrighttemplate = "CC BY-SA 4.0"
     else:
         print("Copyright error")
         print(finna_image.image_right.copyright)

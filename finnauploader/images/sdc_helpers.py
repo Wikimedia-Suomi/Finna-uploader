@@ -52,7 +52,8 @@ def create_P275_licence(value):
         exit(1)
 
     licences = {
-        'CC BY 4.0': 'Q20007257'
+        'CC BY 4.0': 'Q20007257',
+        'CC BY-SA 4.0': 'Q18199165'
     }
 
     if value not in licences:
@@ -73,7 +74,8 @@ def create_P6216_copyright_state(value):
         return None
 
     copyright_states = {
-        'CC BY 4.0': 'Q50423863'
+        'CC BY 4.0': 'Q50423863',
+        'CC BY-SA 4.0': 'Q50423863'
     }
 
     if value not in copyright_states:
