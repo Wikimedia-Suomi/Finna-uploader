@@ -27,7 +27,8 @@ def create_categories_new(finna_image):
         'miesten puvut': 'Men wearing suits in Finland',
         'Osuusliike Elanto': 'Elanto',
         'Valmet Oy': 'Valmet',
-        'Salora Oy': 'Salora'
+        'Salora Oy': 'Salora',
+        'Veljekset Åström Oy': 'Veljekset Åström'
     }
 
     for subject in finna_image.subjects.all():
