@@ -677,7 +677,9 @@ class FinnaImage(models.Model):
         name = name.replace(" ", "_")
         name = name.replace(":", "_")
         name = name.replace("_", " ").strip()
+        
         identifier = self.identifier_string.replace(":", "-")
+        identifier = identifier.replace("/", "_") 
         if self.year and str(self.year) not in name:
             year = f'{self.year}_'
         else:
@@ -687,10 +689,6 @@ class FinnaImage(models.Model):
         name = name.replace("\n", " ") # don't allow newline in names
         name = name.replace("\t", " ") # don't allow tabulator in names
 
-        # check identifier as well
-        identifier = identifier.replace("/", "_") 
-        identifier = identifier.replace(":", "_") 
-        
         file_name = ""
         if self.master_format == 'tif':
             file_name = f'{name}_{year}({identifier}).tif'
