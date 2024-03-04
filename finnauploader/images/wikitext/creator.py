@@ -135,8 +135,14 @@ def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
     commons_site = pywikibot.Site("commons", "commons")
     repo = site.data_repository()
 
-    # Access the Wikidata item using the provided ID
-    item = pywikibot.ItemPage(repo, wikidata_id)
+    item = None
+    try:
+        # Access the Wikidata item using the provided ID
+        item = pywikibot.ItemPage(repo, wikidata_id)
+    except:
+        # at least try to tell what is missing
+        print(f'Item for Wikidata ID {wikidata_id} is missing')
+        raise
 
     # If the item doesn't exist, return None
     if not item.exists():
@@ -233,6 +239,9 @@ pywikibot.config.socket_timeout = 120
 site = pywikibot.Site("commons", "commons")  # for Wikimedia Commons
 site.login()
 
+# TODO keep timestamp or other check if list changes:
+# we should refresh/reload if there is a change without need to restart
+# since that happens very often
 nonPresenterAuthorsCache = parse_cache_page('User:FinnaUploadBot/data/nonPresenterAuthors') # noqa
 institutionsCache = parse_cache_page('User:FinnaUploadBot/data/institutions')
 collectionsCache = parse_cache_page('User:FinnaUploadBot/data/collections')

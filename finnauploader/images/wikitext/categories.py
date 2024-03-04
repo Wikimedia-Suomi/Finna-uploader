@@ -33,7 +33,8 @@ def create_categories_new(finna_image):
 
     for subject in finna_image.subjects.all():
         if subject.name in subject_categories:
-            categories.add(subject_categories[subject.name])
+            category = subject_categories[subject.name]
+            categories.add(category)
 
     for add_category in finna_image.add_categories.all():
         category_name = add_category.get_category_name()
