@@ -686,6 +686,10 @@ class FinnaImage(models.Model):
         name = name.replace("/", "_") # don't allow slash in names
         name = name.replace("\n", " ") # don't allow newline in names
         name = name.replace("\t", " ") # don't allow tabulator in names
+
+        # check identifier as well
+        identifier = identifier.replace("/", "_") 
+        identifier = identifier.replace(":", "_") 
         
         file_name = ""
         if self.master_format == 'tif':

@@ -54,8 +54,12 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
             print(msg)
             exit()
 
-    # Load file from url
-    file_page.upload(source_file_url, comment=comment, asynchronous=True)
+    try:
+        # Load file from url
+        file_page.upload(source_file_url, comment=comment, asynchronous=True)
+    except:
+        print(f"The file {commons_file_name} failed to be uploaded.")
+        raise
 
     return file_page
 
