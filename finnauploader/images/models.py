@@ -99,7 +99,7 @@ class FintoYsoMissingCache(models.Model):
 # Commons image
 class Image(models.Model):
     page_id = models.PositiveIntegerField(unique=True)
-    page_title = models.CharField(max_length=200)
+    page_title = models.CharField(max_length=250)
     finna_id = models.CharField(max_length=200, null=True, blank=True, db_index=True)
     finna_id_confirmed = models.BooleanField(default=False)
     finna_id_confirmed_at = models.DateTimeField(null=True, blank=True)
