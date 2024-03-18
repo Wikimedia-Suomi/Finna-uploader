@@ -48,6 +48,7 @@ def parse_timestamp(datestr):
     except:
         print(f'Parse_timestamp failed: {datestr}')
         pass
+    return None, None
 
 
 def parse_timestamp_string(datestr):
