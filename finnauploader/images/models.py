@@ -679,7 +679,7 @@ class FinnaImage(models.Model):
             if (self.short_title != None and len(self.short_title) < 250):
                 print("using short title name")
                 name = self.short_title
-            elif (alt_title_name != None and len(str(alt_title_name()) < 250):
+            elif (alt_title_name != None and len(str(alt_title_name)) < 250):
                 print("using alt title name")
                 name = alt_title_name
             elif (summaries_name != None and len(str(summaries_name)) < 250):
