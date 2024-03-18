@@ -4,6 +4,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 import re
+import urllib
 from datetime import datetime
 # from images.locations import parse_subject_place_string
 from images.finna import get_finna_record_url, parse_full_record
@@ -694,8 +695,6 @@ class FinnaImage(models.Model):
         name = name.replace(":", "_")
         name = name.replace("_", " ").strip()
         
-        identifier = self.identifier_string.replace(":", "-")
-        identifier = identifier.replace("/", "_") 
         if self.year and str(self.year) not in name:
             year = f'{self.year}'
         else:
@@ -712,10 +711,23 @@ class FinnaImage(models.Model):
                 else:
                     year = year + '_'
 
+        identifier = self.identifier_string.replace(":", "-")
+        identifier = identifier.replace("/", "_") 
+
         name = name.replace(" ", "_")
         name = name.replace("/", "_") # don't allow slash in names
         name = name.replace("\n", " ") # don't allow newline in names
         name = name.replace("\t", " ") # don't allow tabulator in names
+
+        if ((len(name) + len(year) + len(identifier)) > 240):
+            print("filename is becoming too long, limiting it")
+            
+        # each character with umlaut becomes at least three in HTML-encoding..
+        quoted_name = urllib.parse.quote_plus(name)
+        if (len(quoted_name) > 200):
+            print("filename is becoming too long, limiting it")
+            name = name[:200] + "__"
+            print("new name: ", name)
 
         file_name = ""
         if self.master_format == 'tif':
@@ -723,7 +735,6 @@ class FinnaImage(models.Model):
         if self.master_format == 'jpg':
             file_name = f'{name}_{year}({identifier}).jpg'
         return file_name
-
 
     def __str__(self):
         return self.finna_id
