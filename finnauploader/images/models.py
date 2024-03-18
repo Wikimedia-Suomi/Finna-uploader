@@ -676,10 +676,13 @@ class FinnaImage(models.Model):
         # let's assume we have narrow ASCII only..
         if (len(name) > 250):
             if (len(self.short_title) < 250):
+                print("using short title name")
                 name = self.short_title
             elif (len(alt_title_name) < 250):
+                print("using alt title name")
                 name = alt_title_name
             elif (len(summaries_name) < 250):
+                print("using summaries name")
                 name = summaries_name
             else:
                 print("unable to find name shorter than maximum for filename")
@@ -694,16 +697,20 @@ class FinnaImage(models.Model):
         identifier = self.identifier_string.replace(":", "-")
         identifier = identifier.replace("/", "_") 
         if self.year and str(self.year) not in name:
-            year = f'{self.year}_'
+            year = f'{self.year}'
         else:
             year = ''
 
         # if there is large difference in year don't add it to name:
         # year in different fields can vary a lot
-        timestamp, precision = parse_timestamp(self.date_string)
-        if (year != timestamp.year):
-            year = ''
-            print("year does not match date string, ignoring it")
+        if (self.date_string != None):
+            timestamp, precision = parse_timestamp(self.date_string)
+            if (timestamp != None):
+                if (year != str(timestamp.year)):
+                    print("year " + year + " does not match date string " + str(timestamp.year) + ", ignoring it")
+                    year = ''
+                else:
+                    year = year + '_'
 
         name = name.replace(" ", "_")
         name = name.replace("/", "_") # don't allow slash in names
