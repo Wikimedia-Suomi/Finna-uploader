@@ -671,6 +671,19 @@ class FinnaImage(models.Model):
             name = self.short_title
         else:
             name = name.text
+            
+        # filename in commons can't exceed 250 bytes:
+        # let's assume we have narrow ASCII only..
+        if (len(name) > 250):
+            if (len(self.short_title) < 250):
+                name = self.short_title
+            elif (len(alt_title_name) < 250):
+                name = alt_title_name
+            elif (len(summaries_name) < 250):
+                name = summaries_name
+            else:
+                print("unable to find name shorter than maximum for filename")
+            
         name = update_dates_in_filename(name)
         name = name.replace('content description: ', '')
         name = name.replace(".", "_")
@@ -684,6 +697,14 @@ class FinnaImage(models.Model):
             year = f'{self.year}_'
         else:
             year = ''
+
+        # if there is large difference in year don't add it to name:
+        # year in different fields can vary a lot
+        timestamp, precision = parse_timestamp(self.date_string)
+        if (year != timestamp.year):
+            year = ''
+            print("year does not match date string, ignoring it")
+
         name = name.replace(" ", "_")
         name = name.replace("/", "_") # don't allow slash in names
         name = name.replace("\n", " ") # don't allow newline in names
@@ -754,6 +775,7 @@ class FinnaImage(models.Model):
             return None
 
     def get_source_of_file_claim(self):
+        # TODO: when using beyond JOKA-archive, fetch correct values per image
         operator = 'Q420747'    # National library
         publisher = 'Q3029524'  # Finnish Heritage Agency
         url = self.url
