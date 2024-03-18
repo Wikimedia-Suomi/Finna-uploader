@@ -676,13 +676,13 @@ class FinnaImage(models.Model):
         # filename in commons can't exceed 250 bytes:
         # let's assume we have narrow ASCII only..
         if (len(name) > 250):
-            if (len(self.short_title) < 250):
+            if (self.short_title != None and len(self.short_title) < 250):
                 print("using short title name")
                 name = self.short_title
-            elif (len(alt_title_name) < 250):
+            elif (alt_title_name != None and len(str(alt_title_name()) < 250):
                 print("using alt title name")
                 name = alt_title_name
-            elif (len(summaries_name) < 250):
+            elif (summaries_name != None and len(str(summaries_name)) < 250):
                 print("using summaries name")
                 name = summaries_name
             else:
