@@ -12,8 +12,9 @@ def finto_search(keyword, vocab='finaf'):
         response = requests.get(url)
         data = response.json()
     except:
-        print("Finto API query failed: " + url)
-        exit(1)
+        msg = "Finto API query failed: " + url
+        raise Exception(msg)
+
     for term in data['results']:
         return get_finto_term_information(vocab, term['uri'])
 
@@ -24,11 +25,11 @@ def get_finto_term_information(vocab, term_url):
     urlparams = f'format=application/json&uri={urlencoded_term}'
     url = f'http://api.finto.fi/rest/v1/{vocab}/data?{urlparams}'
     print(url)
+    data = {}
     try:
         response = requests.get(url)
         data = response.json()
 
     except:
         print("Finto API query failed: " + url)
-        exit(1)
     return data

@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
-from images.models import FinnaImage, FintoYsoPlace, FintoYsoLabel, \
-                          CacheSparqlBool, FinnaSubjectWikidataPlace
+from images.models import FinnaImage, CacheSparqlBool, FintoYsoLabel, \
+                          FinnaSubjectWikidataPlace
 import pywikibot
 import time
 from images.finna import do_finna_search, get_collection_names
@@ -89,6 +89,8 @@ def is_valtio(place, wikidata_types, mml_types, other_types):
 
 def is_maakunta(place, wikidata_types, mml_types, other_types):
     maakunta_qids = ['Q113965203', 'Q10742', 'Q629870', 'Q217691', 'Q853697']
+    if 'Q11880042' in place:
+        return True
     types = wikidata_types + mml_types + other_types
     if is_in_haystack(types, maakunta_qids):
         return True
@@ -114,7 +116,7 @@ def is_luonto(place, wikidata_types, mml_types, other_types):
 
 
 def is_kunta(place, wikidata_types, mml_types, other_types):
-    kunta_qids = ['Q515', 'Q113965206', 'Q127448']
+    kunta_qids = ['Q515', 'Q113965206', 'Q127448', 'Q42744322']
     types = wikidata_types + mml_types + other_types
     if is_in_haystack(types, kunta_qids):
         return True
@@ -126,14 +128,16 @@ def is_kunta(place, wikidata_types, mml_types, other_types):
 def is_kaupunginosa(place, wikidata_types, mml_types, other_types):
     kaupunginosa_qids = ['Q103910131', 'Q103910453', 'Q103910131',
                          'Q103910177', 'Q63135009', 'Q63134896',
-                         'Q17468533', 'Q60495698', 'Q6566301',
-                         'Q1523821', 'Q12813115', 'Q532', 'Q5084']
+                         'Q17468533', 'Q60495698', 'Q6566301', 'Q18333556'
+                         'Q1523821', 'Q12813115', 'Q532', 'Q5084', 'Q1523821']
     types = wikidata_types + mml_types + other_types
     if is_in_haystack(types, kaupunginosa_qids):
         return True
 
     # Pasila
     if 'Q1636613' in place:
+        return True
+    if 'Q21721289' in place:
         return True
     return False
 
@@ -190,7 +194,7 @@ def detect_place_type(place, wikidata_types, mml_types):
             found = True
 
     if not found:
-        print(f'No wikidata ids: {place}')
+        print(f'ERROR: No wikidata ids: {place}')
         print(mml_types)
         print(wikidata_types)
         print(get_p31_values(place))
@@ -349,14 +353,21 @@ def get_best_location_ids(row):
     if len(alt_ids):
         print("ALT_IDS:")
         print(alt_ids)
-        known_ids = ['http://www.wikidata.org/entity/Q1636182',
+        known_ids = ['http://www.wikidata.org/entity/Q1472085',
+                     'http://www.wikidata.org/entity/Q2092330'
+                     'http://www.wikidata.org/entity/Q2092330'
+                     'http://www.wikidata.org/entity/Q27898927',
+                     'http://www.wikidata.org/entity/Q6305010',
+                     'http://www.wikidata.org/entity/Q3745222',
+                     'http://www.wikidata.org/entity/Q68194119',
+                     'http://www.wikidata.org/entity/Q1636182',
                      'http://www.wikidata.org/entity/Q10426741']
 
         for known_id in known_ids:
             if known_id in alt_ids:
                 best_ids = alt_ids
                 return best_ids
-        exit(1)
+        raise Exception(f'NON-WHITELISTED ALT ID: {alt_ids}')
     return best_ids
 
 
@@ -382,24 +393,60 @@ class Command(BaseCommand):
         parser.add_argument(
             '--seek',
             type=str,
-            help='Finna lookfor argument.',
+            help='Seek until record with text is found.',
         )
 
     def process_finna_record(self, data):
         print(data['id'])
         r = FinnaImage.objects.create_from_data(data)
+        if r.finna_id == 'museovirasto.25B891D0C4EB778A6DEF6B86ADC0138F':
+            return
+        if r.finna_id == 'museovirasto.435B512AF60C1ABB6BEDC3238803D84B':
+            return
+        if r.finna_id == 'museovirasto.3A4800D8302EE6BE67ABF6ADD37FF626':
+            return
+        if r.finna_id == 'museovirasto.C6EAF127009738B35052BE9108026B38':
+            return
+        if r.finna_id == 'museovirasto.C80AA2077007023DE5A691B575F20BD1':
+            return
+        if r.finna_id == 'museovirasto.0C0007A8A417CE9B274F9FB40DE45994':
+            return
+        if r.finna_id == 'museovirasto.E5DC08AEADDE5222D8DA081FBC63F735':
+            return
+        if r.finna_id == 'museovirasto.2C35EC09B2F6F9B2031A236E786FD506':
+            return
+        if r.finna_id == 'museovirasto.5403628c-bf32-4b0a-84de-819217dbb151':
+            return
+        if r.finna_id == 'museovirasto.d694af91-4222-4501-99b8-646e67c94efe':
+            return
+        if r.finna_id == 'museovirasto.99cabab6-26d4-4028-8049-4d3b1ca6dc25':
+            return
+        if r.finna_id == 'museovirasto.340b5bc4-e6de-414e-aceb-440964210447':
+            return
+        if r.finna_id == 'museovirasto.BF9E5910300AD9A84FD041642CAA09E8':
+            return
+        if r.finna_id == 'museovirasto.778C10B2FB5E1AA7CEA251831875611B':
+            return
+        if r.finna_id == 'museovirasto.5BC9610B7A4F964EDC33F27B357B145C':
+            return
+
         if r.best_wikidata_location.exists():
             print("Skipping: best_wikidata_location.exists()")
         print(r.finna_json_url)
 
+        print("parsed_subject_places")
         parsed_subject_places = parse_subject_place_string(r)
+        print("update_yso_places")
         update_yso_places(parsed_subject_places, r.finna_id)
 
         wikidata_location_ids = get_location_override(r)
         if len(parsed_subject_places) and not wikidata_location_ids:
             row = convert_finto_to_wikidata(parsed_subject_places)
             print(row)
-            wikidata_location_ids = get_best_location_ids(row)
+            try:
+                wikidata_location_ids = get_best_location_ids(row)
+            except:
+                return
         obj = FinnaSubjectWikidataPlace.objects
         for wikidata_location_id in wikidata_location_ids:
             location, created = obj.get_or_create(uri=wikidata_location_id)
@@ -424,6 +471,11 @@ class Command(BaseCommand):
                         print(f'{n} skipping ' + str(record['id']))
                         continue
                     seek = ''
+                    if 'Oulujoki' in str(record):
+                        continue
+                    if 'Salpausselkä' in str(record):
+                        continue
+
                     self.process_finna_record(record)
             else:
                 print("XXX")

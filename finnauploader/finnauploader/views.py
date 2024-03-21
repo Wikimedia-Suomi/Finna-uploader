@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework import status, viewsets
 from django.shortcuts import get_object_or_404
 from watson import search as watson
+from images.finna import get_finna_record
 
 from images.wikitext.photographer import get_wikitext_for_new_image
 from images.finna_image_sdc_helpers import get_structured_data_for_new_image
@@ -17,8 +18,6 @@ from images.pywikibot_helpers import edit_commons_mediaitem, \
 class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = FinnaImage.objects.filter(
                                          identifier_string__contains='JOKA',
-                                         already_in_commons=False,
-                                         skipped=False,
                                          )
     serializer_class = FinnaImageSerializer
 
@@ -28,6 +27,11 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Fetch the instance with the given primary key (pk)
         finna_image = get_object_or_404(FinnaImage, pk=pk)
+
+        # Update to latest finna_record
+        record = get_finna_record(finna_image.finna_id, True)
+        record = record['records'][0]
+        finna_image = FinnaImage.objects.create_from_data(record)
 
         filename = finna_image.pseudo_filename
         image_url = finna_image.master_url
@@ -91,6 +95,9 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
         search_query = request.query_params.get('searchkey', '')
 
         q = self.get_queryset()
+        q = q.filter(already_in_commons=False,
+                     skipped=False)
+
         if search_query:
             plus_words = []
             minus_words = []

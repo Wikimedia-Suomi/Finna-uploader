@@ -96,9 +96,9 @@ def is_location_within_administrative_entity(location, entity, slow):
     entity_id = entity_id.replace('https://www.wikidata.org/wiki/', '')
 
     if slow:
-        query = f'SELECT * WHERE {{ wd:{location_id}  (p:P1365/ps:P1365|p:P1366/ps:P1366|p:P361/ps:P361|p:P131/ps:P131)* wd:{entity_id} }}' # noqa
+        query = f'SELECT * WHERE {{ wd:{location_id}  (wdt:P7888|wdt:P276|p:P1365/ps:P1365|p:P1366/ps:P1366|p:P361/ps:P361|p:P131/ps:P131)* wd:{entity_id} }}' # noqa
     else:
-        query = f'SELECT * WHERE {{ wd:{location_id} (wdt:P1365|wdt:P1366|wdt:P361|wdt:P131)* wd:{entity_id} }}' # noqa
+        query = f'SELECT * WHERE {{ wd:{location_id} (wdt:P7888|wdt:P276|wdt:P1365|wdt:P1366|wdt:P361|wdt:P131)* wd:{entity_id} }}' # noqa
     print(query)
     data = sparql.select(query)
     print(query)
@@ -196,6 +196,9 @@ def translate_location_keyword(keyword):
     if keyword in locationKeywords:
         finto_uri = get_yso_using_wikidata_id(locationKeywords[keyword])[0]
         f = get_finto_term_information('yso', finto_uri)
+        if 'graph' not in f:
+            return
+
         for graph in f['graph']:
             if 'prefLabel' in graph:
                 for label in graph['prefLabel']:
