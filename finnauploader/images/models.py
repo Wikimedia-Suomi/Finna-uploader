@@ -20,7 +20,7 @@ from images.sdc_helpers import create_P275_licence, \
                                            create_P7482_source_of_file, \
                                            create_P170_author
 
-from images.wikitext.creator import get_author_wikidata_id, \
+from images.wikitext.cache_wikidata import get_author_wikidata_id, \
                                     get_creator_template_from_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_subject_image_category_from_wikidata_id, \
@@ -285,7 +285,8 @@ class FinnaCollection(models.Model):
         return self.name
 
     def get_wikidata_id(self):
-        return get_collection_wikidata_id(self.name)
+        wikidata_id = get_collection_wikidata_id(self.name)
+        return wikidata_id
 
     def get_collection_claim(self, identifier=None):
         wikidata_id = self.get_wikidata_id()
@@ -300,7 +301,8 @@ class FinnaInstitution(models.Model):
         return self.value
 
     def get_wikidata_id(self):
-        return get_institution_wikidata_id(self.translated)
+        wikidata_id = get_institution_wikidata_id(self.translated)
+        return wikidata_id
 
     def get_institution_template(self):
         wikidata_id = self.get_wikidata_id()
@@ -706,8 +708,8 @@ class FinnaImage(models.Model):
                 if (year != str(timestamp.year)):
                     print("year " + year + " does not match date string " + str(timestamp.year) + ", ignoring it")
                     year = ''
-                else:
-                    year = year + '_'
+        if (len(year) > 0):
+            year = year + '_'
 
         identifier = self.identifier_string.replace(":", "-")
         identifier = identifier.replace("/", "_") 
@@ -792,8 +794,8 @@ class FinnaImage(models.Model):
 
     def get_source_of_file_claim(self):
         # TODO: when using beyond JOKA-archive, fetch correct values per image
-        operator = 'Q420747'    # National library
         publisher = 'Q3029524'  # Finnish Heritage Agency
+        operator = 'Q420747'    # National library
         url = self.url
 
         # FIXME: Only Finnish heritage agency images are supported now
