@@ -227,12 +227,13 @@ if __name__ == "__main__":
         print(f"Expected name from parameter: {expectedname}")
 
         qcodes = searchname(expectedname)
-        for itemfoundq in qcodes:
-            # NOTE! server gives suggestions, verify it matches!
-            print("potential match exists ", str(itemfoundq))
-            if (checkqcode(expectedname, itemfoundq) == True):
-                print("found exact match.")  # noqa
-                exit(1)
+        if (qcodes != None):
+            for itemfoundq in qcodes:
+                # NOTE! server gives suggestions, verify it matches!
+                print("potential match exists ", str(itemfoundq))
+                if (checkqcode(expectedname, itemfoundq) == True):
+                    print("found exact match.")  # noqa
+                    exit(1)
         
         addname(expectedname)
     else:
