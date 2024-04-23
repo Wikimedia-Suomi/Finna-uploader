@@ -9,10 +9,10 @@ from images.locations import is_location_within_administrative_entity, \
                              update_yso_places, test_property_value, \
                              get_p31_values, get_wikidata_items_using_yso, \
                              FintoYsoMissingCache, get_location_override
-from images.wikitext.creator import parse_cache_page
+from images.wikitext.cache_wikidata import parse_cache_page
 
-# CacheSparqlBool.objects.all().delete()
-# FintoYsoMissingCache.objects.all().delete()
+#CacheSparqlBool.objects.all().delete()
+#FintoYsoMissingCache.objects.all().delete()
 page_title = 'User:FinnaUploadBot/data/locationOverride'
 locationOverrideCache = parse_cache_page(page_title)
 print(locationOverrideCache)
@@ -474,6 +474,10 @@ class Command(BaseCommand):
                     if 'Oulujoki' in str(record):
                         continue
                     if 'Salpausselkä' in str(record):
+                        continue
+                    if 'Tyris' in str(record):
+                        continue
+                    if 'Tammela' in str(record):
                         continue
 
                     self.process_finna_record(record)
