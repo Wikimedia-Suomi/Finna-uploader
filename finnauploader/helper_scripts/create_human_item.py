@@ -99,6 +99,11 @@ def isItemLastName(item):
         if (claim.getTarget().id == 'Q29042997'):
             print("instance double family name", claim.getTarget().id)
             isLastName = True
+
+        if (claim.getTarget().id == 'Q56219051'):
+            print("instance Mac of Mc prefix", claim.getTarget().id)
+            isLastName = True
+
     return isLastName
 
 def isItemFirstName(item):
