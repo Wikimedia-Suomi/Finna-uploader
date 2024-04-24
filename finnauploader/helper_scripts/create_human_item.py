@@ -199,8 +199,10 @@ def getLastNameQcode(qcodes, name):
                 return itemqcode
     return ''
 
-def validatenamecode(repo, nametitle, nameqcode):
-    if (len(nameqcode) == 0):
+# check that given item matches with expected label:
+# searches can give partial matches
+def validatenametitle(repo, nametitle, nameqcode):
+    if (len(nameqcode) == 0 or len(nametitle) == 0):
         return False
     
     nameitem = pywikibot.ItemPage(repo, nameqcode)
@@ -208,15 +210,17 @@ def validatenamecode(repo, nametitle, nameqcode):
         return False
 
     dictionary = nameitem.get()
+    # not support first or last name -> not valid name
     if (isItemLastName(nameitem) == False and isItemFirstName(nameitem) == False):
         return False
     
     label = getlabelfromitem(nameitem)
-    if (label != nametitle):
-        return False
-    return True
+    if (label == nametitle):
+        # exact match
+        return True
+    return False
 
-def checkqcodesforhuman(repo, nametitle, qcodes):
+def checkqcodesforhuman(repo, nametitle, firstname, lastname, qcodes):
     if (qcodes == None):
         print("No items")
         return False
@@ -225,6 +229,9 @@ def checkqcodesforhuman(repo, nametitle, qcodes):
         return False
 
     for itemqcode in qcodes:
+        isMatchingFirstName = False
+        isMatchingLastName = False
+        
         humanitem = pywikibot.ItemPage(repo, itemqcode)
         if (humanitem.isRedirectPage() == True):
             continue
@@ -241,37 +248,65 @@ def checkqcodesforhuman(repo, nametitle, qcodes):
             continue
 
         if 'P734' in humanitem.claims:
-            # TODO: check label if it matches to last name
+            #  check label if it matches to last name
             print("Already has property for last name")
-            #getlabelfromitem
-            #continue
+            
+            plist = humanitem.claims['P734']
+            for p in plist:
+                target = p.getTarget()
+                if (validatenametitle(repo, lastname, target.id) == False):
+                    continue
+                else:
+                    isMatchingLastName = True
 
         if 'P735' in humanitem.claims:
-            # TODO: check label if it matches to first name
+            #  check label if it matches to first name
             print("Already has property for given name")
-            #getlabelfromitem
-            #continue
+            
+            plist = humanitem.claims['P735']
+            for p in plist:
+                target = p.getTarget()
+                if (validatenametitle(repo, firstname, target.id) == False):
+                    continue
+                else:
+                    isMatchingFirstName = True
 
+        if (isMatchingLastName == True and isMatchingFirstName == True):
+            label = getlabelfromitem(humanitem)
+            print("First and last name targets match", label)
+            return True
         
         ## double check label for match
         label = getlabelfromitem(humanitem)
         if (label != None and label.find(nametitle) > 0):
+
+            if (nametitle == label):
+                print("Found exact matching label", label)
+                return True
+            
             # check that last name is last (not first) in the label
             indexlast = label.rfind(" ", 0, len(label)-1)
             if (indexlast < 0):
                 print("Item does have first and last name", label)
                 #continue
+            firstfromlabel = label[:indexlast]
+            if (firstfromlabel == firstname):
+                print("Item has matching first name in label", firstfromlabel)
+                isMatchingFirstName = True
+                
             lastfromlabel = label[indexlast+1:]
-            #if (lastfromlabel != nametitle):
-                #print("Item does have matching last name", lastfromlabel)
-                #continue
-            if (nametitle == label):
-                print("Found exact matching label", label)
+            if (lastfromlabel == lastname):
+                print("Item has matching last name in label", lastfromlabel)
+                isMatchingLastName = True
+
+            if (isMatchingLastName == True and isMatchingFirstName == True):
+                print("First and last name in label matches", label)
                 return True
-        else:
-            print("Label is not ok", itemqcode)
+
+        #else:
+            #print("Label is not ok", itemqcode)
         
-    return True
+    return False
 
 def getqcodesfromresponse(record):
     qcodes = list()
@@ -288,11 +323,6 @@ def getqcodesfromresponse(record):
 def searchbyname(repo, wtitle, lang='fi'):
     print(" ---------")
     print("searching for ", wtitle)
-
-    ## check we have correct qcode for lastname
-    #if (validatenamecode(repo, wtitle, nameqcode) == False):
-        #print("title and code is not for name", wtitle, nameqcode)
-        #return False
 
     qcodes = list()
     hasMoreItems = True
@@ -428,7 +458,7 @@ if __name__ == "__main__":
         repo = wdsite.data_repository()
 
         qcodes = searchbyname(repo, complete_name)
-        if (checkqcodesforhuman(repo, complete_name, qcodes) == True):
+        if (checkqcodesforhuman(repo, complete_name, first_name, last_name, qcodes) == True):
             print(f"Human already exists by same name: {complete_name}")
             exit(1)
 
