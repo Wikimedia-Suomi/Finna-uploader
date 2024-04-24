@@ -431,6 +431,12 @@ def addhuman(repo, complete_name, given_name_qcode, last_name_qcode):
     
     print('All done', newitem.getID())
 
+# remove pre- and post-whitespaces when mwparser leaves them
+def trimlr(string):
+    string = string.lstrip()
+    string = string.rstrip()
+    return string
+
 # main()
 
 if __name__ == "__main__":
@@ -449,7 +455,10 @@ if __name__ == "__main__":
             # first name given first
             first_name = expectedlastname
             last_name = expectedfirstname
-            
+
+        first_name = trimlr(first_name)
+        last_name = trimlr(last_name)
+
         complete_name = first_name + " " + last_name
         print(f"Complete name from parameter: {complete_name}")
 
