@@ -479,6 +479,8 @@ class Command(BaseCommand):
                         continue
                     if 'Tammela' in str(record):
                         continue
+                    if 'Siperia' in str(record):
+                        continue
 
                     self.process_finna_record(record)
             else:
