@@ -5,37 +5,16 @@ import json
 import xml.etree.ElementTree as ET
 import html
 
+from images.wikitext.cache_wikidata import get_collection_names, \
+                                    get_collection_name_from_alias
+
+
 s = requests.Session()
 s.headers.update({'User-Agent': 'FinnaUploader 0.1'})
 
-
-# Allowed --collections values
-# See also finna.py: do_finna_search()
-def get_collection_names():
-    collections = [
-                  'Kuvasiskot',
-                  'Studio Kuvasiskojen kokoelma',
-                  'JOKA',
-                  'JOKA Journalistinen kuva-arkisto',
-                  'SA-kuva',
-                  'Kansallisgalleria Ateneumin taidemuseo'
-                  ]
-    return collections
-
-
-# Shortcut -> long-name translations
-def get_collection_name_from_alias(name):
-    aliases = {
-             'Kuvasiskot': 'Studio Kuvasiskojen kokoelma',
-             'JOKA': 'JOKA Journalistinen kuva-arkisto',
-             'SA-kuva': '0/SA-kuva/',
-             'Kansallisgalleria Ateneumin taidemuseo':
-             '0/Kansallisgalleria Ateneumin taidemuseo/'
-    }
-    if name in aliases:
-        return aliases[name]
-    else:
-        return name
+# used by finna_search.py
+def get_supported_collections():
+    return get_collection_names()
 
 
 # urlencode Finna parameters
@@ -99,6 +78,7 @@ def add_finna_api_default_field_parameters():
 
 
 def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, full=True): # noqa
+    
     data = None
     url = "https://api.finna.fi/v1/search?"
     url += add_finna_api_free_images_only_parameters()

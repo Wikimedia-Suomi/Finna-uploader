@@ -29,6 +29,33 @@ def get_institution_name(institutions):
     print(f'Missing in {url}')
     exit(1)
 
+# Allowed --collections values
+# See also finna.py: do_finna_search()
+def get_collection_names():
+    collections = [
+                  'Kuvasiskot',
+                  'Studio Kuvasiskojen kokoelma',
+                  'JOKA',
+                  'JOKA Journalistinen kuva-arkisto',
+                  'SA-kuva',
+                  'Kansallisgalleria Ateneumin taidemuseo'
+                  ]
+    return collections
+
+
+# Shortcut -> long-name translations
+def get_collection_name_from_alias(name):
+    aliases = {
+             'Kuvasiskot': 'Studio Kuvasiskojen kokoelma',
+             'JOKA': 'JOKA Journalistinen kuva-arkisto',
+             'SA-kuva': '0/SA-kuva/',
+             'Kansallisgalleria Ateneumin taidemuseo':
+             '0/Kansallisgalleria Ateneumin taidemuseo/'
+    }
+    if name in aliases:
+        return aliases[name]
+    else:
+        return name
 
 def get_collection_wikidata_id(name):
     if name in collectionsCache:

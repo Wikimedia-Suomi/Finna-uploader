@@ -3,7 +3,7 @@ from django.db import transaction
 import time
 from images.models import FinnaImage
 from images.finna import do_finna_search, \
-                         get_collection_names
+                         get_supported_collections
     
 
 class Command(BaseCommand):
@@ -14,7 +14,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--collection',
             type=str,
-            choices=get_collection_names(),
+            choices=get_supported_collections(),
             help=('Finna type argument. '
                   'Argument selects where lookfor matches.')
         )
