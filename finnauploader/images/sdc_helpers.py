@@ -128,19 +128,18 @@ def create_P170_author(value, role):
 def create_P195_collection(wikidata_id, collection_number):
     if not wikidata_id:
         return None
-    if not collection_number:
-        # collection can be added later
-        print("collection number missing, wikidata_id:", wikidata_id)
-        return None
 
     claim_target = pywikibot.ItemPage(wikidata_site, wikidata_id)
     claim = pywikibot.Claim(wikidata_site, 'P195')
     claim.setTarget(claim_target)
 
-    # P217 collection number
-    qualifier = pywikibot.Claim(wikidata_site, 'P217')
-    qualifier.setTarget(collection_number)
-    claim.addQualifier(qualifier, summary='Adding role qualifier')
+    if collection_number:
+        # P217 collection number
+        qualifier = pywikibot.Claim(wikidata_site, 'P217')
+        qualifier.setTarget(collection_number)
+        claim.addQualifier(qualifier, summary='Adding role qualifier')
+    else:
+        print("collection number missing, wikidata_id:", wikidata_id)
 
     return claim
 
