@@ -724,6 +724,10 @@ class FinnaImage(models.Model):
         name = name.replace("\t", " ") # don't allow tabulator in names
         name = name.replace("\r", " ") # don't allow carriage return in names
 
+        # try to remove soft-hyphens from name while we can
+        name = name.replace(u"\u00A0", "")
+        name = name.replace("\xc2\xa0", "")
+
         if ((len(name) + len(year) + len(identifier)) > 240):
             print("filename is becoming too long, limiting it")
             
@@ -733,12 +737,20 @@ class FinnaImage(models.Model):
             print("filename is becoming too long, limiting it")
             name = name[:200] + "__"
             print("new name: ", name)
+            
+        # wiki doesn't allow soft hyphen in names:
+        # normal replace() does not work on silent characters for some reason?
+        # -> kludge around it
+        quoted_name = urllib.parse.quote_plus(name)
+        quoted_name = quoted_name.replace("%C2%AD", "") 
+        name = urllib.parse.unquote(quoted_name)
 
         file_name = ""
         if self.master_format == 'tif':
             file_name = f'{name}_{year}({identifier}).tif'
         if self.master_format == 'jpg':
             file_name = f'{name}_{year}({identifier}).jpg'
+
         return file_name
 
     def __str__(self):
