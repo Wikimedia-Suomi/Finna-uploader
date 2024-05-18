@@ -711,13 +711,18 @@ class FinnaImage(models.Model):
         if (len(year) > 0):
             year = year + '_'
 
-        identifier = self.identifier_string.replace(":", "-")
-        identifier = identifier.replace("/", "_") 
+        # some images don't have identifier to be used
+        if (self.identifier_string != None):
+            identifier = self.identifier_string.replace(":", "-")
+            identifier = identifier.replace("/", "_")
+        else:
+            identifier = ''
 
         name = name.replace(" ", "_")
         name = name.replace("/", "_") # don't allow slash in names
         name = name.replace("\n", " ") # don't allow newline in names
         name = name.replace("\t", " ") # don't allow tabulator in names
+        name = name.replace("\r", " ") # don't allow carriage return in names
 
         if ((len(name) + len(year) + len(identifier)) > 240):
             print("filename is becoming too long, limiting it")
