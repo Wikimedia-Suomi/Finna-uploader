@@ -27,7 +27,10 @@ def create_categories_new(finna_image):
         'Osuusliike Elanto': 'Elanto',
         'Valmet Oy': 'Valmet',
         'Salora Oy': 'Salora',
-        'Veljekset Åström Oy': 'Veljekset Åström'
+        'Veljekset Åström Oy': 'Veljekset Åström',
+        'Turun linna' : 'Turku Castle',
+        'Hämeen linna' : 'Häme Castle',
+        'Olavinlinna' : 'Olavinlinna'
     }
 
     for subject in finna_image.subjects.all():
