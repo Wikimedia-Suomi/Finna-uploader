@@ -24,7 +24,6 @@ def create_categories_new(finna_image):
         'muotokuvat': 'Portrait photographs',
         'henkilökuvat': 'Portrait photographs',
         'professorit': 'Professors from Finland',
-        'miesten puvut': 'Men wearing suits in Finland',
         'Osuusliike Elanto': 'Elanto',
         'Valmet Oy': 'Valmet',
         'Salora Oy': 'Salora',
@@ -35,6 +34,11 @@ def create_categories_new(finna_image):
         if subject.name in subject_categories:
             category = subject_categories[subject.name]
             categories.add(category)
+
+        # needs more detailed reasoning for categories:
+        # if image location is not from Finland, don't categorize under Finland..
+        if subject.name == 'miesten puvut' and 'Suomi' in depicted_places:
+            categories.add('Men wearing suits in Finland')
 
     for add_category in finna_image.add_categories.all():
         category_name = add_category.get_category_name()
