@@ -656,7 +656,15 @@ class FinnaImage(models.Model):
 
     @property
     def pseudo_filename(self):
-        if self.master_format != 'tif' and self.master_format != 'jpg':
+        unsupported_format = True
+        if (self.master_format == 'tif' 
+            or self.master_format == 'tiff' 
+            or self.master_format == 'jpg' 
+            or self.master_format == 'jpeg'
+            or self.master_format == 'image/jpeg'):
+            unsupported_format = False
+        
+        if (unsupported_format == True):
             print(f'Unknown format: {self.master_format}')
             exit(1)
             
@@ -748,7 +756,7 @@ class FinnaImage(models.Model):
         file_name = ""
         if self.master_format == 'tif':
             file_name = f'{name}_{year}({identifier}).tif'
-        if self.master_format == 'jpg':
+        if self.master_format == 'jpg' or self.master_format == 'jpeg':
             file_name = f'{name}_{year}({identifier}).jpg'
 
         return file_name
