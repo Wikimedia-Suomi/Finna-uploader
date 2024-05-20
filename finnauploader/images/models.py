@@ -656,15 +656,20 @@ class FinnaImage(models.Model):
 
     @property
     def pseudo_filename(self):
-        unsupported_format = True
-        if (self.master_format == 'tif' 
-            or self.master_format == 'tiff' 
-            or self.master_format == 'jpg' 
-            or self.master_format == 'jpeg'
-            or self.master_format == 'image/jpeg'):
-            unsupported_format = False
+        format_to_extension = {
+            'tif': 'tif',
+            'tiff': 'tif',
+            'png': 'png',
+            'jpg': 'jpg',
+            'jpeg': 'jpg',
+            'image/jpeg': 'jpg'
+        }
+
+        extension = ""
+        if self.master_format in format_to_extension:
+            extension = format_to_extension[self.master_format]
         
-        if (unsupported_format == True):
+        if (len(extension) == 0):
             print(f'Unknown format: {self.master_format}')
             exit(1)
             
@@ -753,11 +758,11 @@ class FinnaImage(models.Model):
         quoted_name = quoted_name.replace("%C2%AD", "") 
         name = urllib.parse.unquote(quoted_name)
 
-        file_name = ""
-        if self.master_format == 'tif':
-            file_name = f'{name}_{year}({identifier}).tif'
-        if self.master_format == 'jpg' or self.master_format == 'jpeg':
-            file_name = f'{name}_{year}({identifier}).jpg'
+        if (len(identifier) > 0):
+            file_name = f'{name}_{year}({identifier}).{extension}'
+        else:
+            # in some odd cases there is no identifier (accession number) for the file
+            file_name = f'{name}_{year}.{extension}'
 
         return file_name
 
