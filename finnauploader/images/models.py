@@ -827,13 +827,26 @@ class FinnaImage(models.Model):
         publisher = 'Q3029524'  # Finnish Heritage Agency
         operator = 'Q420747'    # National library
         url = self.url
+        
+        instlist = list()
 
         # FIXME: Only Finnish heritage agency images are supported now
         for institution in self.institutions.all():
-            if institution.get_wikidata_id() != publisher:
-                print(f'{institution} wikidata id is not {publisher}')
-                exit(1)
-        return create_P7482_source_of_file(url, operator, publisher)
+            #instcode = get_institution_wikidata_id(institution.name)
+            instlist.append(institution.get_wikidata_id())
+
+            #if institution.get_wikidata_id() != publisher:
+                #print(f'{institution} wikidata id is not {publisher}')
+                #exit(1)
+        if (len(instlist) == 0):
+            print(f'no institutions found')
+            exit(1)
+        if (len(instlist) > 1):
+            # TODO: check that create_P7482_source_of_file() can handle multiple institutions
+            print(f'too many institutions found')
+            exit(1)
+                
+        return create_P7482_source_of_file(url, operator, instlist[0])
 
 
 class FinnaImageHash(models.Model):
