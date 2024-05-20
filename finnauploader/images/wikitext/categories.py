@@ -42,7 +42,12 @@ def create_categories_new(finna_image):
         # if image location is not from Finland, don't categorize under Finland..
         if subject.name == 'miesten puvut' and 'Suomi' in depicted_places:
             categories.add('Men wearing suits in Finland')
-
+        #if subject.name == 'naisten puvut' and 'Suomi' in depicted_places:
+            #categories.add('Women wearing suits in Finland')
+            
+        if subject.name == 'kartanot' and 'Louhisaari' in depicted_places:
+            categories.add('Louhisaari Manor')
+    
     for add_category in finna_image.add_categories.all():
         category_name = add_category.get_category_name()
         if category_name:
