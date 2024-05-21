@@ -33,6 +33,7 @@ def create_categories_new(finna_image):
         'Hämeen linna' : 'Häme Castle',
         'Olavinlinna' : 'Olavinlinna',
         'Hvitträsk': 'Hvitträsk',
+        'höyrylaivat': 'Steamboats',
         'kiväärit' : 'Rifles'
     }
     
