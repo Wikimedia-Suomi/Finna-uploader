@@ -42,7 +42,11 @@ def create_categories_new(finna_image):
         'miesten puvut': 'Men wearing suits in Finland',
         'muotinäytökset' : 'Fashion shows in Finland',
         'laivat' : 'Ships in Finland',
-        'autokilpailut' : 'Automobile races in Finland'
+        'autokilpailut' : 'Automobile races in Finland',
+        'asuinrakennukset' : 'Houses in Finland',
+        'tehtaat' : 'Factories in Finland',
+        'teollisuusrakennukset' : 'Factories in Finland',
+        'auto-onnettomuudet' : 'Automobile accidents in Finland'
     }
 
     for subject in finna_image.subjects.all():
