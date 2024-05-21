@@ -43,23 +43,38 @@ def create_categories_new(finna_image):
     #
     # note: there are also "from" and "of" categories in Commons, 
     # can we guess the right one automatically?
+    # aircraft may be "in" city or "at" airport..
     subject_categories_with_country = {
-        'professorit': 'Professors from Finland',
-        'kauppaneuvokset' : 'Businesspeople from Finland',
-        'miesten puvut': 'Men wearing suits in Finland',
-        'muotinäytökset' : 'Fashion shows in Finland',
-        'laivat' : 'Ships in Finland',
-        'veneet' : 'Boats in Finland',
-        'linja-autot': 'Buses in Finland',
-        'kuorma-autot' : 'Trucks in Finland',
-        'henkilöautot' : 'Automobiles in Finland',
-        'asuinrakennukset' : 'Houses in Finland',
-        'liikerakennukset' : 'Buildings in Finland',
-        'nosturit' : 'Cranes in Finland',
-        'tehtaat' : 'Factories in Finland',
-        'teollisuusrakennukset' : 'Factories in Finland',
-        'laulujuhlat' : 'Music festivals in Finland'
+        'professorit': 'Professors from',
+        'kauppaneuvokset' : 'Businesspeople from',
+        'toimitusjohtajat' : 'Businesspeople from',
+        'miesten puvut': 'Men wearing suits in',
+        'muotinäytökset' : 'Fashion shows in',
+        'lentonäytökset': 'Air shows in',
+        'laivat' : 'Ships in',
+        'veneet' : 'Boats in',
+        'lentokoneet' : 'Aircraft in',
+        'linja-autot': 'Buses in',
+        'kuorma-autot' : 'Trucks in',
+        'henkilöautot' : 'Automobiles in',
+        'asuinrakennukset' : 'Houses in',
+        'liikerakennukset' : 'Buildings in',
+        'nosturit' : 'Cranes in',
+        'tehtaat' : 'Factories in',
+        'teollisuusrakennukset' : 'Factories in',
+        'laulujuhlat' : 'Music festivals in',
+        'rukit' : 'Spinning wheels in'
     }
+    
+    cat_place = ""
+    if 'Helsinki' in depicted_places:
+        cat_place = "Helsinki"
+    elif 'Turku' in depicted_places:
+        cat_place = "Turku"
+    elif 'Oulu' in depicted_places:
+        cat_place = "Oulu"
+    elif 'Suomi' in depicted_places:
+        cat_place = "Finland"
 
     for subject in finna_image.subjects.all():
         if subject.name in subject_categories:
@@ -67,7 +82,7 @@ def create_categories_new(finna_image):
             categories.add(category)
 
         if subject.name in subject_categories_with_country and 'Suomi' in depicted_places:
-            category = subject_categories_with_country[subject.name]
+            category = subject_categories_with_country[subject.name] + " " + "Finland"
             categories.add(category)
 
         if (subject.name == 'kartanot' and 'Louhisaari' in depicted_places):
@@ -79,13 +94,11 @@ def create_categories_new(finna_image):
             categories.add(category_name)
 
     if finna_image.year:
-        if 'Portrait photographs' in categories:
+        if 'Portrait photographs' in categories and 'Suomi' in depicted_places:
             categories.add(f'People of Finland in {finna_image.year}')
 
-        if 'Helsinki' in depicted_places:
-            categories.add(f'{finna_image.year} in Helsinki')
-        elif 'Suomi' in depicted_places:
-            categories.add(f'{finna_image.year} in Finland')
+        if (len(cat_place) > 0):
+            categories.add(f'{finna_image.year} in {cat_place}')
 
     categories.add('Files uploaded by FinnaUploadBot')
 
