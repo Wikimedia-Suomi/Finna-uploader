@@ -28,9 +28,11 @@ def create_categories_new(finna_image):
         'Valmet Oy': 'Valmet',
         'Salora Oy': 'Salora',
         'Veljekset Åström Oy': 'Veljekset Åström',
+        'Yntyneet Paperitehtaat': 'Yntyneet Paperitehtaat',
         'Turun linna' : 'Turku Castle',
         'Hämeen linna' : 'Häme Castle',
         'Olavinlinna' : 'Olavinlinna',
+        'Hvitträsk': 'Hvitträsk',
         'kiväärit' : 'Rifles'
     }
     
@@ -42,11 +44,13 @@ def create_categories_new(finna_image):
         'miesten puvut': 'Men wearing suits in Finland',
         'muotinäytökset' : 'Fashion shows in Finland',
         'laivat' : 'Ships in Finland',
+        'henkilöautot' : 'Automobiles in Finland',
         'autokilpailut' : 'Automobile races in Finland',
+        'auto-onnettomuudet' : 'Automobile accidents in Finland',
         'asuinrakennukset' : 'Houses in Finland',
         'tehtaat' : 'Factories in Finland',
         'teollisuusrakennukset' : 'Factories in Finland',
-        'auto-onnettomuudet' : 'Automobile accidents in Finland'
+        'laulujuhlat' : 'Music festivals in Finland'
     }
 
     for subject in finna_image.subjects.all():
