@@ -27,7 +27,6 @@ def create_categories_new(finna_image):
     subject_categories = {
         'muotokuvat': 'Portrait photographs',
         'henkilökuvat': 'Portrait photographs',
-        'professorit': 'Professors from Finland',
         'Osuusliike Elanto': 'Elanto',
         'Valmet Oy': 'Valmet',
         'Salora Oy': 'Salora',
@@ -45,6 +44,8 @@ def create_categories_new(finna_image):
     # note: there are also "from" and "of" categories in Commons, 
     # can we guess the right one automatically?
     subject_categories_with_country = {
+        'professorit': 'Professors from Finland',
+        'kauppaneuvokset' : 'Businesspeople from Finland',
         'miesten puvut': 'Men wearing suits in Finland',
         'muotinäytökset' : 'Fashion shows in Finland',
         'laivat' : 'Ships in Finland',
@@ -53,6 +54,7 @@ def create_categories_new(finna_image):
         'kuorma-autot' : 'Trucks in Finland',
         'henkilöautot' : 'Automobiles in Finland',
         'asuinrakennukset' : 'Houses in Finland',
+        'liikerakennukset' : 'Buildings in Finland',
         'nosturit' : 'Cranes in Finland',
         'tehtaat' : 'Factories in Finland',
         'teollisuusrakennukset' : 'Factories in Finland',
