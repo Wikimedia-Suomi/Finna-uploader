@@ -30,13 +30,18 @@ def create_categories_new(finna_image):
         'Veljekset Åström Oy': 'Veljekset Åström',
         'Turun linna' : 'Turku Castle',
         'Hämeen linna' : 'Häme Castle',
-        'Olavinlinna' : 'Olavinlinna'
+        'Olavinlinna' : 'Olavinlinna',
+        'kiväärit' : 'Rifles'
     }
     
     # must have place 'Suomi' to generate ' in Finland'
+    #
+    # note: there are also "from" and "of" categories in Commons, 
+    # can we guess the right one automatically?
     subject_categories_with_country = {
         'miesten puvut': 'Men wearing suits in Finland',
-        'muotinäytökset' : 'Fashion shows in Finland'
+        'muotinäytökset' : 'Fashion shows in Finland',
+        'laivat' : 'Ships in Finland'
     }
 
     for subject in finna_image.subjects.all():
