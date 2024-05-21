@@ -41,7 +41,8 @@ def create_categories_new(finna_image):
     subject_categories_with_country = {
         'miesten puvut': 'Men wearing suits in Finland',
         'muotinäytökset' : 'Fashion shows in Finland',
-        'laivat' : 'Ships in Finland'
+        'laivat' : 'Ships in Finland',
+        'autokilpailut' : 'Automobile races in Finland'
     }
 
     for subject in finna_image.subjects.all():
