@@ -32,20 +32,23 @@ def create_categories_new(finna_image):
         'Hämeen linna' : 'Häme Castle',
         'Olavinlinna' : 'Olavinlinna'
     }
+    
+    # must have place 'Suomi' to generate ' in Finland'
+    subject_categories_with_country = {
+        'miesten puvut': 'Men wearing suits in Finland',
+        'muotinäytökset' : 'Fashion shows in Finland'
+    }
 
     for subject in finna_image.subjects.all():
         if subject.name in subject_categories:
             category = subject_categories[subject.name]
             categories.add(category)
 
-        # needs more detailed reasoning for categories:
-        # if image location is not from Finland, don't categorize under Finland..
-        if subject.name == 'miesten puvut' and 'Suomi' in depicted_places:
-            categories.add('Men wearing suits in Finland')
-        #if subject.name == 'naisten puvut' and 'Suomi' in depicted_places:
-            #categories.add('Women wearing suits in Finland')
-            
-        if subject.name == 'kartanot' and 'Louhisaari' in depicted_places:
+        if subject.name in subject_categories_with_country and 'Suomi' in depicted_places:
+            category = subject_categories_with_country[subject.name]
+            categories.add(category)
+
+        if (subject.name == 'kartanot' and 'Louhisaari' in depicted_places):
             categories.add('Louhisaari Manor')
     
     for add_category in finna_image.add_categories.all():
