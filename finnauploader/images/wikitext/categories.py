@@ -20,6 +20,10 @@ def create_categories_new(finna_image):
         category = author.get_photos_category()
         categories.add(category)
 
+    # Ssteamboats: non ocean-going
+    # Steamships of Finland
+    # Naval ships of Finland
+    # Sailing ships of Finland
     subject_categories = {
         'muotokuvat': 'Portrait photographs',
         'henkilökuvat': 'Portrait photographs',
@@ -33,7 +37,6 @@ def create_categories_new(finna_image):
         'Hämeen linna' : 'Häme Castle',
         'Olavinlinna' : 'Olavinlinna',
         'Hvitträsk': 'Hvitträsk',
-        'höyrylaivat': 'Steamboats',
         'kiväärit' : 'Rifles'
     }
     
@@ -45,10 +48,14 @@ def create_categories_new(finna_image):
         'miesten puvut': 'Men wearing suits in Finland',
         'muotinäytökset' : 'Fashion shows in Finland',
         'laivat' : 'Ships in Finland',
+        'veneet' : 'Boats in Finland',
+        'linja-autot', 'Buses in Finland',
+        'kuorma-autot' : 'Trucks in Finland',
         'henkilöautot' : 'Automobiles in Finland',
         'autokilpailut' : 'Automobile races in Finland',
         'auto-onnettomuudet' : 'Automobile accidents in Finland',
         'asuinrakennukset' : 'Houses in Finland',
+        'nosturit' : 'Cranes in Finland',
         'tehtaat' : 'Factories in Finland',
         'teollisuusrakennukset' : 'Factories in Finland',
         'laulujuhlat' : 'Music festivals in Finland'
