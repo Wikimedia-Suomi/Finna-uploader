@@ -1,5 +1,16 @@
 import mwparserfromhell
 
+def get_category_place(subject_places, depicted_places):
+    cat_place = {
+        "Helsinki","Hamina","Hämeenlinna","Espoo","Forssa","Imatra","Inari","Joensuu","Lahti","Lappeenranta","Kajaani","Kemi","Kotka","Kuopio","Kuusamo","Kokkola","Kouvola","Mikkeli","Naantali","Porvoo","Pori","Oulu","Raahe","Rauma","Rovaniemi","Savonlinna","Turku","Tampere","Tornio","Vantaa","Vaasa"
+    }
+    for p in cat_place:
+        if p in depicted_places:
+            return p
+        
+    if 'Suomi' in depicted_places:
+        return "Finland"
+    return ""
 
 def create_categories_new(finna_image):
     subject_places = finna_image.subject_places.values_list('name', flat=True)
@@ -57,24 +68,21 @@ def create_categories_new(finna_image):
         'linja-autot': 'Buses in',
         'kuorma-autot' : 'Trucks in',
         'henkilöautot' : 'Automobiles in',
+        'autokilpailut' : 'Automobile races in',
+        'auto-onnettomuudet' : 'Automobile accidents in',
         'asuinrakennukset' : 'Houses in',
         'liikerakennukset' : 'Buildings in',
+        'osuusliikkeet' : 'Consumers\' cooperatives in',
         'nosturit' : 'Cranes in',
         'tehtaat' : 'Factories in',
         'teollisuusrakennukset' : 'Factories in',
         'laulujuhlat' : 'Music festivals in',
-        'rukit' : 'Spinning wheels in'
+        'rukit' : 'Spinning wheels in',
+        'meijerit' : 'Dairies in',
+        'mainoskuvat' : 'Advertisements in'
     }
     
-    cat_place = ""
-    if 'Helsinki' in depicted_places:
-        cat_place = "Helsinki"
-    elif 'Turku' in depicted_places:
-        cat_place = "Turku"
-    elif 'Oulu' in depicted_places:
-        cat_place = "Oulu"
-    elif 'Suomi' in depicted_places:
-        cat_place = "Finland"
+    cat_place = get_category_place(subject_places, depicted_places)
 
     for subject in finna_image.subjects.all():
         if subject.name in subject_categories:
