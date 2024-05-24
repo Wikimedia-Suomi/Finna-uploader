@@ -1,11 +1,17 @@
 import mwparserfromhell
 
 def get_category_place(subject_places, depicted_places):
+    print("DEBUG: get_category_place, subject places: ", str(subject_places) )
+    print("DEBUG: get_category_place, depicted places: ", str(depicted_places) )
     cat_place = {
-        "Helsinki","Hamina","Hämeenlinna","Espoo","Forssa","Imatra","Inari","Joensuu","Lahti","Lappeenranta","Kajaani","Kemi","Kotka","Kuopio","Kuusamo","Kokkola","Kouvola","Mikkeli","Naantali","Porvoo","Pori","Oulu","Raahe","Rauma","Rovaniemi","Savonlinna","Turku","Tampere","Tornio","Vantaa","Vaasa"
+        "Helsinki","Hamina","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Jyväskylä","Lahti","Lappajärvi","Lappeenranta","Loviisa","Kajaani","Kemi","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Mikkeli","Naantali","Pietarsaari","Porvoo","Pori","Oulu","Raahe","Rauma","Rovaniemi","Savonlinna","Seinäjoki","Sipoo","Sotkamo","Turku","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa"
     }
     for p in cat_place:
         if p in depicted_places:
+            return p
+        # may need combination location (country, subdivision etc)
+        tmp = "Suomi, " + p
+        if (tmp in depicted_places):
             return p
         
     if 'Suomi' in depicted_places:
@@ -38,6 +44,7 @@ def create_categories_new(finna_image):
     subject_categories = {
         'muotokuvat': 'Portrait photographs',
         'henkilökuvat': 'Portrait photographs',
+        'saamenpuvut' : 'Sami clothing',
         'Osuusliike Elanto': 'Elanto',
         'Valmet Oy': 'Valmet',
         'Salora Oy': 'Salora',
@@ -62,20 +69,29 @@ def create_categories_new(finna_image):
         'miesten puvut': 'Men wearing suits in',
         'muotinäytökset' : 'Fashion shows in',
         'lentonäytökset': 'Air shows in',
+        'veturit' : 'Locomotives of',
+        'junat' : 'Trains of',
         'laivat' : 'Ships in',
         'veneet' : 'Boats in',
+        'matkustajalaivat' : 'Passenger ships in',
+        'purjeveneet' : 'Sailboats in',
+        'moottoriveneet' : 'Motorboats in',
+        'lossit' : 'Cable ferries in',
         'lentokoneet' : 'Aircraft in',
         'linja-autot': 'Buses in',
         'kuorma-autot' : 'Trucks in',
         'henkilöautot' : 'Automobiles in',
         'autokilpailut' : 'Automobile races in',
         'auto-onnettomuudet' : 'Automobile accidents in',
+        'hotellit' : 'Hotels in',
         'asuinrakennukset' : 'Houses in',
         'liikerakennukset' : 'Buildings in',
         'osuusliikkeet' : 'Consumers\' cooperatives in',
         'nosturit' : 'Cranes in',
+        'kaivinkoneet' : 'Excavators in',
         'tehtaat' : 'Factories in',
         'teollisuusrakennukset' : 'Factories in',
+        'konepajateollisuus' : 'Machinery industry in',
         'laulujuhlat' : 'Music festivals in',
         'rukit' : 'Spinning wheels in',
         'meijerit' : 'Dairies in',
@@ -107,6 +123,11 @@ def create_categories_new(finna_image):
 
         if (len(cat_place) > 0):
             categories.add(f'{finna_image.year} in {cat_place}')
+    else:
+        # if we can't determine year, use only location name
+        # and only if it something other than country (at least a city)
+        if (len(cat_place) > 0 and (cat_place != 'Suomi' and cat_place != 'Finland')):
+            categories.add(cat_place)
 
     categories.add('Files uploaded by FinnaUploadBot')
 
