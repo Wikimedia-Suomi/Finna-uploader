@@ -21,14 +21,14 @@ def get_structured_data_for_new_image(finna_image):
 
     # Handle non presenter authors (photographers)
 
-    known_roles = ['kuvaaja', 'reprokuvaaja']
+    known_roles = ['kuvaaja', 'reprokuvaaja', 'valokuvaaja']
     non_presenter_authors = finna_image.non_presenter_authors.all()
 
     for author in non_presenter_authors:
         if author.role not in known_roles:
             print(f'{author.role} is not known role')
 
-        if author.role == 'kuvaaja':
+        if (author.is_photographer()):
             claim = author.get_photographer_author_claim()
             claims.append(claim)
 
