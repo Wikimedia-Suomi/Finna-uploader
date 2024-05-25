@@ -186,27 +186,58 @@ def wbEditEntity(site, page, data):
     ret = request.submit()
     return ret
 
+def get_source_of_file_claim(finna_image):
+    # TODO: when using beyond JOKA-archive, fetch correct values per image
+    publisher = 'Q3029524'  # Finnish Heritage Agency
+    operator = 'Q420747'    # National library
+    url = finna_image.url
+    
+    instlist = finna_image.get_institutions_for_publisher()
+
+    if (len(instlist) != 1):
+        # TODO: check that create_P7482_source_of_file() can handle multiple institutions
+        print(f'excpected one institution, found:', str(instlist))
+        exit(1)
+            
+    return create_P7482_source_of_file(url, operator, instlist[0])
+
+def get_inception_claim(finna_image):
+    try:
+        timestamp, precision = parse_timestamp(finna_image.get_date_string())
+
+        if timestamp and precision:
+            claim = create_P571_inception(timestamp, precision)
+            return claim
+    except:
+        return None
+
+def get_licence_claim(finna_image):
+    return create_P275_licence(value=finna_image.image_right.get_copyright())
+
+def get_copyright_state_claim(finna_image):
+    return create_P6216_copyright_state(value=finna_image.image_right.get_copyright())
+
 ## this context is for sdc data in commons,
 # used by views.py
 def get_structured_data_for_new_image(finna_image):
     labels = finna_image.get_sdc_labels()
     claims = []
 
-    claim = finna_image.get_source_of_file_claim()
+    claim = get_source_of_file_claim(finna_image)
     claims.append(claim)
 
-    claim = finna_image.get_finna_id_claim()
+    claim = create_P9478_finna_id(finna_image.get_finna_id())
     claims.append(claim)
 
-    claim = finna_image.get_inception_claim()
+    claim = get_inception_claim(finna_image)
     claims.append(claim)
 
     # Handle image rights
 
-    claim = finna_image.image_right.get_licence_claim()
+    claim = get_licence_claim(finna_image)
     claims.append(claim)
 
-    claim = finna_image.image_right.get_copyright_state_claim()
+    claim = get_copyright_state_claim(finna_image)
     claims.append(claim)
 
     # Handle non presenter authors (photographers)

@@ -10,15 +10,7 @@ from datetime import datetime
 from images.finna import get_finna_record_url, parse_full_record
 from images.pywikibot_helpers import get_wikidata_id_from_url
 from images.wikitext.timestamps import parse_timestamp
-from images.sdc_helpers import create_P571_inception
 from images.duplicatedetection import is_already_in_commons
-from images.sdc_helpers import create_P275_licence, \
-                                           create_P6216_copyright_state, \
-                                           create_P9478_finna_id, \
-                                           create_P195_collection, \
-                                           create_P180_depict, \
-                                           create_P7482_source_of_file, \
-                                           create_P170_author
 
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_creator_template_from_wikidata_id, \
@@ -161,12 +153,9 @@ class FinnaImageRight(models.Model):
         else:
             ret = f'{self.copyright}; {self.description}'
         return ret
-
-    def get_licence_claim(self):
-        return create_P275_licence(value=self.copyright)
-
-    def get_copyright_state_claim(self):
-        return create_P6216_copyright_state(value=self.copyright)
+    
+    def get_copyright(self):
+        return self.copyright
 
 
 class FinnaNonPresenterAuthor(models.Model):
@@ -289,10 +278,6 @@ class FinnaInstitution(models.Model):
     def get_wikidata_id(self):
         wikidata_id = get_institution_wikidata_id(self.translated)
         return wikidata_id
-
-    def get_institution_template(self):
-        wikidata_id = self.get_wikidata_id()
-        return get_institution_template_from_wikidata_id(wikidata_id)
 
 
 # Dynamic subjects based on wiki categories / wikidata items
@@ -768,7 +753,8 @@ class FinnaImage(models.Model):
     def get_institution_templates(self):
         institution_templates = []
         for institution in self.institutions.all():
-            template = institution.get_institution_template()
+            wikidata_id = institution.get_wikidata_id()
+            template = get_institution_template_from_wikidata_id(wikidata_id)
             institution_templates.append(template)
         return "".join(institution_templates)
 
@@ -798,45 +784,19 @@ class FinnaImage(models.Model):
 
         return labels
 
-    def get_finna_id_claim(self):
-        return create_P9478_finna_id(self.finna_id)
+    # this is still in class FinnaImage, many others have member "finna_id" as well..
+    def get_finna_id(self):
+        return self.finna_id
 
-    def get_inception_claim(self):
-        try:
-            timestamp, precision = parse_timestamp(self.date_string)
+    def get_date_string(self):
+        return self.date_string
 
-            if timestamp and precision:
-                claim = create_P571_inception(timestamp, precision)
-                return claim
-        except:
-            return None
-
-    def get_source_of_file_claim(self):
-        # TODO: when using beyond JOKA-archive, fetch correct values per image
-        publisher = 'Q3029524'  # Finnish Heritage Agency
-        operator = 'Q420747'    # National library
-        url = self.url
-        
+    def get_institutions_for_publisher(self):
         instlist = list()
-
-        # FIXME: Only Finnish heritage agency images are supported now
         for institution in self.institutions.all():
-            #instcode = get_institution_wikidata_id(institution.name)
-            instlist.append(institution.get_wikidata_id())
-
-            #if institution.get_wikidata_id() != publisher:
-                #print(f'{institution} wikidata id is not {publisher}')
-                #exit(1)
-        if (len(instlist) == 0):
-            print(f'no institutions found')
-            exit(1)
-        if (len(instlist) > 1):
-            # TODO: check that create_P7482_source_of_file() can handle multiple institutions
-            print(f'too many institutions found')
-            exit(1)
-                
-        return create_P7482_source_of_file(url, operator, instlist[0])
-
+            wikidata_id = institution.get_wikidata_id()
+            instlist.append(wikidata_id)
+        return instlist
 
 class FinnaImageHash(models.Model):
     phash = models.BigIntegerField(null=True)  # To store 64-bit unsigned integer
