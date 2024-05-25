@@ -204,7 +204,7 @@ class FinnaNonPresenterAuthor(models.Model):
             exit(1)
 
         wikidata_id = self.get_wikidata_id()
-        role = 'Q33231'  # kuvaaja
+        role = 'Q33231'  # valokuvaaja
         claim = create_P170_author(wikidata_id, role)
         return claim
 
@@ -474,12 +474,11 @@ class FinnaRecordManager(models.Manager):
 
         # in some cases, url is not complete:
         # protocol and domain are not stored in the record, which we need later
-        if (master_url.find("http://") < 0 or master_url.find("https://") < 0):
-            if (master_url.startswith("/Cover/Show") == False):
-                print("Error: not a Finna url and not complete url")
-                exit(1)
-            else:
+        if (master_url.find("http://") < 0 and master_url.find("https://") < 0):
+            if (master_url.startswith("/Cover/Show") == True):
                 master_url = "https://finna.fi" + master_url
+            else:
+                print("Warn: not a Finna url and not complete url? ", master_url)
 
         # Extract the Summary
         # Data which is stored to separate tables
@@ -779,6 +778,7 @@ class FinnaImage(models.Model):
 
     def get_creator_templates(self):
         creator_templates = []
+        # TODO: role may be also "valokuvaaja" -> what to do here?
         for creator in self.non_presenter_authors.filter(role='kuvaaja'):
             template = creator.get_creator_template()
             creator_templates.append(template)

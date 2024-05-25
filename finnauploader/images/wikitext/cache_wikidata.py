@@ -107,7 +107,7 @@ def get_author_name(nonPresenterAuthors):
         name = nonPresenterAuthor['name']
         role = nonPresenterAuthor['role']
 
-        if role == "kuvaaja":
+        if role == "kuvaaja" or role == "valokuvaaja":
             if name in nonPresenterAuthorsCache:
                 if not ret:
                     ret = name
@@ -278,3 +278,4 @@ nonPresenterAuthorsCache = parse_cache_page('User:FinnaUploadBot/data/nonPresent
 institutionsCache = parse_cache_page('User:FinnaUploadBot/data/institutions')
 collectionsCache = parse_cache_page('User:FinnaUploadBot/data/collections')
 subjectActorsCache = parse_cache_page('User:FinnaUploadBot/data/subjectActors')
+subjectPlacesCache = parse_cache_page('User:FinnaUploadBot/data/subjectPlaces')
