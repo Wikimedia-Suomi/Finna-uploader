@@ -230,20 +230,23 @@ def get_structured_data_for_new_image(finna_image):
     identifier = finna_image.identifier_string
 
     for collection in collections:
-        claim = collection.get_collection_claim(identifier)
+        wikidata_id = collection.get_wikidata_id()
+        claim = create_P195_collection(wikidata_id, identifier)
         claims.append(claim)
 
     # Handle subject actors
 
     subject_actors = finna_image.subject_actors.all()
     for subject_actor in subject_actors:
-        claim = subject_actor.get_depict_claim()
+        wikidata_id = subject_actor.get_wikidata_id()
+        claim = create_P180_depict(wikidata_id)
         claims.append(claim)
 
     # Handle local subjects
 
     for add_depict in finna_image.add_depicts.all():
-        claim = add_depict.get_depict_claim()
+        wikidata_id = add_depict.get_wikidata_id()
+        claim = create_P180_depict(wikidata_id)
         claims.append(claim)
 
     json_claims = []

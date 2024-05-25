@@ -260,10 +260,6 @@ class FinnaSubjectActor(models.Model):
             category = category.replace('Category:', '')
         return category
 
-    def get_depict_claim(self):
-        wikidata_id = self.get_wikidata_id()
-        return create_P180_depict(wikidata_id)
-
 
 class FinnaSubjectDetail(models.Model):
     name = models.CharField(max_length=200)
@@ -281,10 +277,6 @@ class FinnaCollection(models.Model):
     def get_wikidata_id(self):
         wikidata_id = get_collection_wikidata_id(self.name)
         return wikidata_id
-
-    def get_collection_claim(self, identifier=None):
-        wikidata_id = self.get_wikidata_id()
-        return create_P195_collection(wikidata_id, identifier)
 
 
 class FinnaInstitution(models.Model):
@@ -334,11 +326,6 @@ class FinnaLocalSubject(models.Model):
                     category = category.replace('Category:', '')
                 return category
         return None
-
-    def get_depict_claim(self):
-        wikidata_id = self.get_wikidata_id()
-        return create_P180_depict(wikidata_id)
-
 
 # Managers
 class FinnaRecordManager(models.Manager):
