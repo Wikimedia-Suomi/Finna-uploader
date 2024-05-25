@@ -4,11 +4,6 @@ def get_category_place(subject_places, depicted_places):
     print("DEBUG: get_category_place, subject places: ", str(subject_places) )
     print("DEBUG: get_category_place, depicted places: ", str(depicted_places) )
 
-    # may start with comma and space -> clean it
-    if (depicted_places.startswith(",")):
-        depicted_places = depicted_places[1:]
-        depicted_places = depicted_places.lstrip()
-    
     cat_place = {
         "Helsinki","Hamina","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Jyväskylä","Lahti","Lappajärvi","Lappeenranta","Loviisa","Kajaani","Kemi","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Mikkeli","Naantali","Pietarsaari","Porvoo","Pori","Oulu","Raahe","Rauma","Rovaniemi","Savonlinna","Seinäjoki","Sipoo","Sotkamo","Turku","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa"
     }
@@ -27,6 +22,11 @@ def get_category_place(subject_places, depicted_places):
 def create_categories_new(finna_image):
     subject_places = finna_image.subject_places.values_list('name', flat=True)
     depicted_places = str(list(subject_places))
+
+    # may start with comma and space -> clean it
+    if (depicted_places.startswith(",")):
+        depicted_places = depicted_places[1:]
+    depicted_places = depicted_places.lstrip()
 
     # Create a new WikiCode object
     wikicode = mwparserfromhell.parse("")
@@ -98,6 +98,8 @@ def create_categories_new(finna_image):
         'tehtaat' : 'Factories in',
         'teollisuusrakennukset' : 'Factories in',
         'konepajateollisuus' : 'Machinery industry in',
+        'koulurakennukset' : 'School buildings in',
+        'rakennushankkeet' : 'Construction in',
         'laulujuhlat' : 'Music festivals in',
         'rukit' : 'Spinning wheels in',
         'meijerit' : 'Dairies in',
