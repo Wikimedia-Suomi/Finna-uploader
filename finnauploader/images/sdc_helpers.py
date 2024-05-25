@@ -137,7 +137,7 @@ def create_P195_collection(wikidata_id, collection_number):
         # P217 collection number
         qualifier = pywikibot.Claim(wikidata_site, 'P217')
         qualifier.setTarget(collection_number)
-        claim.addQualifier(qualifier, summary='Adding role qualifier')
+        claim.addQualifier(qualifier, summary='Adding collection qualifier')
     else:
         print("collection number missing, wikidata_id:", wikidata_id)
 
