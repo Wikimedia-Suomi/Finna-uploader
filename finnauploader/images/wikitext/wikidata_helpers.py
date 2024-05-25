@@ -1,19 +1,10 @@
 from images.exceptions import MissingNonPresenterAuthorError, \
                               MultipleNonPresenterAuthorError, \
                               MissingSubjectActorError
+from images.wikitext.mappingcache import MappingCache
+
 import pywikibot
 import re
-
-
-def parse_name_and_q_item(text):
-    pattern = r'\*\s(.*?)\s:\s\{\{Q\|(Q\d+)\}\}'
-    matches = re.findall(pattern, text)
-
-    # Extracted names and Q-items
-    parsed_data = {}
-    for name, q_item in matches:
-        parsed_data[name] = q_item
-    return parsed_data
 
 
 def get_institution_name(institutions):
@@ -21,7 +12,7 @@ def get_institution_name(institutions):
         print('incorrect number of institutions')
         exit(1)
     for institution in institutions:
-        if institution['value'] in institutionsCache:
+        if institution['value'] in cache.institutionsCache:
             return institution['value']
 
     print("Unknown institution: " + str(institutions))
@@ -42,7 +33,7 @@ def get_collection_names():
                   ]
     if (collectionsCache != None):
         clist = list()
-        for k in collectionsCache:
+        for k in cache.collectionsCache:
             clist.append(k)
         return clist
     return collections
@@ -63,15 +54,15 @@ def get_collection_name_from_alias(name):
         return name
 
 def get_collection_wikidata_id(name):
-    if name in collectionsCache:
-        return collectionsCache[name]
+    if name in cache.collectionsCache:
+        return cache.collectionsCache[name]
     print("Unknown collection: " + str(name))
     exit(1)
 
 
 def get_institution_wikidata_id(institution_name):
-    if institution_name in institutionsCache:
-        return institutionsCache[institution_name]
+    if institution_name in cache.institutionsCache:
+        return cache.institutionsCache[institution_name]
     print("Unknown institution: " + str(institution_name))
     exit(1)
 
@@ -107,8 +98,8 @@ def get_author_name(nonPresenterAuthors):
         name = nonPresenterAuthor['name']
         role = nonPresenterAuthor['role']
 
-        if role == "kuvaaja" or role == "valokuvaaja":
-            if name in nonPresenterAuthorsCache:
+        if (nonPresenterAuthor.is_photographer()):
+            if name in cache.nonPresenterAuthorsCache:
                 if not ret:
                     ret = name
                 else:
@@ -128,8 +119,8 @@ def get_author_name(nonPresenterAuthors):
 
 
 def get_author_wikidata_id(name):
-    if name in nonPresenterAuthorsCache:
-        wikidata_id = nonPresenterAuthorsCache[name]
+    if name in cache.nonPresenterAuthorsCache:
+        wikidata_id = cache.nonPresenterAuthorsCache[name]
         return wikidata_id
     else:
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors' # noqa
@@ -242,8 +233,9 @@ def get_creator_image_category_from_wikidata_id(wikidata_id):
 def get_subject_actors_wikidata_ids(subjectActors):
     ret = []
     for subjectActor in subjectActors:
-        if subjectActor in subjectActorsCache:
-            ret.append(subjectActorsCache[subjectActor])
+        if subjectActor in cache.subjectActorsCache:
+            sa = cache.subjectActorsCache[subjectActor]
+            ret.append(sa)
         else:
             url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/subjectActors' # noqa
             print('Error: Unknown actor "{subjectActor}". Add actor to {url}')
@@ -252,29 +244,18 @@ def get_subject_actors_wikidata_ids(subjectActors):
 
 
 def get_subject_actors_wikidata_id(subject_actor):
-    if subject_actor in subjectActorsCache:
-        return subjectActorsCache[subject_actor]
+    if subject_actor in cache.subjectActorsCache:
+        return cache.subjectActorsCache[subject_actor]
     else:
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/subjectActors' # noqa
         print(f'Error: Unknown actor "{subject_actor}". Add actor to {url}')
         raise MissingSubjectActorError
 
 
-def parse_cache_page(page_title):
-    page = pywikibot.Page(site, page_title)
-    cache = parse_name_and_q_item(page.text)
-    return cache
-
-
 pywikibot.config.socket_timeout = 120
 site = pywikibot.Site("commons", "commons")  # for Wikimedia Commons
 site.login()
 
-# TODO keep timestamp or other check if list changes:
-# we should refresh/reload if there is a change without need to restart
-# since that happens very often
-nonPresenterAuthorsCache = parse_cache_page('User:FinnaUploadBot/data/nonPresenterAuthors') # noqa
-institutionsCache = parse_cache_page('User:FinnaUploadBot/data/institutions')
-collectionsCache = parse_cache_page('User:FinnaUploadBot/data/collections')
-subjectActorsCache = parse_cache_page('User:FinnaUploadBot/data/subjectActors')
-subjectPlacesCache = parse_cache_page('User:FinnaUploadBot/data/subjectPlaces')
+cache = MappingCache()
+cache.parse_cache(pywikibot, site)
+
