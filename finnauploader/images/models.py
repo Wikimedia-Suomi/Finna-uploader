@@ -468,10 +468,18 @@ class FinnaRecordManager(models.Manager):
                 # If no highResolution or original image
                 master_url = images_extended_data[0]['urls']['large']
                 master_format = 'image/jpeg'
-
         else:
             print("Error: imagesExtended missing")
             exit(1)
+
+        # in some cases, url is not complete:
+        # protocol and domain are not stored in the record, which we need later
+        if (master_url.find("http://") < 0 or master_url.find("https://") < 0):
+            if (master_url.startswith("/Cover/Show") == False):
+                print("Error: not a Finna url and not complete url")
+                exit(1)
+            else:
+                master_url = "https://finna.fi" + master_url
 
         # Extract the Summary
         # Data which is stored to separate tables
