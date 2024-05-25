@@ -198,16 +198,6 @@ class FinnaNonPresenterAuthor(models.Model):
             category = category.replace('Category:', '')
         return category
 
-    def get_photographer_author_claim(self):
-        if (self.is_photographer() == False):
-            print(f'{self} is not photographer')
-            exit(1)
-
-        wikidata_id = self.get_wikidata_id()
-        role = 'Q33231'  # valokuvaaja
-        claim = create_P170_author(wikidata_id, role)
-        return claim
-
     def is_photographer(self):
         if (self.role == 'kuvaaja' or self.role == 'valokuvaaja'):
             return True

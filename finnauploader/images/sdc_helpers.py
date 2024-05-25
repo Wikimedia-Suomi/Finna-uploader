@@ -219,7 +219,9 @@ def get_structured_data_for_new_image(finna_image):
             print(f'{author.role} is not known role')
 
         if (author.is_photographer()):
-            claim = author.get_photographer_author_claim()
+            wikidata_id = author.get_wikidata_id()
+            role = 'Q33231'  # valokuvaaja
+            claim = create_P170_author(wikidata_id, role)
             claims.append(claim)
 
     # Handle collections
