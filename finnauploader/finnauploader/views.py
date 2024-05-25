@@ -37,7 +37,7 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
         image_url = finna_image.master_url
 
         # if we store incomplete url -> needs fixing
-        if (image_url.find("http://") < 0 or image_url.find("https://") < 0):
+        if (image_url.find("http://") < 0 and image_url.find("https://") < 0):
             print("URL is not complete:", image_url)
             exit(1)
 
