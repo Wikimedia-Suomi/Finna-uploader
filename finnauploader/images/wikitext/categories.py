@@ -38,10 +38,11 @@ def create_categories_new(finna_image):
         category = subject_actor.get_commons_category()
         categories.add(category)
 
-    authors = finna_image.non_presenter_authors.filter(role='kuvaaja')
+    authors = finna_image.non_presenter_authors.all()
     for author in authors:
-        category = author.get_photos_category()
-        categories.add(category)
+        if (author.role == "kuvaaja" or author.role == "valokuvaaja"):
+            category = author.get_photos_category()
+            categories.add(category)
 
     # Ssteamboats: non ocean-going
     # Steamships of Finland
