@@ -199,7 +199,7 @@ class FinnaNonPresenterAuthor(models.Model):
         return category
 
     def get_photographer_author_claim(self):
-        if self.role != 'kuvaaja':
+        if self.role != 'kuvaaja' and self.role != 'valokuvaaja':
             print(f'{self} is not photographer')
             exit(1)
 
