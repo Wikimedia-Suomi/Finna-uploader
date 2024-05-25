@@ -36,6 +36,11 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
         filename = finna_image.pseudo_filename
         image_url = finna_image.master_url
 
+        # if we store incomplete url -> needs fixing
+        if (image_url.find("http://") < 0 or image_url.find("https://") < 0):
+            print("URL is not complete:", image_url)
+            exit(1)
+
         structured_data = get_structured_data_for_new_image(finna_image)
         wikitext = get_wikitext_for_new_image(finna_image)
         comment = get_comment_text(finna_image)
