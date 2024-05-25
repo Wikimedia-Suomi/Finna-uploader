@@ -394,9 +394,14 @@ class FinnaRecordManager(models.Manager):
         non_presenter_authors_data = data.pop('nonPresenterAuthors', [])
         non_presenter_authors = []
         for non_presenter_author_data in non_presenter_authors_data:
+            authorname=non_presenter_author_data['name']
+            authorrole=non_presenter_author_data['role']
+            # fixup so that rest can handle variation
+            if (authorrole == "valokuvaaja"):
+                authorrole = "kuvaaja"
             author = FinnaNonPresenterAuthor.objects.get_or_create(
-                name=non_presenter_author_data['name'],
-                role=non_presenter_author_data['role']
+                authorname,
+                authorrole
                 )[0]
             try:
                 # Update wikidata id
