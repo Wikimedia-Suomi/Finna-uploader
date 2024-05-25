@@ -199,7 +199,7 @@ class FinnaNonPresenterAuthor(models.Model):
         return category
 
     def get_photographer_author_claim(self):
-        if self.role != 'kuvaaja' and self.role != 'valokuvaaja':
+        if (self.is_photographer() == False):
             print(f'{self} is not photographer')
             exit(1)
 
@@ -208,6 +208,10 @@ class FinnaNonPresenterAuthor(models.Model):
         claim = create_P170_author(wikidata_id, role)
         return claim
 
+    def is_photographer(self):
+        if (self.role == 'kuvaaja' or self.role == 'valokuvaaja'):
+            return True
+        return False
 
 class FinnaAlternativeTitle(models.Model):
     text = models.TextField()
@@ -779,7 +783,7 @@ class FinnaImage(models.Model):
     def get_creator_templates(self):
         creator_templates = []
         for creator in self.non_presenter_authors.all():
-            if (creator.role == "kuvaaja" or creator.role == "valokuvaaja"):
+            if (creator.is_photographer()):
                 template = creator.get_creator_template()
                 creator_templates.append(template)
         return "".join(creator_templates)

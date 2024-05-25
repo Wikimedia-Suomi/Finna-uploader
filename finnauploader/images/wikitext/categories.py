@@ -40,7 +40,7 @@ def create_categories_new(finna_image):
 
     authors = finna_image.non_presenter_authors.all()
     for author in authors:
-        if (author.role == "kuvaaja" or author.role == "valokuvaaja"):
+        if (author.is_photographer()):
             category = author.get_photos_category()
             categories.add(category)
 
