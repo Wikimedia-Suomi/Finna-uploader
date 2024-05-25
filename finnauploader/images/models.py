@@ -20,7 +20,7 @@ from images.sdc_helpers import create_P275_licence, \
                                            create_P7482_source_of_file, \
                                            create_P170_author
 
-from images.wikitext.cache_wikidata import get_author_wikidata_id, \
+from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_creator_template_from_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_subject_image_category_from_wikidata_id, \

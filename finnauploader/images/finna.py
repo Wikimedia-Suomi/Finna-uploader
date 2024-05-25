@@ -5,7 +5,7 @@ import json
 import xml.etree.ElementTree as ET
 import html
 
-from images.wikitext.cache_wikidata import get_collection_names, \
+from images.wikitext.wikidata_helpers import get_collection_names, \
                                     get_collection_name_from_alias
 
 

@@ -1,4 +1,4 @@
-from images.wikitext.cache_wikidata import parse_cache_page
+from images.wikitext.wikidata_helpers import parse_cache_page
 import hashlib
 from pywikibot.data.sparql import SparqlQuery
 from images.models import LocationTestCache, FintoYsoMissingCache, \
