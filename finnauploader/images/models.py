@@ -394,14 +394,9 @@ class FinnaRecordManager(models.Manager):
         non_presenter_authors_data = data.pop('nonPresenterAuthors', [])
         non_presenter_authors = []
         for non_presenter_author_data in non_presenter_authors_data:
-            authorname=non_presenter_author_data['name']
-            authorrole=non_presenter_author_data['role']
-            # fixup so that rest can handle variation
-            if (authorrole == "valokuvaaja"):
-                authorrole = "kuvaaja"
             author = FinnaNonPresenterAuthor.objects.get_or_create(
-                authorname,
-                authorrole
+                name=non_presenter_author_data['name'],
+                role=non_presenter_author_data['role']
                 )[0]
             try:
                 # Update wikidata id
@@ -783,10 +778,10 @@ class FinnaImage(models.Model):
 
     def get_creator_templates(self):
         creator_templates = []
-        # TODO: role may be also "valokuvaaja" -> what to do here?
-        for creator in self.non_presenter_authors.filter(role='kuvaaja'):
-            template = creator.get_creator_template()
-            creator_templates.append(template)
+        for creator in self.non_presenter_authors.all():
+            if (creator.role == "kuvaaja" or creator.role == "valokuvaaja"):
+                template = creator.get_creator_template()
+                creator_templates.append(template)
         return "".join(creator_templates)
 
     def get_institution_templates(self):
