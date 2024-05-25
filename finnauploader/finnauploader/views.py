@@ -9,7 +9,7 @@ from watson import search as watson
 from images.finna import get_finna_record
 
 from images.wikitext.photographer import get_wikitext_for_new_image
-from images.finna_image_sdc_helpers import get_structured_data_for_new_image
+from images.sdc_helpers import get_structured_data_for_new_image
 from images.pywikibot_helpers import edit_commons_mediaitem, \
                                      upload_file_to_commons, \
                                      get_comment_text

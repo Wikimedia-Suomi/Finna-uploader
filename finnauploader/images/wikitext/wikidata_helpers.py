@@ -239,7 +239,6 @@ def get_creator_image_category_from_wikidata_id(wikidata_id):
         exit(1)
 #        return None
 
-
 def get_subject_actors_wikidata_ids(subjectActors):
     ret = []
     for subjectActor in subjectActors:
