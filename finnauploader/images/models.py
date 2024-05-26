@@ -14,8 +14,6 @@ from images.duplicatedetection import is_already_in_commons
 
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
-                                    get_subject_image_category_from_wikidata_id, \
-                                    get_creator_image_category_from_wikidata_id, \
                                     get_institution_wikidata_id, \
                                     get_collection_wikidata_id
 
@@ -157,20 +155,6 @@ class FinnaNonPresenterAuthor(models.Model):
     def get_wikidata_id(self):
         return get_author_wikidata_id(self.name)
 
-    def get_creator_category(self, prefix=None):
-        wikidata_id = self.get_wikidata_id()
-        category = get_subject_image_category_from_wikidata_id(wikidata_id, True)
-        if not prefix:
-            category = category.replace('Category:', '')
-        return category
-
-    def get_photos_category(self, prefix=None):
-        wikidata_id = self.get_wikidata_id()
-        category = get_creator_image_category_from_wikidata_id(wikidata_id)
-        if not prefix:
-            category = category.replace('Category:', '')
-        return category
-
     def is_photographer(self):
         if (self.role == 'kuvaaja' or self.role == 'valokuvaaja'):
             return True
@@ -226,13 +210,6 @@ class FinnaSubjectActor(models.Model):
         wikidata_id = get_subject_actors_wikidata_id(self.name)
         return wikidata_id
 
-    def get_commons_category(self, prefix=None):
-        wikidata_id = self.get_wikidata_id()
-        category = get_subject_image_category_from_wikidata_id(wikidata_id, True)
-        if not prefix:
-            category = category.replace('Category:', '')
-        return category
-
 
 class FinnaSubjectDetail(models.Model):
     name = models.CharField(max_length=200)
@@ -274,27 +251,6 @@ class FinnaLocalSubject(models.Model):
 
     def get_wikidata_id(self):
         return get_wikidata_id_from_url(self.value)
-
-    def get_category_name(self, prefix=None):
-        self.value = self.value.replace('category:', 'Category:')
-
-        if 'https://commons.wikimedia.org/wiki/Category:' in self.value:
-            return self.value.replace('https://commons.wikimedia.org/wiki/Category:', '')
-
-        if 'http://commons.wikimedia.org/wiki/category:' in self.value:
-            return self.value.replace('http://commons.wikimedia.org/wiki/Category:', '')
-
-        if '^Category:' in self.value:
-            return self.value.replace('Category:', '')
-
-        wikidata_id = self.get_wikidata_id()
-        if wikidata_id:
-            category = get_subject_image_category_from_wikidata_id(wikidata_id)
-            if category:
-                if not prefix:
-                    category = category.replace('Category:', '')
-                return category
-        return None
 
 # Managers
 class FinnaRecordManager(models.Manager):

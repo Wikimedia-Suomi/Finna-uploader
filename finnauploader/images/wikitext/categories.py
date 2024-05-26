@@ -1,5 +1,32 @@
 import mwparserfromhell
 
+from images.wikitext.wikidata_helpers import get_subject_image_category_from_wikidata_id, \
+                                    get_creator_image_category_from_wikidata_id, \
+
+def get_category_by_wikidata_id(wikidata_id, prefix=None):
+    if wikidata_id:
+        category = get_subject_image_category_from_wikidata_id(wikidata_id)
+        if category:
+            if not prefix:
+                category = category.replace('Category:', '')
+            return category
+    return None
+
+def get_subject_category(finna_subject, prefix=None):
+    value = finna_subject.value.replace('category:', 'Category:')
+
+    if 'https://commons.wikimedia.org/wiki/Category:' in value:
+        return value.replace('https://commons.wikimedia.org/wiki/Category:', '')
+
+    if 'http://commons.wikimedia.org/wiki/category:' in value:
+        return value.replace('http://commons.wikimedia.org/wiki/Category:', '')
+
+    if '^Category:' in value:
+        return value.replace('Category:', '')
+
+    wikidata_id = finna_subject.get_wikidata_id()
+    return get_category_by_wikidata_id(wikidata_id)
+
 def get_category_place(subject_places, depicted_places):
     print("DEBUG: get_category_place, subject places: ", str(subject_places) )
     print("DEBUG: get_category_place, depicted places: ", str(depicted_places) )
@@ -35,13 +62,15 @@ def create_categories_new(finna_image):
     categories = set()
 
     for subject_actor in finna_image.subject_actors.all():
-        category = subject_actor.get_commons_category()
+        wikidata_id = subject_actor.get_wikidata_id()
+        category = get_category_by_wikidata_id(wikidata_id)
         categories.add(category)
 
     authors = finna_image.non_presenter_authors.all()
     for author in authors:
         if (author.is_photographer()):
-            category = author.get_photos_category()
+            wikidata_id = author.get_wikidata_id()
+            category = get_category_by_wikidata_id(wikidata_id)
             categories.add(category)
 
     # Ssteamboats: non ocean-going
@@ -106,6 +135,7 @@ def create_categories_new(finna_image):
         'koulurakennukset' : 'School buildings in',
         'rakennushankkeet' : 'Construction in',
         'laulujuhlat' : 'Music festivals in',
+        'festivaalit' : 'Music festivals in',
         'rukit' : 'Spinning wheels in',
         'meijerit' : 'Dairies in',
         'mainoskuvat' : 'Advertisements in'
@@ -126,7 +156,7 @@ def create_categories_new(finna_image):
             categories.add('Louhisaari Manor')
     
     for add_category in finna_image.add_categories.all():
-        category_name = add_category.get_category_name()
+        category_name = get_subject_category(add_category)
         if category_name:
             categories.add(category_name)
 
