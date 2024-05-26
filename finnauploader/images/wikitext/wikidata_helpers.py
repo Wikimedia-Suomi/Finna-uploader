@@ -18,7 +18,7 @@ def get_collection_names():
                   'SA-kuva',
                   'Kansallisgalleria Ateneumin taidemuseo'
                   ]
-    if (collectionsCache != None):
+    if (cache.collectionsCache != None):
         clist = list()
         for k in cache.collectionsCache:
             clist.append(k)
