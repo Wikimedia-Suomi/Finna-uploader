@@ -1,18 +1,27 @@
 import mwparserfromhell
 
 from images.wikitext.wikidata_helpers import get_subject_image_category_from_wikidata_id, \
-                                    get_creator_image_category_from_wikidata_id, \
+                                    get_creator_image_category_from_wikidata_id
 
-def get_category_by_wikidata_id(wikidata_id, prefix=None):
+def get_category_by_wikidata_id(wikidata_id):
     if wikidata_id:
         category = get_subject_image_category_from_wikidata_id(wikidata_id)
         if category:
-            if not prefix:
-                category = category.replace('Category:', '')
+            #if not prefix:
+            category = category.replace('Category:', '')
             return category
     return None
 
-def get_subject_category(finna_subject, prefix=None):
+def get_creator_category_by_wikidata_id(wikidata_id):
+    if wikidata_id:
+        category = get_creator_image_category_from_wikidata_id(wikidata_id)
+        if category:
+            #if not prefix:
+            category = category.replace('Category:', '')
+            return category
+    return None
+
+def get_subject_category(finna_subject):
     value = finna_subject.value.replace('category:', 'Category:')
 
     if 'https://commons.wikimedia.org/wiki/Category:' in value:
@@ -70,7 +79,7 @@ def create_categories_new(finna_image):
     for author in authors:
         if (author.is_photographer()):
             wikidata_id = author.get_wikidata_id()
-            category = get_category_by_wikidata_id(wikidata_id)
+            category = get_creator_category_by_wikidata_id(wikidata_id)
             categories.add(category)
 
     # Ssteamboats: non ocean-going
