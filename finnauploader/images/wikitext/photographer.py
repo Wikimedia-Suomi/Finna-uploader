@@ -2,6 +2,12 @@ import mwparserfromhell
 from images.wikitext.timestamps import parse_timestamp_string
 from images.wikitext.categories import create_categories_new
 
+from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
+                                    get_creator_template_from_wikidata_id, \
+                                    get_institution_wikidata_id, \
+                                    get_institution_template_from_wikidata_id, \
+                                    get_collection_wikidata_id
+
 
 def lang_template(lang, text):
     text = str(text)
@@ -75,6 +81,42 @@ def clean_depicted_places(location_string):
 
     return ret
 
+def get_creator_templates(finna_image):
+    creator_templates = []
+    for creator in finna_image.non_presenter_authors.all():
+        if (creator.is_photographer()):
+            wikidata_id = creator.get_wikidata_id()
+            template = get_creator_template_from_wikidata_id(wikidata_id)
+            creator_templates.append(template)
+    return "".join(creator_templates)
+
+def get_institution_templates(finna_image):
+    institution_templates = []
+    for institution in finna_image.institutions.all():
+        wikidata_id = institution.get_wikidata_id()
+        template = get_institution_template_from_wikidata_id(wikidata_id)
+        institution_templates.append(template)
+    return "".join(institution_templates)
+
+def get_copyright_template(finna_image):
+    copyright = finna_image.image_right.get_copyright()
+    if copyright == "CC BY 4.0":
+        return "{{CC-BY-4.0}}\n{{FinnaReview}}"
+    elif copyright == "CC BY-SA 4.0":
+        return "{{CC BY-SA 4.0}}\n{{FinnaReview}}"
+    else:
+        print("Unknown copyright: " + copyright)
+        exit(1)
+
+def get_permission_string(finna_image):
+    link = finna_image.image_right.get_link()
+    copyright = finna_image.image_right.get_copyright()
+    description = finna_image.image_right.get_description()
+    if link:
+        ret = f'[{link} {copyright}]; {description}'
+    else:
+        ret = f'{copyright}; {description}'
+    return ret
 
 def get_photographer_template(finna_image):
 
@@ -109,18 +151,18 @@ def get_photographer_template(finna_image):
             description = lang_template(lang, text)
             descriptions.append(description)
 
-    r['creator_template'] = finna_image.get_creator_templates()
+    r['creator_template'] = get_creator_templates(finna_image)
     r['template_titles'] = titles
     r['template_descriptions'] = descriptions
     r['subjectActors'] = "; ".join(depicted_people)
     r['subjectPlaces'] = clean_depicted_places("; ".join(depicted_places))
     r['date'] = finna_image.date_string
     r['measurements'] = finna_image.measurements
-    r['institution_template'] = finna_image.get_institution_templates()
+    r['institution_template'] = get_institution_templates(finna_image)
     r['collections'] = collections
     r['identifierString'] = finna_image.identifier_string
     r['source'] = finna_image.url
-    r['permission'] = finna_image.get_permission_string()
+    r['permission'] = get_permission_string(finna_image)
 
     return create_photographer_template(r)
 
@@ -132,7 +174,7 @@ def get_wikitext_for_new_image(finna_image):
     wikitext_parts.append("== {{int:filedesc}} ==")
     wikitext_parts.append(creator + '\n')
     wikitext_parts.append("== {{int:license-header}} ==")
-    wikitext_parts.append(finna_image.get_copyright_template())
+    wikitext_parts.append(get_copyright_template(finna_image))
     wikitext_parts.append(create_categories_new(finna_image))
     wikitext = "\n".join(wikitext_parts)
     return wikitext

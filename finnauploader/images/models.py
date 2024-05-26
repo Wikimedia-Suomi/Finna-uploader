@@ -13,12 +13,10 @@ from images.wikitext.timestamps import parse_timestamp
 from images.duplicatedetection import is_already_in_commons
 
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
-                                    get_creator_template_from_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_subject_image_category_from_wikidata_id, \
                                     get_creator_image_category_from_wikidata_id, \
                                     get_institution_wikidata_id, \
-                                    get_institution_template_from_wikidata_id, \
                                     get_collection_wikidata_id
 
 
@@ -138,24 +136,14 @@ class FinnaImageRight(models.Model):
     def __str__(self):
         return self.copyright
 
-    def get_copyright_template(self):
-        if self.copyright == "CC BY 4.0":
-            return "{{CC-BY-4.0}}\n{{FinnaReview}}"
-        elif self.copyright == "CC BY-SA 4.0":
-            return "{{CC BY-SA 4.0}}\n{{FinnaReview}}"
-        else:
-            print("Unknown copyright: " + self.copyright)
-            exit(1)
-
-    def get_permission_string(self):
-        if self.link:
-            ret = f'[{self.link} {self.copyright}]; {self.description}'
-        else:
-            ret = f'{self.copyright}; {self.description}'
-        return ret
+    def get_link(self):
+        return self.link
     
     def get_copyright(self):
         return self.copyright
+    
+    def get_description(self):
+        return self.description
 
 
 class FinnaNonPresenterAuthor(models.Model):
@@ -168,10 +156,6 @@ class FinnaNonPresenterAuthor(models.Model):
 
     def get_wikidata_id(self):
         return get_author_wikidata_id(self.name)
-
-    def get_creator_template(self):
-        wikidata_id = self.get_wikidata_id()
-        return get_creator_template_from_wikidata_id(wikidata_id)
 
     def get_creator_category(self, prefix=None):
         wikidata_id = self.get_wikidata_id()
@@ -741,28 +725,6 @@ class FinnaImage(models.Model):
 
     def __str__(self):
         return self.finna_id
-
-    def get_creator_templates(self):
-        creator_templates = []
-        for creator in self.non_presenter_authors.all():
-            if (creator.is_photographer()):
-                template = creator.get_creator_template()
-                creator_templates.append(template)
-        return "".join(creator_templates)
-
-    def get_institution_templates(self):
-        institution_templates = []
-        for institution in self.institutions.all():
-            wikidata_id = institution.get_wikidata_id()
-            template = get_institution_template_from_wikidata_id(wikidata_id)
-            institution_templates.append(template)
-        return "".join(institution_templates)
-
-    def get_permission_string(self):
-        return self.image_right.get_permission_string()
-
-    def get_copyright_template(self):
-        return self.image_right.get_copyright_template()
 
     def get_sdc_labels(self):
         

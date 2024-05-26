@@ -7,19 +7,6 @@ import pywikibot
 import re
 
 
-def get_institution_name(institutions):
-    if len(institutions) != 1:
-        print('incorrect number of institutions')
-        exit(1)
-    for institution in institutions:
-        if institution['value'] in cache.institutionsCache:
-            return institution['value']
-
-    print("Unknown institution: " + str(institutions))
-    url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/institutions' # noqa
-    print(f'Missing in {url}')
-    exit(1)
-
 # Allowed --collections values
 # See also finna.py: do_finna_search()
 def get_collection_names():
@@ -59,6 +46,18 @@ def get_collection_wikidata_id(name):
     print("Unknown collection: " + str(name))
     exit(1)
 
+def get_institution_name(institutions):
+    if len(institutions) != 1:
+        print('incorrect number of institutions')
+        exit(1)
+    for institution in institutions:
+        if institution['value'] in cache.institutionsCache:
+            return institution['value']
+
+    print("Unknown institution: " + str(institutions))
+    url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/institutions' # noqa
+    print(f'Missing in {url}')
+    exit(1)
 
 def get_institution_wikidata_id(institution_name):
     if institution_name in cache.institutionsCache:
