@@ -58,11 +58,11 @@ def create_P275_licence(value):
 
     if value not in licences:
         print(f'Licence not found {value}.')
-        if 1:
-            exit(1)
+        exit(1)
         return None
 
-    claim_target = pywikibot.ItemPage(wikidata_site, licences[value])
+    qcode = licences[value]
+    claim_target = pywikibot.ItemPage(wikidata_site, qcode)
     claim = pywikibot.Claim(wikidata_site, 'P275')
     claim.setTarget(claim_target)
 
@@ -80,11 +80,11 @@ def create_P6216_copyright_state(value):
 
     if value not in copyright_states:
         print(f'Copyright state not found {value}.')
-        if 1:
-            exit(1)
+        exit(1)
         return None
 
-    claim_target = pywikibot.ItemPage(wikidata_site, copyright_states[value])
+    qcode = copyright_states[value]
+    claim_target = pywikibot.ItemPage(wikidata_site, qcode)
     claim = pywikibot.Claim(wikidata_site, 'P6216')
     claim.setTarget(claim_target)
 
@@ -209,13 +209,8 @@ def get_inception_claim(finna_image):
             claim = create_P571_inception(timestamp, precision)
             return claim
     except:
+        print("failed to create inception")
         return None
-
-def get_licence_claim(finna_image):
-    return create_P275_licence(value=finna_image.image_right.get_copyright())
-
-def get_copyright_state_claim(finna_image):
-    return create_P6216_copyright_state(value=finna_image.image_right.get_copyright())
 
 ## this context is for sdc data in commons,
 # used by views.py
@@ -234,10 +229,10 @@ def get_structured_data_for_new_image(finna_image):
 
     # Handle image rights
 
-    claim = get_licence_claim(finna_image)
+    claim = create_P275_licence(finna_image.image_right.get_copyright())
     claims.append(claim)
 
-    claim = get_copyright_state_claim(finna_image)
+    claim = create_P6216_copyright_state(finna_image.image_right.get_copyright())
     claims.append(claim)
 
     # Handle non presenter authors (photographers)
