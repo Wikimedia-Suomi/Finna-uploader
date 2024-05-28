@@ -19,6 +19,15 @@ class MappingCache:
         # Extracted names and Q-items
         parsed_data = {}
         for name, q_item in matches:
+            # if something is wrong, skip it
+            if (name.find("http:") >= 0 or name.find("https:") >= 0):
+                continue
+            if (name.find("//") >= 0):
+                continue
+            if (q_item.find(':') >= 0):
+                continue
+            if (q_item.find('^') >= 0):
+                continue
             parsed_data[name] = q_item
         return parsed_data
 
