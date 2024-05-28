@@ -46,7 +46,7 @@ def create_P7482_source_of_file(url, operator, publisher):
     return claim
 
 
-def create_P275_licence(value):
+def create_P275_licence(value, url):
     if not value:
         print("No licence error")
         exit(1)
@@ -65,6 +65,11 @@ def create_P275_licence(value):
     claim_target = pywikibot.ItemPage(wikidata_site, qcode)
     claim = pywikibot.Claim(wikidata_site, 'P275')
     claim.setTarget(claim_target)
+
+    if url:
+        qualifier_url = pywikibot.Claim(wikidata_site, 'P854')  # property ID for source URL (reference url)
+        qualifier_url.setTarget(url)
+        claim.addSource(qualifier_url, summary='Adding reference URL qualifier')
 
     return claim
 
@@ -229,7 +234,7 @@ def get_structured_data_for_new_image(finna_image):
 
     # Handle image rights
 
-    claim = create_P275_licence(finna_image.image_right.get_copyright())
+    claim = create_P275_licence(finna_image.image_right.get_copyright(), finna_image.url)
     claims.append(claim)
 
     claim = create_P6216_copyright_state(finna_image.image_right.get_copyright())
