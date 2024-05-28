@@ -41,7 +41,7 @@ def get_category_place(subject_places, depicted_places):
     print("DEBUG: get_category_place, depicted places: ", str(depicted_places) )
 
     cat_place = {
-        "Helsinki","Hamina","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Jyväskylä","Lahti","Lappajärvi","Lappeenranta","Loviisa","Kajaani","Kemi","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Mikkeli","Naantali","Pietarsaari","Porvoo","Pori","Oulu","Raahe","Rauma","Rovaniemi","Savonlinna","Seinäjoki","Sipoo","Sotkamo","Turku","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa"
+        "Helsinki","Hanko","Hamina","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Jyväskylä","Jämsä","Kaarina","Kajaani","Kerava","Kemi","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Naantali","Pietarsaari","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Virolahti"
     }
     for p in cat_place:
         if p in depicted_places:
@@ -124,15 +124,17 @@ def create_categories_new(finna_image):
         'lossit' : 'Cable ferries in',
         'lentokoneet' : 'Aircraft in',
         'moottoripyörät' : 'Motorcycles in',
-        'moottoripyöräurheilu' : 'Motorcycle racing in Finland',
-        'moottoriurheilu' : 'Motorsports in Finland',
+        'moottoripyöräurheilu' : 'Motorcycle racing in',
+        'moottoriurheilu' : 'Motorsports in',
         'linja-autot': 'Buses in',
         'kuorma-autot' : 'Trucks in',
+        #'autot' : 'Automobiles in',
         'henkilöautot' : 'Automobiles in',
-        'autourheilu' : 'Automobile racing in Finland',
+        'autourheilu' : 'Automobile racing in',
         'autokilpailut' : 'Automobile races in',
         'auto-onnettomuudet' : 'Automobile accidents in',
         'hotellit' : 'Hotels in',
+        'kodit' : 'Accommodation buildings in',
         'asuinrakennukset' : 'Houses in',
         'liikerakennukset' : 'Buildings in',
         'osuusliikkeet' : 'Consumers\' cooperatives in',
@@ -141,13 +143,16 @@ def create_categories_new(finna_image):
         'tehtaat' : 'Factories in',
         'teollisuusrakennukset' : 'Factories in',
         'konepajateollisuus' : 'Machinery industry in',
+        'paperiteollisuus' : 'Pulp and paper industry in',
         'koulurakennukset' : 'School buildings in',
         'rakennushankkeet' : 'Construction in',
         'laulujuhlat' : 'Music festivals in',
         'festivaalit' : 'Music festivals in',
         'rukit' : 'Spinning wheels in',
         'meijerit' : 'Dairies in',
-        'mainoskuvat' : 'Advertisements in'
+        'sairaalat' : 'Hospitals in',
+        'mainoskuvat' : 'Advertisements in',
+        'koira' : 'Dogs of'
     }
     
     cat_place = get_category_place(subject_places, depicted_places)
