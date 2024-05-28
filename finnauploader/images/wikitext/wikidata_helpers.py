@@ -6,6 +6,11 @@ from images.wikitext.mappingcache import MappingCache
 import pywikibot
 import re
 
+# reduce repeated queries a bit
+institutionTemplates = {}
+creatorTemplates = {}
+subjectImageCategory = {}
+creatorImageCategory = {}
 
 # Allowed --collections values
 # See also finna.py: do_finna_search()
@@ -65,8 +70,26 @@ def get_institution_wikidata_id(institution_name):
     print("Unknown institution: " + str(institution_name))
     exit(1)
 
+def setInstitutionTemplate(wikidata_id, name):
+    institutionTemplates[wikidata_id] = name
+
+def getInstitutionTemplate(wikidata_id):
+    if (wikidata_id in institutionTemplates):
+        return institutionTemplates[wikidata_id]
+    return None
+
+def isInstitutionTemplate(wikidata_id):
+    if (wikidata_id in institutionTemplates):
+        return True
+    return False
 
 def get_institution_template_from_wikidata_id(wikidata_id):
+
+    # reduce repeated queries a bit
+    if (isInstitutionTemplate(wikidata_id) == True):
+        institution_template_name = getInstitutionTemplate(wikidata_id)
+        return '{{Institution:' + institution_template_name + '}}'
+    
     # Connect to Wikidata
     site = pywikibot.Site("wikidata", "wikidata")
     repo = site.data_repository()
@@ -85,6 +108,10 @@ def get_institution_template_from_wikidata_id(wikidata_id):
     if 'P1612' in claims:
         institution_page_claim = claims['P1612'][0]
         institution_template_name = institution_page_claim.getTarget()
+        
+        # reduce repeated queries a bit
+        setInstitutionTemplate(wikidata_id, institution_template_name)
+        
         return '{{Institution:' + institution_template_name + '}}'
     else:
         print(f"Item {wikidata_id} does not exist!")
@@ -126,8 +153,26 @@ def get_author_wikidata_id(name):
         print(f'Unknown author: "{name}". Add author to {url}')
         exit(1)
 
+def setCreatorTemplate(wikidata_id, name):
+    creatorTemplates[wikidata_id] = name
+
+def getCreatorTemplate(wikidata_id):
+    if (wikidata_id in creatorTemplates):
+        return creatorTemplates[wikidata_id]
+    return None
+
+def isCreatorTemplate(wikidata_id):
+    if (wikidata_id in creatorTemplates):
+        return True
+    return False
 
 def get_creator_template_from_wikidata_id(wikidata_id):
+
+    # reduce repeated queries a bit
+    if (isCreatorTemplate(wikidata_id) == True):
+        creator_template_name = getCreatorTemplate(wikidata_id)
+        return '{{Creator:' + creator_template_name + '}}'
+    
     # Connect to Wikidata
     site = pywikibot.Site("wikidata", "wikidata")
     repo = site.data_repository()
@@ -146,12 +191,33 @@ def get_creator_template_from_wikidata_id(wikidata_id):
     if 'P1472' in claims:
         creator_page_claim = claims['P1472'][0]
         creator_template_name = creator_page_claim.getTarget()
+        
+        # reduce repeated queries a bit
+        setCreatorTemplate(wikidata_id, creator_template_name)
+
         return '{{Creator:' + creator_template_name + '}}'
     else:
         return None
 
+def setSubjectImageCategory(wikidata_id, name):
+    subjectImageCategory[wikidata_id] = name
+
+def getSubjectImageCategory(wikidata_id):
+    if (wikidata_id in subjectImageCategory):
+        return subjectImageCategory[wikidata_id]
+    return None
+
+def isSubjectImageCategory(wikidata_id):
+    if (wikidata_id in subjectImageCategory):
+        return True
+    return False
 
 def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
+    
+    # reduce repeated queries a bit
+    if (isSubjectImageCategory(wikidata_id) == True):
+        return getSubjectImageCategory(wikidata_id)
+    
     # Connect to Wikidata
     site = pywikibot.Site("wikidata", "wikidata")
     commons_site = pywikibot.Site("commons", "commons")
@@ -181,15 +247,36 @@ def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
 
         # Check if the category exists
         if photo_category.exists():
-            return photo_category.title()
+            category_name = photo_category.title()
+            
+            # reduce repeated queries a bit
+            setSubjectImageCategory(wikidata_id, category_name)
+            return category_name
 
     if mandatory:
         print(f'ERROR: Commons P373 category in https://wikidata.org/wiki/{wikidata_id} is missign.') # noqa
         exit(1)
     return None
 
+def setCreatorImageCategory(wikidata_id, name):
+    creatorImageCategory[wikidata_id] = name
+
+def getCreatorImageCategory(wikidata_id):
+    if (wikidata_id in creatorImageCategory):
+        return creatorImageCategory[wikidata_id]
+    return None
+
+def isCreatorImageCategory(wikidata_id):
+    if (wikidata_id in creatorImageCategory):
+        return True
+    return False
 
 def get_creator_image_category_from_wikidata_id(wikidata_id):
+
+    # reduce repeated queries a bit
+    if (isCreatorImageCategory(wikidata_id) == True):
+        return getCreatorImageCategory(wikidata_id)
+    
     # Connect to Wikidata
     site = pywikibot.Site("wikidata", "wikidata")
     commons_site = pywikibot.Site("commons", "commons")
@@ -219,7 +306,11 @@ def get_creator_image_category_from_wikidata_id(wikidata_id):
 
         # Check if the category exists
         if photo_category.exists():
-            return photo_category.title()
+            category_name = photo_category.title()
+            
+            # reduce repeated queries a bit
+            setCreatorImageCategory(wikidata_id, category_name)
+            return category_name
         else:
             print(f'{photo_category.title} is missing')
             exit(1)
