@@ -197,13 +197,18 @@ def get_source_of_file_claim(finna_image):
     operator = 'Q420747'    # National library
     url = finna_image.url
     
-    instlist = finna_image.get_institutions_for_publisher()
+    instlist = list()
+    for institution in finna_image.institutions.all():
+        wikidata_id = institution.get_wikidata_id()
+        instlist.append(wikidata_id)
 
     if (len(instlist) != 1):
         # TODO: check that create_P7482_source_of_file() can handle multiple institutions
         print(f'excpected one institution, found:', str(instlist))
         exit(1)
-            
+        
+    # TODO: fix handling so that potentially multiple institutions can be supported
+    # (do we have a real case for that though?)
     return create_P7482_source_of_file(url, operator, instlist[0])
 
 def get_inception_claim(finna_image):

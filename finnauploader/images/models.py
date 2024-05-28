@@ -357,6 +357,7 @@ class FinnaRecordManager(models.Manager):
         image_rights_copyright = image_rights_data['copyright']
         image_rights_link = image_rights_data['link']
         image_rights_description = image_rights_data.get('description', '')
+        # TODO : if description has link to creative commons, replace http:// by https://
         image_right, created = FinnaImageRight.objects.get_or_create(copyright=image_rights_copyright,
                                                                      link=image_rights_link,
                                                                      description=image_rights_description)
@@ -384,6 +385,7 @@ class FinnaRecordManager(models.Manager):
             if (master_url.startswith("/Cover/Show") == True):
                 master_url = "https://finna.fi" + master_url
             else:
+                # might be another museovirasto link, but in different domain
                 print("Warn: not a Finna url and not complete url? ", master_url)
 
         # Extract the Summary
@@ -421,9 +423,12 @@ class FinnaRecordManager(models.Manager):
                 continue
             if not s['text']:
                 continue
+            if 'attributes' not in s:
+                continue
             if 'label' not in s['attributes']:
                 continue
 
+            # TODO: data from certain collections does not have "pref" in the parameters
             alt_title, created = obj.get_or_create(text=s['text'],
                                                    lang=s['attributes']['lang'],
                                                    pref=s['attributes']['pref'])
@@ -708,13 +713,6 @@ class FinnaImage(models.Model):
 
     def get_date_string(self):
         return self.date_string
-
-    def get_institutions_for_publisher(self):
-        instlist = list()
-        for institution in self.institutions.all():
-            wikidata_id = institution.get_wikidata_id()
-            instlist.append(wikidata_id)
-        return instlist
 
 class FinnaImageHash(models.Model):
     phash = models.BigIntegerField(null=True)  # To store 64-bit unsigned integer

@@ -145,12 +145,12 @@ def create_categories_new(finna_image):
         'konepajateollisuus' : 'Machinery industry in',
         'paperiteollisuus' : 'Pulp and paper industry in',
         'koulurakennukset' : 'School buildings in',
+        'sairaalat' : 'Hospitals in',
         'rakennushankkeet' : 'Construction in',
         'laulujuhlat' : 'Music festivals in',
         'festivaalit' : 'Music festivals in',
         'rukit' : 'Spinning wheels in',
         'meijerit' : 'Dairies in',
-        'sairaalat' : 'Hospitals in',
         'mainoskuvat' : 'Advertisements in',
         'koira' : 'Dogs of'
     }
