@@ -152,8 +152,16 @@ def create_categories_new(finna_image):
         'rukit' : 'Spinning wheels in',
         'meijerit' : 'Dairies in',
         'mainoskuvat' : 'Advertisements in',
-        'koira' : 'Dogs of'
+        'koira' : 'Dogs of',
+        'hevosajoneuvot' : 'Horse-drawn vehicles in',
+        'polkupyörät' : 'Bicycles in'
     }
+
+    manor_categories_by_location = {
+        'Louhisaari' : 'Louhisaari Manor',
+        'Piikkiö' : 'Pukkila Manor'
+    }
+
     
     cat_place = get_category_place(subject_places, depicted_places)
 
@@ -173,7 +181,8 @@ def create_categories_new(finna_image):
             categories.add('Pukkila Manor')
     
     for add_category in finna_image.add_categories.all():
-        category_name = get_subject_category(add_category)
+        wikidata_id = finna_subject.get_wikidata_id()
+        category_name = get_category_by_wikidata_id(wikidata_id)
         if category_name:
             categories.add(category_name)
 
@@ -192,6 +201,15 @@ def create_categories_new(finna_image):
     categories.add('Files uploaded by FinnaUploadBot')
 
     for category in categories:
+        # is it possible to get this somehow?
+        if '^Category:' in category:
+            print("Should strip category")
+            exit(1)
+        # is it possible to get this somehow?
+        if 'http' in category:
+            print("Should strip url from category")
+            exit(1)
+        
         # Create the Wikilink
         category_title = 'Category:' + category
         wikilink = mwparserfromhell.nodes.Wikilink(title=category_title)
