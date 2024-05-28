@@ -1,3 +1,5 @@
+# for queries from wikidata-context
+
 from images.exceptions import MissingNonPresenterAuthorError, \
                               MultipleNonPresenterAuthorError, \
                               MissingSubjectActorError
@@ -11,6 +13,13 @@ institutionTemplates = {}
 creatorTemplates = {}
 subjectImageCategory = {}
 creatorImageCategory = {}
+
+# if there is update, just invalidate all
+def invalidateWikidataCaches():
+    institutionTemplates.clear()
+    creatorTemplates.clear()
+    subjectImageCategory.clear()
+    creatorImageCategory.clear()
 
 # Allowed --collections values
 # See also finna.py: do_finna_search()

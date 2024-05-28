@@ -1,3 +1,5 @@
+# for updates to commons structured data context
+
 import pywikibot
 import json
 
