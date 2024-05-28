@@ -168,6 +168,9 @@ def create_categories_new(finna_image):
 
         if (subject.name == 'kartanot' and 'Louhisaari' in depicted_places):
             categories.add('Louhisaari Manor')
+
+        if (subject.name == 'kartanot' and 'Piikkiö' in depicted_places):
+            categories.add('Pukkila Manor')
     
     for add_category in finna_image.add_categories.all():
         category_name = get_subject_category(add_category)
