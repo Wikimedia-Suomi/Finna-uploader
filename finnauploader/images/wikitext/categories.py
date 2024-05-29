@@ -40,6 +40,14 @@ def get_category_place(subject_places, depicted_places):
     print("DEBUG: get_category_place, subject places: ", str(subject_places) )
     print("DEBUG: get_category_place, depicted places: ", str(depicted_places) )
 
+    # for now, use hack to translate into category
+    if ('Nokia' in depicted_places):
+        return "Nokia, Finland"
+    if ('Maarianhamina' in depicted_places):
+        return "Mariehamn"
+    if ('Viipuri' in depicted_places):
+        return "Vyborg"
+
     cat_place = {
         "Helsinki","Hanko","Hamina","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Jyväskylä","Jämsä","Kaarina","Kajaani","Kerava","Kemi","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Naantali","Pietarsaari","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Virolahti"
     }
@@ -50,9 +58,6 @@ def get_category_place(subject_places, depicted_places):
         tmp = "Suomi, " + p
         if (tmp in depicted_places):
             return p
-        
-    if 'Suomi' in depicted_places:
-        return "Finland"
     return ""
 
 def create_categories_new(finna_image):
@@ -116,6 +121,8 @@ def create_categories_new(finna_image):
         'lentonäytökset': 'Air shows in',
         'veturit' : 'Locomotives of',
         'junat' : 'Trains of',
+        'junanvaunut' : 'Railway coaches of',
+        'rautatieasemat' : 'Train stations in',
         'laivat' : 'Ships in',
         'veneet' : 'Boats in',
         'matkustajalaivat' : 'Passenger ships in',
@@ -128,7 +135,7 @@ def create_categories_new(finna_image):
         'moottoriurheilu' : 'Motorsports in',
         'linja-autot': 'Buses in',
         'kuorma-autot' : 'Trucks in',
-        #'autot' : 'Automobiles in',
+        'autot' : 'Automobiles in',
         'henkilöautot' : 'Automobiles in',
         'autourheilu' : 'Automobile racing in',
         'autokilpailut' : 'Automobile races in',
@@ -151,6 +158,7 @@ def create_categories_new(finna_image):
         'festivaalit' : 'Music festivals in',
         'rukit' : 'Spinning wheels in',
         'meijerit' : 'Dairies in',
+        'ravintolat' : 'Restaurants in',
         'mainoskuvat' : 'Advertisements in',
         'koira' : 'Dogs of',
         'hevosajoneuvot' : 'Horse-drawn vehicles in',
@@ -159,18 +167,27 @@ def create_categories_new(finna_image):
 
     manor_categories_by_location = {
         'Louhisaari' : 'Louhisaari Manor',
-        'Piikkiö' : 'Pukkila Manor'
+        'Piikkiö' : 'Pukkila Manor',
+        'Kuusisto' : 'Kuusisto Manor',
+        'Knuutila' : 'Knuutila Manor'
     }
-
     
+    isInFinland = False
     cat_place = get_category_place(subject_places, depicted_places)
+    if (len(cat_place) == 0):
+        if 'Suomi' in depicted_places:
+            cat_place = "Finland"
+    else:
+        # for now, we recognize mostly places in finland..
+        if ('Viipuri' not in depicted_places and 'Petsamo' not in depicted_places):
+            isInFinland = True
 
     for subject in finna_image.subjects.all():
         if subject.name in subject_categories:
             category = subject_categories[subject.name]
             categories.add(category)
 
-        if subject.name in subject_categories_with_country and 'Suomi' in depicted_places:
+        if subject.name in subject_categories_with_country and isInFinland == True:
             category = subject_categories_with_country[subject.name] + " " + "Finland"
             categories.add(category)
 
@@ -179,6 +196,14 @@ def create_categories_new(finna_image):
 
         if (subject.name == 'kartanot' and 'Piikkiö' in depicted_places):
             categories.add('Pukkila Manor')
+
+        # Kuusisto, Kaarina
+        if (subject.name == 'kartanot' and 'Kuusisto' in depicted_places):
+            categories.add('Kuusisto Manor')
+
+        # Knuutila, Nokia
+        if (subject.name == 'kartanot' and 'Knuutila' in depicted_places):
+            categories.add('Knuutila Manor')
     
     for add_category in finna_image.add_categories.all():
         wikidata_id = finna_subject.get_wikidata_id()
