@@ -49,7 +49,7 @@ def get_category_place(subject_places, depicted_places):
         return "Vyborg"
 
     cat_place = {
-        "Helsinki","Hanko","Hamina","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Jyväskylä","Jämsä","Kaarina","Kajaani","Kerava","Kemi","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Naantali","Pietarsaari","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Virolahti"
+        "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Jyväskylä","Jämsä","Kaarina","Kajaani","Kauhajoki","Kerava","Kemi","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Naantali","Pietarsaari","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Virolahti"
     }
     for p in cat_place:
         if p in depicted_places:
@@ -104,8 +104,8 @@ def create_categories_new(finna_image):
         'Turun linna' : 'Turku Castle',
         'Hämeen linna' : 'Häme Castle',
         'Olavinlinna' : 'Olavinlinna',
-        'Hvitträsk': 'Hvitträsk',
-        'kiväärit' : 'Rifles'
+        'Hvitträsk': 'Hvitträsk'
+        #'kiväärit' : 'Rifles'
     }
     
     ## categories by type of photograph (portrait, nature..)
@@ -182,7 +182,11 @@ def create_categories_new(finna_image):
         'uimarannat' : 'Beaches of',
         'uimapuvut' : 'Swimwear in',
         'kylvö' : 'Agriculture in',
+        'peltoviljely' : 'Agriculture in',
+        'maanviljely' : 'Agriculture in',
+        'maatalous' : 'Agriculture in',
         'uitto' : 'Timber floating in',
+        'uittorännit' : 'Timber floating in',
         # retkeilyalueet, retkeilyvarusteet
         'retkeily' : 'Camping in'
     }
@@ -255,6 +259,11 @@ def create_categories_new(finna_image):
             categories.add('Svartholm Fortress')
         elif (subject.name == 'linnakkeet' and isInFinland == True):
             categories.add('Fortresses in Finland')
+
+        if (subject.name == 'kanavat' and 'Kimolan kanava' in depicted_places):
+            categories.add('Kimola Canal')
+        if (subject.name == 'kanavat' and 'Vääksyn Vesijärven kanava' in depicted_places):
+            categories.add('Vääksy Canal')
 
         # categorize by city if in Finland
         if (subject.name == 'kirkot' and len(cat_place) > 0 and isInFinland == True):
