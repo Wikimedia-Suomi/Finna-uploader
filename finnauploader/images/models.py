@@ -156,7 +156,7 @@ class FinnaNonPresenterAuthor(models.Model):
         return get_author_wikidata_id(self.name)
 
     def is_photographer(self):
-        if (self.role == 'kuvaaja' or self.role == 'valokuvaaja'):
+        if (self.role == 'kuvaaja' or self.role == 'valokuvaaja' or self.role == 'Valokuvaaja'):
             return True
         return False
 
