@@ -61,6 +61,7 @@ def get_category_place(subject_places, depicted_places):
     return ""
 
 def create_categories_new(finna_image):
+    subject_names = finna_image.subjects.values_list('name', flat=True)
     subject_places = finna_image.subject_places.values_list('name', flat=True)
     depicted_places = str(list(subject_places))
 
@@ -207,20 +208,22 @@ def create_categories_new(finna_image):
         if ('Viipuri' not in depicted_places and 'Petsamo' not in depicted_places):
             isInFinland = True
 
+    isInPortraits = False
     for subject in finna_image.subjects.all():
         if subject.name in subject_categories:
             category = subject_categories[subject.name]
             if (category == "Portrait photographs" and isInFinland == True):
-                if 'Men of Finland' in categories:
+                if 'miehet' in subject_names:
                     categories.add("Portrait photographs of men of Finland")
-                if 'Women of Finland' in categories:
+                if 'naiset' in subject_names:
                     categories.add("Portrait photographs of women of Finland")
-                
-                categories.add("Portrait photographs of Finland")
+                    
+                if ('Portrait photographs of men of Finland' not in categories and 'Portrait photographs of women of Finland' not in categories):
+                    categories.add("Portrait photographs of Finland")
+            elif (category == "Portrait photographs"):
+                categories.add(category)
             else:
                 categories.add(category)
-
-            categories.add(category)
 
         if (subject.name in subject_categories_with_country and isInFinland == True):
             category = subject_categories_with_country[subject.name] + " " + "Finland"
@@ -264,6 +267,8 @@ def create_categories_new(finna_image):
     if finna_image.year:
         if 'Portrait photographs' in categories and isInFinland == True:
             categories.add(f'People of Finland in {finna_image.year}')
+        if 'Portrait photographs' in categories:
+            categories.add(f'{finna_image.year} portrait photographs')
 
         if (len(cat_place) > 0):
             categories.add(f'{finna_image.year} in {cat_place}')
