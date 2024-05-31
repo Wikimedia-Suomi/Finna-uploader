@@ -144,15 +144,19 @@ def create_categories_new(finna_image):
         'kodit' : 'Accommodation buildings in',
         'asuinrakennukset' : 'Houses in',
         'liikerakennukset' : 'Buildings in',
+        'kerrostalot' : 'Apartment buildings in',
         'osuusliikkeet' : 'Consumers\' cooperatives in',
+        'saunat' : 'Sauna buildings in',
         'nosturit' : 'Cranes in',
         'kaivinkoneet' : 'Excavators in',
         'tehtaat' : 'Factories in',
         'teollisuusrakennukset' : 'Factories in',
         'konepajateollisuus' : 'Machinery industry in',
         'paperiteollisuus' : 'Pulp and paper industry in',
+        'sahateollisuus' : 'Sawmills in',
         'koulurakennukset' : 'School buildings in',
         'sairaalat' : 'Hospitals in',
+        'museot' : 'Museums in',
         'rakennushankkeet' : 'Construction in',
         'laulujuhlat' : 'Music festivals in',
         'festivaalit' : 'Music festivals in',
@@ -162,7 +166,8 @@ def create_categories_new(finna_image):
         'mainoskuvat' : 'Advertisements in',
         'koira' : 'Dogs of',
         'hevosajoneuvot' : 'Horse-drawn vehicles in',
-        'polkupyörät' : 'Bicycles in'
+        'polkupyörät' : 'Bicycles in',
+        'ammattikoulutus' : 'Vocational schools in'
     }
 
     manor_categories_by_location = {
@@ -204,6 +209,21 @@ def create_categories_new(finna_image):
         # Knuutila, Nokia
         if (subject.name == 'kartanot' and 'Knuutila' in depicted_places):
             categories.add('Knuutila Manor')
+
+        if (subject.name == 'parlamentit' and 'Helsinki' in depicted_places):
+            categories.add('Parliament House, Helsinki')
+
+        # Svartholma, Loviisa
+        if (subject.name == 'linnakkeet' and 'Svartholma' in depicted_places):
+            categories.add('Svartholm Fortress')
+        elif (subject.name == 'linnakkeet' and isInFinland == True):
+            categories.add('Fortresses in Finland')
+
+        # categorize by city if in Finland
+        if (subject.name == 'kirkot' and len(cat_place) > 0 and isInFinland == True):
+            cattext = 'Churches in ' + cat_place
+            categories.add(cattext)
+
     
     for add_category in finna_image.add_categories.all():
         wikidata_id = finna_subject.get_wikidata_id()
@@ -222,6 +242,9 @@ def create_categories_new(finna_image):
         # and only if it something other than country (at least a city)
         if (len(cat_place) > 0 and (cat_place != 'Suomi' and cat_place != 'Finland')):
             categories.add(cat_place)
+
+    # TODO: to categorize under "Black and white photographs of Finland",
+    # see models about parsing the full record xml from Finna for more terms
 
     categories.add('Files uploaded by FinnaUploadBot')
 
