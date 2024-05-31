@@ -44,8 +44,8 @@ def get_upload_summary():
     site.login()
 
     # Get own edits
-    user = site.user()  # The user whose edits we want to check
-    user = pywikibot.User(site, str(user))
+    current_user = site.user()  # The user whose edits we want to check
+    user = pywikibot.User(site, str(current_user))
     contribs = user.contributions(total=5000)  # Get the user's last 5000 edits
 
     uploadsummary = ''
@@ -53,18 +53,20 @@ def get_upload_summary():
         uploadsummary += str(contrib) + "\n"
 
     # Get Zaches edits
-    user = pywikibot.User(site, 'Zache')
-    contribs = user.contributions(total=5000)
+    if (current_user != 'Zache'):
+        user = pywikibot.User(site, 'Zache')
+        contribs = user.contributions(total=5000)
 
-    for contrib in contribs:
-        uploadsummary += str(contrib) + "\n"
+        for contrib in contribs:
+            uploadsummary += str(contrib) + "\n"
 
     # Get Finna upload bot edits
-    user = pywikibot.User(site, 'FinnaUploadBot')
-    contribs = user.contributions(total=5000)
+    if (current_user != 'FinnaUploadBot'):
+        user = pywikibot.User(site, 'FinnaUploadBot')
+        contribs = user.contributions(total=5000)
 
-    for contrib in contribs:
-        uploadsummary += str(contrib) + "\n"
+        for contrib in contribs:
+            uploadsummary += str(contrib) + "\n"
 
     return uploadsummary
 
