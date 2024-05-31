@@ -427,12 +427,23 @@ class FinnaRecordManager(models.Manager):
                 continue
             if 'label' not in s['attributes']:
                 continue
+            if 'lang' not in s['attributes']:
+                continue
+            # data from certain collections does not have "pref" in the full record
+            if 'pref' not in s['attributes']:
+                continue
 
-            # TODO: data from certain collections does not have "pref" in the parameters
+            # tag appellationValue ?
             alt_title, created = obj.get_or_create(text=s['text'],
                                                    lang=s['attributes']['lang'],
                                                    pref=s['attributes']['pref'])
+            
+            # TODO: parse classification><term lang="fi" label="luokitus"
+            # has information like >mustavalkoinen  negatiivi< that we can further categorize with later
+            
             alternative_titles.append(alt_title)
+
+        # classification
 
         # Extract local add_categories data
         add_categories_data = local_data.pop('add_categories', [])
