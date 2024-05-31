@@ -215,13 +215,17 @@ def create_categories_new(finna_image):
             if (category == "Portrait photographs" and isInFinland == True):
                 if 'miehet' in subject_names:
                     categories.add("Portrait photographs of men of Finland")
+                    isInPortraits = True
                 if 'naiset' in subject_names:
                     categories.add("Portrait photographs of women of Finland")
+                    isInPortraits = True
                     
                 if ('Portrait photographs of men of Finland' not in categories and 'Portrait photographs of women of Finland' not in categories):
                     categories.add("Portrait photographs of Finland")
+                    isInPortraits = True
             elif (category == "Portrait photographs"):
                 categories.add(category)
+                isInPortraits = True
             else:
                 categories.add(category)
 
@@ -265,9 +269,9 @@ def create_categories_new(finna_image):
             categories.add(category_name)
 
     if finna_image.year:
-        if 'Portrait photographs' in categories and isInFinland == True:
+        if (isInPortraits == True and isInFinland == True):
             categories.add(f'People of Finland in {finna_image.year}')
-        if 'Portrait photographs' in categories:
+        if (isInPortraits == True):
             categories.add(f'{finna_image.year} portrait photographs')
 
         if (len(cat_place) > 0):
