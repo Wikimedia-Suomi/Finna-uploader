@@ -119,6 +119,9 @@ def create_categories_new(finna_image):
         'professorit': 'Professors from',
         'kauppaneuvokset' : 'Businesspeople from',
         'toimitusjohtajat' : 'Businesspeople from',
+        'miehet' : 'Men of',
+        'naiset' : 'Women of',
+        'perheet' : 'Families of',
         'miesten puvut': 'Men wearing suits in',
         'muotinäytökset' : 'Fashion shows in',
         'lentonäytökset': 'Air shows in',
@@ -171,13 +174,16 @@ def create_categories_new(finna_image):
         'hevosajoneuvot' : 'Horse-drawn vehicles in',
         'polkupyörät' : 'Bicycles in',
         'aikakauslehdet' : 'Magazines of',
+        # sanomalehtipaperi
         'sanomalehdet' : 'Newspapers of',
         'ammattikoulutus' : 'Vocational schools in',
         'salmet' : 'Straits of',
         'uimarannat' : 'Beaches of',
         'uimapuvut' : 'Swimwear in',
         'kylvö' : 'Agriculture in',
-        'uitto' : 'Timber floating in'
+        'uitto' : 'Timber floating in',
+        # retkeilyalueet, retkeilyvarusteet
+        'retkeily' : 'Camping in'
     }
     
     # iron works
@@ -204,9 +210,19 @@ def create_categories_new(finna_image):
     for subject in finna_image.subjects.all():
         if subject.name in subject_categories:
             category = subject_categories[subject.name]
+            if (category == "Portrait photographs" and isInFinland == True):
+                if 'Men of Finland' in categories:
+                    categories.add("Portrait photographs of men of Finland")
+                if 'Women of Finland' in categories:
+                    categories.add("Portrait photographs of women of Finland")
+                
+                categories.add("Portrait photographs of Finland")
+            else:
+                categories.add(category)
+
             categories.add(category)
 
-        if subject.name in subject_categories_with_country and isInFinland == True:
+        if (subject.name in subject_categories_with_country and isInFinland == True):
             category = subject_categories_with_country[subject.name] + " " + "Finland"
             categories.add(category)
 
@@ -246,7 +262,7 @@ def create_categories_new(finna_image):
             categories.add(category_name)
 
     if finna_image.year:
-        if 'Portrait photographs' in categories and 'Suomi' in depicted_places:
+        if 'Portrait photographs' in categories and isInFinland == True:
             categories.add(f'People of Finland in {finna_image.year}')
 
         if (len(cat_place) > 0):
@@ -254,7 +270,7 @@ def create_categories_new(finna_image):
     else:
         # if we can't determine year, use only location name
         # and only if it something other than country (at least a city)
-        if (len(cat_place) > 0 and (cat_place != 'Suomi' and cat_place != 'Finland')):
+        if (len(cat_place) > 0 and (cat_place != 'Suomi' and cat_place != 'Finland') and isInFinland == True):
             categories.add(cat_place)
 
     # TODO: to categorize under "Black and white photographs of Finland",
