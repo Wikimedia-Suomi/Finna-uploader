@@ -107,6 +107,9 @@ def create_categories_new(finna_image):
         'kiväärit' : 'Rifles'
     }
     
+    ## categories by type of photograph (portrait, nature..)
+    # luontokuvat
+    
     # must have place 'Suomi' to generate ' in Finland'
     #
     # note: there are also "from" and "of" categories in Commons, 
@@ -167,8 +170,19 @@ def create_categories_new(finna_image):
         'koira' : 'Dogs of',
         'hevosajoneuvot' : 'Horse-drawn vehicles in',
         'polkupyörät' : 'Bicycles in',
-        'ammattikoulutus' : 'Vocational schools in'
+        'aikakauslehdet' : 'Magazines of',
+        'sanomalehdet' : 'Newspapers of',
+        'ammattikoulutus' : 'Vocational schools in',
+        'salmet' : 'Straits of',
+        'uimarannat' : 'Beaches of',
+        'uimapuvut' : 'Swimwear in',
+        'kylvö' : 'Agriculture in',
+        'uitto' : 'Timber floating in'
     }
+    
+    # iron works
+    # metal industry
+    # Metalworkers
 
     manor_categories_by_location = {
         'Louhisaari' : 'Louhisaari Manor',
