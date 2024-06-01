@@ -729,6 +729,13 @@ class FinnaImage(models.Model):
 
     def get_date_string(self):
         return self.date_string
+    
+    def is_name_in_subjects(self, name):
+        for subject in subjects:
+            if name == subject.name:
+                return True
+        return False
+
 
 class FinnaImageHash(models.Model):
     phash = models.BigIntegerField(null=True)  # To store 64-bit unsigned integer

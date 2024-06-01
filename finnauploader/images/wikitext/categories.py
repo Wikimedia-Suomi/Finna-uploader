@@ -24,10 +24,10 @@ def get_creator_category_by_wikidata_id(wikidata_id):
 # if picture is categorized under architecture
 # and authors includes person with role "arkkitehti"
 # categorize under "buildings by <architect>"
-def get_architect_category(finna_image, architectname):
+#def get_architect_category(wikidata_id, architectname):
     # subject should include "rakennukset"
     # TODO: add validation for input
-    return "Buildings by " + architectname
+    #return "Buildings by " + architectname
 
 def get_subject_category(finna_subject):
     value = finna_subject.value.replace('category:', 'Category:')
@@ -95,6 +95,11 @@ def create_categories_new(finna_image):
             wikidata_id = author.get_wikidata_id()
             category = get_creator_category_by_wikidata_id(wikidata_id)
             categories.add(category)
+
+        #if (author.is_architect()):
+            #if (finna_image.is_name_in_subjects("rakennukset")):
+                #category = get_architect_category():
+            
 
     # Ssteamboats: non ocean-going
     # Steamships of Finland
