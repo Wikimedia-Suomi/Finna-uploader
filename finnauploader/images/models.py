@@ -160,6 +160,11 @@ class FinnaNonPresenterAuthor(models.Model):
             return True
         return False
 
+    def is_architect(self):
+        if (self.role == 'arkkitehti' or self.role == 'Arkkitehti'):
+            return True
+        return False
+
 class FinnaAlternativeTitle(models.Model):
     text = models.TextField()
     lang = models.CharField(max_length=6)

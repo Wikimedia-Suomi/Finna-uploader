@@ -21,6 +21,14 @@ def get_creator_category_by_wikidata_id(wikidata_id):
             return category
     return None
 
+# if picture is categorized under architecture
+# and authors includes person with role "arkkitehti"
+# categorize under "buildings by <architect>"
+def get_architect_category(finna_image, architectname):
+    # subject should include "rakennukset"
+    # TODO: add validation for input
+    return "Buildings by " + architectname
+
 def get_subject_category(finna_subject):
     value = finna_subject.value.replace('category:', 'Category:')
 
@@ -104,6 +112,7 @@ def create_categories_new(finna_image):
         'Turun linna' : 'Turku Castle',
         'Hämeen linna' : 'Häme Castle',
         'Olavinlinna' : 'Olavinlinna',
+        'Raaseporin linna' : 'Raseborg castle',
         'Hvitträsk': 'Hvitträsk'
         #'kiväärit' : 'Rifles'
     }
