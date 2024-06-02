@@ -122,12 +122,14 @@ def create_categories_new(finna_image):
             if (category != None):
                 categories.add(category)
 
-        if (author.is_architect() and finna_image.is_name_in_subjects("rakennukset")):
-            # "buildings by" category under architect
-            wikidata_id = author.get_wikidata_id()
-            category = get_building_category_by_architect_id(wikidata_id)
-            if (category != None):
-                categories.add(category)
+        if (author.is_architect()):
+            # is image about a building?
+            if (finna_image.is_entry_in_subjects("rakennukset") or finna_image.is_entry_in_subjects("kirkkorakennukset")):
+                # "buildings by" category under architect
+                wikidata_id = author.get_wikidata_id()
+                category = get_building_category_by_architect_id(wikidata_id)
+                if (category != None):
+                    categories.add(category)
             
 
     # Ssteamboats: non ocean-going
