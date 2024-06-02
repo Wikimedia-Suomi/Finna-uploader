@@ -15,14 +15,12 @@ import re
 institutionNames = {}
 creatorNames = {}
 subjectImageCategory = {}
-creatorImageCategory = {}
 
 # if there is update, just invalidate all
 def invalidateWikidataCaches():
     institutionNames.clear()
     creatorNames.clear()
     subjectImageCategory.clear()
-    creatorImageCategory.clear()
 
 # Allowed --collections values
 # See also finna.py: do_finna_search()
@@ -284,67 +282,6 @@ def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
         exit(1)
     return None
 
-def setCreatorImageCategory(wikidata_id, name):
-    creatorImageCategory[wikidata_id] = name
-
-def getCreatorImageCategory(wikidata_id):
-    if (wikidata_id in creatorImageCategory):
-        return creatorImageCategory[wikidata_id]
-    return None
-
-def isCreatorImageCategory(wikidata_id):
-    if (wikidata_id in creatorImageCategory):
-        return True
-    return False
-
-def get_creator_image_category_from_wikidata_id(wikidata_id):
-
-    # reduce repeated queries a bit
-    if (isCreatorImageCategory(wikidata_id) == True):
-        return getCreatorImageCategory(wikidata_id)
-    
-    # Connect to Wikidata
-    site = pywikibot.Site("wikidata", "wikidata")
-    commons_site = pywikibot.Site("commons", "commons")
-    repo = site.data_repository()
-
-    # Access the Wikidata item using the provided ID
-    item = pywikibot.ItemPage(repo, wikidata_id)
-
-    # If the item doesn't exist, return None
-    if not item.exists():
-        print(f"Item {wikidata_id} does not exist!")
-        return None
-
-    # Try to fetch the value of the property P1472 (Commons Creator page)
-    claims = item.get().get('claims')
-
-    if 'P373' in claims:
-        commons_category_claim = claims['P373'][0]
-        commons_category = commons_category_claim.getTarget()
-
-        # Photogategory is main category
-        if 'Photographs by' in commons_category:
-            return commons_category
-
-        photo_category_name = f"Category:Photographs by {commons_category}"
-        photo_category = pywikibot.Category(commons_site, photo_category_name)
-
-        # Check if the category exists
-        if photo_category.exists():
-            category_name = photo_category.title()
-            
-            # reduce repeated queries a bit
-            setCreatorImageCategory(wikidata_id, category_name)
-            return category_name
-        else:
-            print(f'{photo_category.title} is missing')
-            exit(1)
-#            return None
-    else:
-        print(f'{wikidata_id}.P373 value is missing')
-        exit(1)
-#        return None
 
 def get_subject_actors_wikidata_ids(subjectActors):
     ret = []

@@ -1,7 +1,6 @@
 import mwparserfromhell
 
 from images.wikitext.wikidata_helpers import get_subject_image_category_from_wikidata_id, \
-                                    get_creator_image_category_from_wikidata_id, \
                                     get_creator_nane_by_wikidata_id
 
 def get_category_by_wikidata_id(wikidata_id):
