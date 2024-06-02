@@ -1,33 +1,57 @@
 import mwparserfromhell
 
 from images.wikitext.wikidata_helpers import get_subject_image_category_from_wikidata_id, \
-                                    get_creator_image_category_from_wikidata_id
+                                    get_creator_image_category_from_wikidata_id, \
+                                    get_creator_nane_by_wikidata_id
 
 def get_category_by_wikidata_id(wikidata_id):
-    if wikidata_id:
-        category = get_subject_image_category_from_wikidata_id(wikidata_id)
-        if category:
-            #if not prefix:
-            category = category.replace('Category:', '')
-            return category
+    if not wikidata_id:
+        return None
+    
+    category = get_subject_image_category_from_wikidata_id(wikidata_id)
+    if category:
+        #if not prefix:
+        category = category.replace('Category:', '')
+        return category
     return None
 
-def get_creator_category_by_wikidata_id(wikidata_id):
-    if wikidata_id:
-        category = get_creator_image_category_from_wikidata_id(wikidata_id)
-        if category:
-            #if not prefix:
-            category = category.replace('Category:', '')
-            return category
+def get_photography_category_by_photographer_id(wikidata_id):
+    if not wikidata_id:
+        return None
+
+    creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
+    if (creatorName != None):
+        if 'Photographs by' in creatorName:
+            category = creatorName
+        else:
+            category = "Photographs by " + creatorName
+
+        #if (isCategoryExistingInCommons(category)):
+            #return category
+        return category
+        
     return None
 
 # if picture is categorized under architecture
 # and authors includes person with role "arkkitehti"
 # categorize under "buildings by <architect>"
-#def get_architect_category(wikidata_id, architectname):
-    # subject should include "rakennukset"
-    # TODO: add validation for input
-    #return "Buildings by " + architectname
+# subject should include "rakennukset"
+def get_building_category_by_architect_id(wikidata_id):
+    if not wikidata_id:
+        return None
+    
+    creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
+    if (creatorName != None):
+        if 'Buildings by' in creatorName:
+            category = creatorName
+        else:
+            category = "Buildings by " + creatorName
+
+        #if (isCategoryExistingInCommons(category)):
+            #return category
+        return category
+
+    return None
 
 def get_subject_category(finna_subject):
     value = finna_subject.value.replace('category:', 'Category:')
@@ -92,13 +116,18 @@ def create_categories_new(finna_image):
     authors = finna_image.non_presenter_authors.all()
     for author in authors:
         if (author.is_photographer()):
+            # "photographs by" category under photographer
             wikidata_id = author.get_wikidata_id()
-            category = get_creator_category_by_wikidata_id(wikidata_id)
-            categories.add(category)
+            category = get_photography_category_by_photographer_id(wikidata_id)
+            if (category != None):
+                categories.add(category)
 
-        #if (author.is_architect()):
-            #if (finna_image.is_name_in_subjects("rakennukset")):
-                #category = get_architect_category():
+        if (author.is_architect() and finna_image.is_name_in_subjects("rakennukset")):
+            # "buildings by" category under architect
+            wikidata_id = author.get_wikidata_id()
+            category = get_building_category_by_architect_id(wikidata_id)
+            if (category != None):
+                categories.add(category)
             
 
     # Ssteamboats: non ocean-going

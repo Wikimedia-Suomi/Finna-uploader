@@ -731,7 +731,7 @@ class FinnaImage(models.Model):
         return self.date_string
     
     def is_name_in_subjects(self, name):
-        for subject in subjects:
+        for subject in self.subjects.all():
             if name == subject.name:
                 return True
         return False

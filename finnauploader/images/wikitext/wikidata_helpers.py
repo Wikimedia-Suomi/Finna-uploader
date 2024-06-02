@@ -1,4 +1,7 @@
 # for queries from wikidata-context
+#
+# these get called from photographer.py, sdc_helpers.py, categories.py and models.py
+# during generating data for upload
 
 from images.exceptions import MissingNonPresenterAuthorError, \
                               MultipleNonPresenterAuthorError, \
@@ -9,15 +12,15 @@ import pywikibot
 import re
 
 # reduce repeated queries a bit
-institutionTemplates = {}
-creatorTemplates = {}
+institutionNames = {}
+creatorNames = {}
 subjectImageCategory = {}
 creatorImageCategory = {}
 
 # if there is update, just invalidate all
 def invalidateWikidataCaches():
-    institutionTemplates.clear()
-    creatorTemplates.clear()
+    institutionNames.clear()
+    creatorNames.clear()
     subjectImageCategory.clear()
     creatorImageCategory.clear()
 
@@ -54,6 +57,7 @@ def get_collection_name_from_alias(name):
     else:
         return name
 
+# use mapping from Finna-string to qcode
 def get_collection_wikidata_id(name):
     if name in cache.collectionsCache:
         return cache.collectionsCache[name]
@@ -73,31 +77,32 @@ def get_institution_name(institutions):
     print(f'Missing in {url}')
     exit(1)
 
+# use mapping from Finna-string to qcode
 def get_institution_wikidata_id(institution_name):
     if institution_name in cache.institutionsCache:
         return cache.institutionsCache[institution_name]
     print("Unknown institution: " + str(institution_name))
     exit(1)
 
-def setInstitutionTemplate(wikidata_id, name):
-    institutionTemplates[wikidata_id] = name
+def setInstitutionName(wikidata_id, name):
+    institutionNames[wikidata_id] = name
 
-def getInstitutionTemplate(wikidata_id):
-    if (wikidata_id in institutionTemplates):
-        return institutionTemplates[wikidata_id]
+def getInstitutionName(wikidata_id):
+    if (wikidata_id in institutionNames):
+        return institutionNames[wikidata_id]
     return None
 
-def isInstitutionTemplate(wikidata_id):
-    if (wikidata_id in institutionTemplates):
+def isInstitutionName(wikidata_id):
+    if (wikidata_id in institutionNames):
         return True
     return False
 
-def get_institution_template_from_wikidata_id(wikidata_id):
+def get_institution_name_by_wikidata_id(wikidata_id):
 
     # reduce repeated queries a bit
-    if (isInstitutionTemplate(wikidata_id) == True):
-        institution_template_name = getInstitutionTemplate(wikidata_id)
-        return '{{Institution:' + institution_template_name + '}}'
+    if (isInstitutionName(wikidata_id) == True):
+        institution_template_name = getInstitutionName(wikidata_id)
+        return institution_template_name
     
     # Connect to Wikidata
     site = pywikibot.Site("wikidata", "wikidata")
@@ -119,9 +124,9 @@ def get_institution_template_from_wikidata_id(wikidata_id):
         institution_template_name = institution_page_claim.getTarget()
         
         # reduce repeated queries a bit
-        setInstitutionTemplate(wikidata_id, institution_template_name)
+        setInstitutionName(wikidata_id, institution_template_name)
         
-        return '{{Institution:' + institution_template_name + '}}'
+        return institution_template_name
     else:
         print(f"Item {wikidata_id} does not exist!")
         exit(1)
@@ -152,7 +157,7 @@ def get_author_name(nonPresenterAuthors):
 
     return ret
 
-
+# use mapping from Finna-string to qcode
 def get_author_wikidata_id(name):
     if name in cache.nonPresenterAuthorsCache:
         wikidata_id = cache.nonPresenterAuthorsCache[name]
@@ -162,25 +167,25 @@ def get_author_wikidata_id(name):
         print(f'Unknown author: "{name}". Add author to {url}')
         exit(1)
 
-def setCreatorTemplate(wikidata_id, name):
-    creatorTemplates[wikidata_id] = name
+def setCreatorName(wikidata_id, name):
+    creatorNames[wikidata_id] = name
 
-def getCreatorTemplate(wikidata_id):
-    if (wikidata_id in creatorTemplates):
-        return creatorTemplates[wikidata_id]
+def getCreatorName(wikidata_id):
+    if (wikidata_id in creatorNames):
+        return creatorNames[wikidata_id]
     return None
 
-def isCreatorTemplate(wikidata_id):
-    if (wikidata_id in creatorTemplates):
+def isCreatorName(wikidata_id):
+    if (wikidata_id in creatorNames):
         return True
     return False
 
-def get_creator_template_from_wikidata_id(wikidata_id):
+def get_creator_nane_by_wikidata_id(wikidata_id):
 
     # reduce repeated queries a bit
-    if (isCreatorTemplate(wikidata_id) == True):
-        creator_template_name = getCreatorTemplate(wikidata_id)
-        return '{{Creator:' + creator_template_name + '}}'
+    if (isCreatorName(wikidata_id) == True):
+        creator_name = getCreatorName(wikidata_id)
+        return creator_name
     
     # Connect to Wikidata
     site = pywikibot.Site("wikidata", "wikidata")
@@ -199,14 +204,26 @@ def get_creator_template_from_wikidata_id(wikidata_id):
 
     if 'P1472' in claims:
         creator_page_claim = claims['P1472'][0]
-        creator_template_name = creator_page_claim.getTarget()
+        creator_name = creator_page_claim.getTarget()
         
         # reduce repeated queries a bit
-        setCreatorTemplate(wikidata_id, creator_template_name)
+        setCreatorName(wikidata_id, creator_name)
 
-        return '{{Creator:' + creator_template_name + '}}'
+        return creator_name
     else:
         return None
+
+def isCategoryExistingInCommons(commons_site, category_name):
+    if (category_name.find("Category:") < 0):
+        category_name = "Category:" + category_name
+   
+    photo_category = pywikibot.Category(commons_site, category_name)
+
+    # Check if the category exists
+    if photo_category.exists():
+        return True
+    return False
+
 
 def setSubjectImageCategory(wikidata_id, name):
     subjectImageCategory[wikidata_id] = name

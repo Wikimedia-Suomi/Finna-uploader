@@ -16,6 +16,8 @@ from images.pywikibot_helpers import edit_commons_mediaitem, \
 
 
 class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
+    # TODO: selection for collection would be nice
+    
     queryset = FinnaImage.objects.filter(
                                          identifier_string__contains='JOKA',
                                          )
@@ -52,6 +54,8 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
         print(comment)
         print(filename)
 
+        print('uploading from:', image_url)
+
         page = upload_file_to_commons(image_url, filename,
                                       wikitext, comment)
         ret = edit_commons_mediaitem(page, structured_data)
@@ -63,6 +67,8 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
                          "filename": filename,
                          "message": f'{pk} uploaded to commons'},
                         status=status.HTTP_200_OK)
+
+    # TODO: add action to call the helper script for creating subject if it is missing..
 
     # http://127.0.0.1:8000/finna/14526/skip/
     @action(detail=True, methods=['get'])
@@ -109,9 +115,11 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
             search_keys = search_query.split(" ")
             for search_key in search_keys:
                 if search_key[0] == '-':
-                    minus_words.append(search_key[1:])
+                    sk = search_key[1:]
+                    minus_words.append(sk)
                 else:
-                    plus_words.append(search_key)
+                    sk = search_key
+                    plus_words.append(sk)
 
             if len(plus_words):
                 plus_query = " ".join(plus_words)

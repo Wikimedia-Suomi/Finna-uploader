@@ -3,9 +3,9 @@ from images.wikitext.timestamps import parse_timestamp_string
 from images.wikitext.categories import create_categories_new
 
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
-                                    get_creator_template_from_wikidata_id, \
+                                    get_creator_nane_by_wikidata_id, \
                                     get_institution_wikidata_id, \
-                                    get_institution_template_from_wikidata_id, \
+                                    get_institution_name_by_wikidata_id, \
                                     get_collection_wikidata_id
 
 
@@ -86,16 +86,20 @@ def get_creator_templates(finna_image):
     for creator in finna_image.non_presenter_authors.all():
         if (creator.is_photographer()):
             wikidata_id = creator.get_wikidata_id()
-            template = get_creator_template_from_wikidata_id(wikidata_id)
-            creator_templates.append(template)
+            creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
+            if (creatorName != None):
+                template =  '{{Creator:' + creatorName + '}}'
+                creator_templates.append(template)
     return "".join(creator_templates)
 
 def get_institution_templates(finna_image):
     institution_templates = []
     for institution in finna_image.institutions.all():
         wikidata_id = institution.get_wikidata_id()
-        template = get_institution_template_from_wikidata_id(wikidata_id)
-        institution_templates.append(template)
+        institutionName = get_institution_name_by_wikidata_id(wikidata_id)
+        if (institutionName != None):
+            template = '{{Institution:' + institutionName + '}}'
+            institution_templates.append(template)
     return "".join(institution_templates)
 
 def get_copyright_template(finna_image):
