@@ -139,6 +139,12 @@ def get_finna_record(id, full=False, lang=None):
         print("Finna API query failed: " + url)
         exit(1)
 
+def get_finna_record_by_id(id, full=False, lang=None):
+
+    # Update to latest finna_record
+    record = get_finna_record(id, True)
+    record = record['records'][0]
+    return record
 
 def get_summary_in_language(id, lang):
     urlencoded_id = urllib.parse.quote_plus(id)

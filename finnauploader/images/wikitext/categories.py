@@ -16,17 +16,21 @@ def get_category_by_wikidata_id(wikidata_id):
 
 def get_photography_category_by_photographer_id(wikidata_id):
     if not wikidata_id:
+        print('DEBUG: no wikidata id, unable to find photographer category')
         return None
 
-    creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
+    creatorName = get_subject_image_category_from_wikidata_id(wikidata_id)
     if (creatorName != None):
-        if 'Photographs by' in creatorName:
+        print('DEBUG: creator name ', creatorName ,' for wikidata id: ', wikidata_id)
+        
+        if (creatorName.startswith("Photographs by") == True):
             category = creatorName
         else:
             category = "Photographs by " + creatorName
 
         #if (isCategoryExistingInCommons(category)):
             #return category
+        print('DEBUG: using photography category', category)
         return category
         
     return None
@@ -37,10 +41,13 @@ def get_photography_category_by_photographer_id(wikidata_id):
 # subject should include "rakennukset"
 def get_building_category_by_architect_id(wikidata_id):
     if not wikidata_id:
+        print('DEBUG: no wikidata id, unable to find architect category')
         return None
     
-    creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
+    creatorName = get_subject_image_category_from_wikidata_id(wikidata_id)
     if (creatorName != None):
+        print('DEBUG: creator name ', creatorName ,' for wikidata id: ', wikidata_id)
+
         if 'Buildings by' in creatorName:
             category = creatorName
         else:
@@ -48,6 +55,7 @@ def get_building_category_by_architect_id(wikidata_id):
 
         #if (isCategoryExistingInCommons(category)):
             #return category
+        print('DEBUG: using photography category', category)
         return category
 
     return None
@@ -110,7 +118,8 @@ def create_categories_new(finna_image):
     for subject_actor in finna_image.subject_actors.all():
         wikidata_id = subject_actor.get_wikidata_id()
         category = get_category_by_wikidata_id(wikidata_id)
-        categories.add(category)
+        if category:
+            categories.add(category)
 
     authors = finna_image.non_presenter_authors.all()
     for author in authors:
@@ -211,6 +220,7 @@ def create_categories_new(finna_image):
         'rakennushankkeet' : 'Construction in',
         'laulujuhlat' : 'Music festivals in',
         'festivaalit' : 'Music festivals in',
+        'neulonta' : 'Knitting in',
         'rukit' : 'Spinning wheels in',
         'meijerit' : 'Dairies in',
         'ravintolat' : 'Restaurants in',
@@ -286,6 +296,11 @@ def create_categories_new(finna_image):
 
         if (subject.name == 'kartanot' and 'Piikkiö' in depicted_places):
             categories.add('Pukkila Manor')
+
+        #if (subject.name == 'kartanot' and 'Vesilahti' in depicted_places):
+            #categories.add('Laukko Manor')
+        if (subject.name == "Laukon kartano"):
+            categories.add('Laukko Manor')
 
         # Kuusisto, Kaarina
         if (subject.name == 'kartanot' and 'Kuusisto' in depicted_places):

@@ -14,13 +14,13 @@ import re
 # reduce repeated queries a bit
 institutionNames = {}
 creatorNames = {}
-subjectImageCategory = {}
+subjectCategories = {}
 
 # if there is update, just invalidate all
 def invalidateWikidataCaches():
     institutionNames.clear()
     creatorNames.clear()
-    subjectImageCategory.clear()
+    subjectCategories.clear()
 
 # Allowed --collections values
 # See also finna.py: do_finna_search()
@@ -178,6 +178,7 @@ def isCreatorName(wikidata_id):
         return True
     return False
 
+# creator name according wikidata entry for creator template
 def get_creator_nane_by_wikidata_id(wikidata_id):
 
     # reduce repeated queries a bit
@@ -198,6 +199,8 @@ def get_creator_nane_by_wikidata_id(wikidata_id):
         return None
 
     # Try to fetch the value of the property P1472 (Commons Creator page)
+    # Creator-tekijämalline Wikimedia Commonsissa (P1472)
+    
     claims = item.get().get('claims')
 
     if 'P1472' in claims:
@@ -223,24 +226,26 @@ def isCategoryExistingInCommons(commons_site, category_name):
     return False
 
 
-def setSubjectImageCategory(wikidata_id, name):
-    subjectImageCategory[wikidata_id] = name
+def setSubjectCategory(wikidata_id, name):
+    subjectCategories[wikidata_id] = name
 
-def getSubjectImageCategory(wikidata_id):
-    if (wikidata_id in subjectImageCategory):
-        return subjectImageCategory[wikidata_id]
+def getSubjectCategory(wikidata_id):
+    if (wikidata_id in subjectCategories):
+        return subjectCategories[wikidata_id]
     return None
 
-def isSubjectImageCategory(wikidata_id):
-    if (wikidata_id in subjectImageCategory):
+def isSubjectCategory(wikidata_id):
+    if (wikidata_id in subjectCategories):
         return True
     return False
 
+# Commons-category associated with wikidata-entry
+# Commons-luokka (P373)
 def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
     
     # reduce repeated queries a bit
-    if (isSubjectImageCategory(wikidata_id) == True):
-        return getSubjectImageCategory(wikidata_id)
+    if (isSubjectCategory(wikidata_id) == True):
+        return getSubjectCategory(wikidata_id)
     
     # Connect to Wikidata
     site = pywikibot.Site("wikidata", "wikidata")
@@ -261,21 +266,28 @@ def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
         print(f"Item {wikidata_id} does not exist!")
         return None
 
-    # Try to fetch the value of the property P1472 (Commons Creator page)
+    # Try to fetch the value of the property P373 (Commons category)
     claims = item.get().get('claims')
 
     if 'P373' in claims:
         commons_category_claim = claims['P373'][0]
-        commons_category = commons_category_claim.getTarget()
-        photo_category = pywikibot.Category(commons_site, commons_category)
+        category_name = commons_category_claim.getTarget()
+        
+        # reduce repeated queries a bit
+        setSubjectCategory(wikidata_id, category_name)
+        return category_name
+ 
+        #photo_category = pywikibot.Category(commons_site, category_name)
 
         # Check if the category exists
-        if photo_category.exists():
-            category_name = photo_category.title()
+        # this is pointless: you can't have non-existing categories in wikidata?
+        # also, you can generate various sub-categories based on this..
+        #if photo_category.exists():
+            #category_name = photo_category.title()
             
             # reduce repeated queries a bit
-            setSubjectImageCategory(wikidata_id, category_name)
-            return category_name
+            #setSubjectCategory(wikidata_id, category_name)
+            #return category_name
 
     if mandatory:
         print(f'ERROR: Commons P373 category in https://wikidata.org/wiki/{wikidata_id} is missign.') # noqa
