@@ -294,6 +294,66 @@ def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
         exit(1)
     return None
 
+class WikidataPlace:
+    def __init__(self):
+        self.category_name = None
+        self.instance_of = None
+        self.part_of = None
+        self.region = None
+        self.nation = None
+
+def get_place_by_wikidata_id(wikidata_id):
+    
+    # reduce repeated queries a bit
+    #if (isPlaceCategory(wikidata_id) == True):
+        #return getPlaceCategory(wikidata_id)
+    
+    # Connect to Wikidata
+    site = pywikibot.Site("wikidata", "wikidata")
+    commons_site = pywikibot.Site("commons", "commons")
+    repo = site.data_repository()
+
+    item = None
+    try:
+        # Access the Wikidata item using the provided ID
+        item = pywikibot.ItemPage(repo, wikidata_id)
+    except:
+        # at least try to tell what is missing
+        print(f'Item for Wikidata ID {wikidata_id} is missing')
+        raise
+
+    # If the item doesn't exist, return None
+    if not item.exists():
+        print(f"Item {wikidata_id} does not exist!")
+        return None
+
+    # Try to fetch the value of the property P373 (Commons category)
+    claims = item.get().get('claims')
+
+    wdp = WikidataPlace()
+
+    # commons category for this place (if any)
+    if 'P373' in claims:
+        commons_category_claim = claims['P373'][0]
+        wdp.category_name = commons_category_claim.getTarget()
+
+    # verify for type of city/place to live
+    if 'P31' in claims:
+        wdp.instance_of = claims['P31'][0]
+
+    # part of some division (maakunta) ?
+    if 'P361' in claims:
+        wdp.part_of = claims['P361'][0]
+
+    # sijaitsee hallinnollisessa alueyksikössä (P131)
+    if 'P131' in claims:
+        wdp.region = claims['P131'][0]
+
+    # valtio (P17)
+    if 'P17' in claims:
+        wdp.nation = claims['P17'][0]
+
+    return wdp
 
 def get_subject_actors_wikidata_ids(subjectActors):
     ret = []
