@@ -150,6 +150,7 @@ def create_categories_new(finna_image):
     subject_categories = {
         'muotokuvat': 'Portrait photographs',
         'henkilökuvat': 'Portrait photographs',
+        'ryhmäkuvat' : 'Group photographs',
         'saamenpuvut' : 'Sami clothing',
         'Osuusliike Elanto': 'Elanto',
         'Valmet Oy': 'Valmet',
@@ -207,6 +208,8 @@ def create_categories_new(finna_image):
         'kodit' : 'Accommodation buildings in',
         'asuinrakennukset' : 'Houses in',
         'liikerakennukset' : 'Buildings in',
+        'virastotalot' : 'Government buildings in',
+        'toimistorakennukset' : 'Office buildings in',
         'kerrostalot' : 'Apartment buildings in',
         'osuusliikkeet' : 'Consumers\' cooperatives in',
         'saunat' : 'Sauna buildings in',
@@ -217,8 +220,15 @@ def create_categories_new(finna_image):
         'konepajateollisuus' : 'Machinery industry in',
         'paperiteollisuus' : 'Pulp and paper industry in',
         'sahateollisuus' : 'Sawmills in',
+        'metsänhoito' : 'Forestry in',
         'koulurakennukset' : 'School buildings in',
+        'koululaiset' : 'School children of',
+        'koulutus' : 'Education in',
+        'opetus' : 'Teaching in',
+        'opettajat' : 'Teachers from',
+        'ammatit opettajat' : 'Teachers from',
         'sairaalat' : 'Hospitals in',
+        'sairaanhoitajat' : 'Nurses from',
         'museot' : 'Museums in',
         'kirjastorakennukset' : 'Libraries in',
         'rakennushankkeet' : 'Construction in',
@@ -240,6 +250,7 @@ def create_categories_new(finna_image):
         #'leipomotyöntekijät' : '',
         'leivinuunit' : 'Baking ovens in',
         'musiikkiliikkeet' : 'Music stores in',
+        #'laulajat' : 'Vocalists from',
         'vaateliikkeet' : 'Clothing shops in',
         'mainoskuvat' : 'Advertisements in',
         'näyteikkunat' : 'Shop windows in',
@@ -269,8 +280,11 @@ def create_categories_new(finna_image):
         'pikaluistelu' : 'Speed skating in',
         'talviurheilulajit' : 'Winter sports in',
         'talviurheilu' : 'Winter sports in',
-        'kilpaurheilu' : 'Sports competitions in'
+        'kilpaurheilu' : 'Sports competitions in',
         #'maaottelut' : ''
+        #'autokorjaamot' : '',
+        'huoltamot' : 'Petrol stations in',
+        'huoltoasemat' : 'Petrol stations in'
     }
     
     # iron works
