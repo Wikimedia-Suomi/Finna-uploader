@@ -230,6 +230,10 @@ def create_categories_new(finna_image):
         'rukit' : 'Spinning wheels in',
         'meijerit' : 'Dairies in',
         'ravintolat' : 'Restaurants in',
+        'leipomoteollisuus' : 'Bread industry in',
+        #'leipomotuotteet' : '',
+        #'leipomotyöntekijät' : '',
+        'leivinuunit' : 'Baking ovens in',
         'vaateliikkeet' : 'Clothing shops in',
         'mainoskuvat' : 'Advertisements in',
         'näyteikkunat' : 'Shop windows in',
@@ -250,7 +254,11 @@ def create_categories_new(finna_image):
         'uitto' : 'Timber floating in',
         'uittorännit' : 'Timber floating in',
         # retkeilyalueet, retkeilyvarusteet
-        'retkeily' : 'Camping in'
+        'retkeily' : 'Camping in',
+        'tuolit' : 'Chairs in',
+        'keittiöt' : 'Kitchens in',
+        'näyttelyt' : 'Exhibitions in',
+        'messut' : 'Trade fairs in'
     }
     
     # iron works
