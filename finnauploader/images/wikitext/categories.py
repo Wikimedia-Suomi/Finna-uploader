@@ -287,8 +287,10 @@ def create_categories_new(finna_image):
     isInFinland = False
     cat_place = get_category_place(subject_places, depicted_places)
     if (len(cat_place) == 0):
-        if 'Suomi' in depicted_places:
+        if (depicted_places.find('Suomi') >= 0):
             cat_place = "Finland"
+            isInFinland = True
+            print("Place recognized as Finland, no further")
         #if 'Suomen entinen kunta/pitäjä' in depicted_places:
             #cat_place = "Finland"
     else:
