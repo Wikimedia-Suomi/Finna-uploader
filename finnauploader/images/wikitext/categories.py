@@ -223,6 +223,7 @@ def create_categories_new(finna_image):
         'kirjastorakennukset' : 'Libraries in',
         'rakennushankkeet' : 'Construction in',
         'rakennustarvikkeet' : 'Construction equipment in',
+        'puusepänteollisuus' : 'Carpentry in',
         'laulujuhlat' : 'Music festivals in',
         'festivaalit' : 'Music festivals in',
         'neulonta' : 'Knitting in',
@@ -258,7 +259,8 @@ def create_categories_new(finna_image):
         'tuolit' : 'Chairs in',
         'keittiöt' : 'Kitchens in',
         'näyttelyt' : 'Exhibitions in',
-        'messut' : 'Trade fairs in'
+        'messut' : 'Trade fairs in',
+        'messut (tapahtumat)' : 'Trade fairs in'
     }
     
     # iron works
