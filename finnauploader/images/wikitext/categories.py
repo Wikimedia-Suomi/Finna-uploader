@@ -87,6 +87,8 @@ def get_category_place(subject_places, depicted_places):
         return "Mariehamn"
     if ('Viipuri' in depicted_places):
         return "Vyborg"
+    #if ('Helsingin maalaiskunta' in depicted_places):
+        #return "Vantaa"
 
     cat_place = {
         "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Jyväskylä","Jämsä","Kaarina","Kajaani","Kauhajoki","Kerava","Kemi","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Naantali","Pietarsaari","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Virolahti"
@@ -218,14 +220,19 @@ def create_categories_new(finna_image):
         'koulurakennukset' : 'School buildings in',
         'sairaalat' : 'Hospitals in',
         'museot' : 'Museums in',
+        'kirjastorakennukset' : 'Libraries in',
         'rakennushankkeet' : 'Construction in',
+        'rakennustarvikkeet' : 'Construction equipment in',
         'laulujuhlat' : 'Music festivals in',
         'festivaalit' : 'Music festivals in',
         'neulonta' : 'Knitting in',
+        'työvaatteet' : 'Work clothing in',
         'rukit' : 'Spinning wheels in',
         'meijerit' : 'Dairies in',
         'ravintolat' : 'Restaurants in',
+        'vaateliikkeet' : 'Clothing shops in',
         'mainoskuvat' : 'Advertisements in',
+        'näyteikkunat' : 'Shop windows in',
         'koira' : 'Dogs of',
         'hevosajoneuvot' : 'Horse-drawn vehicles in',
         'polkupyörät' : 'Bicycles in',
@@ -262,6 +269,8 @@ def create_categories_new(finna_image):
     if (len(cat_place) == 0):
         if 'Suomi' in depicted_places:
             cat_place = "Finland"
+        #if 'Suomen entinen kunta/pitäjä' in depicted_places:
+            #cat_place = "Finland"
     else:
         # for now, we recognize mostly places in finland..
         if ('Viipuri' not in depicted_places and 'Petsamo' not in depicted_places):
@@ -288,10 +297,17 @@ def create_categories_new(finna_image):
             else:
                 categories.add(category)
 
+        if (subject.name == "työ" and isInFinland == True):
+            if 'miehet' in subject_names:
+                categories.add("Men at work in Finland")
+            if 'naiset' in subject_names:
+                categories.add("Women at work in Finland")
+
         if (subject.name in subject_categories_with_country and isInFinland == True):
             category = subject_categories_with_country[subject.name] + " " + "Finland"
             categories.add(category)
 
+        # or Askainen
         if (subject.name == 'kartanot' and 'Louhisaari' in depicted_places):
             categories.add('Louhisaari Manor')
 
