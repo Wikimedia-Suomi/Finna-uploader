@@ -230,11 +230,16 @@ def create_categories_new(finna_image):
         'työvaatteet' : 'Work clothing in',
         'rukit' : 'Spinning wheels in',
         'meijerit' : 'Dairies in',
+        'elintarvikeliikkeet' : 'Grocery stores in',
+        'myymälät' : 'Shops in',
         'ravintolat' : 'Restaurants in',
+        'kahvilat' : 'Coffee shops in',
+        'konditoriat' : 'Konditoreien in',
         'leipomoteollisuus' : 'Bread industry in',
         #'leipomotuotteet' : '',
         #'leipomotyöntekijät' : '',
         'leivinuunit' : 'Baking ovens in',
+        'musiikkiliikkeet' : 'Music stores in',
         'vaateliikkeet' : 'Clothing shops in',
         'mainoskuvat' : 'Advertisements in',
         'näyteikkunat' : 'Shop windows in',
@@ -260,7 +265,12 @@ def create_categories_new(finna_image):
         'keittiöt' : 'Kitchens in',
         'näyttelyt' : 'Exhibitions in',
         'messut' : 'Trade fairs in',
-        'messut (tapahtumat)' : 'Trade fairs in'
+        'messut (tapahtumat)' : 'Trade fairs in',
+        'pikaluistelu' : 'Speed skating in',
+        'talviurheilulajit' : 'Winter sports in',
+        'talviurheilu' : 'Winter sports in',
+        'kilpaurheilu' : 'Sports competitions in'
+        #'maaottelut' : ''
     }
     
     # iron works
