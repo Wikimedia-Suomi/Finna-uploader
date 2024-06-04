@@ -52,21 +52,14 @@ def get_upload_summary():
     for contrib in contribs:
         uploadsummary += str(contrib) + "\n"
 
-    # Get Zaches edits
-    if (current_user != 'Zache'):
-        user = pywikibot.User(site, 'Zache')
-        contribs = user.contributions(total=5000)
+    usual_uploaders = ['FinnaUploadBot', 'FinnaUploadBot2', 'Zache']
+    for username in usual_uploaders:
+        if (current_user != username):
+            user = pywikibot.User(site, username)
+            contribs = user.contributions(total=5000)
 
-        for contrib in contribs:
-            uploadsummary += str(contrib) + "\n"
-
-    # Get Finna upload bot edits
-    if (current_user != 'FinnaUploadBot'):
-        user = pywikibot.User(site, 'FinnaUploadBot')
-        contribs = user.contributions(total=5000)
-
-        for contrib in contribs:
-            uploadsummary += str(contrib) + "\n"
+            for contrib in contribs:
+                uploadsummary += str(contrib) + "\n"
 
     return uploadsummary
 
