@@ -287,6 +287,13 @@ def create_categories_new(finna_image):
     isInFinland = False
     cat_place = get_category_place(subject_places, depicted_places)
     if (len(cat_place) == 0):
+        # TODO: try to cache the lookups
+        # if we didn't have fast recognizing, try slow one
+        #for place in reversed(subject_places):
+            #location_id = get_location_by_name(place)
+            #if (location_id != None):
+        
+        # fallback, if all else fails, at least try to detect counry
         if (depicted_places.find('Suomi') >= 0):
             cat_place = "Finland"
             isInFinland = True
@@ -320,10 +327,16 @@ def create_categories_new(finna_image):
                 categories.add(category)
 
         if (subject.name == "työ" and isInFinland == True):
+            isGenderedWork = False
             if 'miehet' in subject_names:
                 categories.add("Men at work in Finland")
+                isGenderedWork = True
             if 'naiset' in subject_names:
                 categories.add("Women at work in Finland")
+                isGenderedWork = True
+            if (isGenderedWork == False):
+                # working in finland but no tag for gender
+                categories.add("People at work in Finland")
 
         if (subject.name in subject_categories_with_country and isInFinland == True):
             category = subject_categories_with_country[subject.name] + " " + "Finland"
