@@ -9,8 +9,9 @@ def get_category_by_wikidata_id(wikidata_id):
     
     category = get_subject_image_category_from_wikidata_id(wikidata_id)
     if category:
-        #if not prefix:
-        category = category.replace('Category:', '')
+        # this is error in the data if someone has added this way (unlikely, but check it anyway)
+        if (category.find("Category:") >= 0):
+            category = category.replace('Category:', '')
         return category
     return None
 
@@ -323,6 +324,9 @@ def create_categories_new(finna_image):
             categories.add('Kimola Canal')
         if (subject.name == 'kanavat' and 'Vääksyn Vesijärven kanava' in depicted_places):
             categories.add('Vääksy Canal')
+
+        #if (subject.name == "teatterirakennukset" and 'Turku' in depicted_places):
+            #categories.add('Turku City Theatre')
 
         # categorize by city if in Finland
         if (subject.name == 'kirkot' and len(cat_place) > 0 and isInFinland == True):
