@@ -150,6 +150,7 @@ def create_categories_new(finna_image):
     subject_categories = {
         'muotokuvat': 'Portrait photographs',
         'henkilökuvat': 'Portrait photographs',
+        'henkilövalokuvaus': 'Portrait photographs',
         'ryhmäkuvat' : 'Group photographs',
         'saamenpuvut' : 'Sami clothing',
         'Osuusliike Elanto': 'Elanto',
@@ -193,6 +194,7 @@ def create_categories_new(finna_image):
         'purjeveneet' : 'Sailboats in',
         'moottoriveneet' : 'Motorboats in',
         'lossit' : 'Cable ferries in',
+        'traktorit' : 'Tractors in',
         'lentokoneet' : 'Aircraft in',
         'moottoripyörät' : 'Motorcycles in',
         'moottoripyöräurheilu' : 'Motorcycle racing in',
