@@ -104,7 +104,9 @@ def get_institution_templates(finna_image):
 
 def get_copyright_template(finna_image):
     copyright = finna_image.image_right.get_copyright()
-    if copyright == "CC BY 4.0":
+    if copyright == "CC0":
+        return "{{CC0}}\n{{FinnaReview}}"
+    elif copyright == "CC BY 4.0":
         return "{{CC-BY-4.0}}\n{{FinnaReview}}"
     elif copyright == "CC BY-SA 4.0":
         return "{{CC BY-SA 4.0}}\n{{FinnaReview}}"

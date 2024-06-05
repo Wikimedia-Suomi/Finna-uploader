@@ -54,6 +54,7 @@ def create_P275_licence(value, url):
         exit(1)
 
     licences = {
+        'CC0': 'Q6938433',
         'CC BY 4.0': 'Q20007257',
         'CC BY-SA 4.0': 'Q18199165'
     }
@@ -80,7 +81,9 @@ def create_P6216_copyright_state(value):
     if not value:
         return None
 
+    # CC0: public domain? (Q19652)
     copyright_states = {
+        'CC0': 'Q50423863',
         'CC BY 4.0': 'Q50423863',
         'CC BY-SA 4.0': 'Q50423863'
     }
@@ -248,8 +251,8 @@ def get_structured_data_for_new_image(finna_image):
     claims.append(claim)
 
     # Handle non presenter authors (photographers)
-
-    known_roles = ['kuvaaja', 'reprokuvaaja', 'valokuvaaja', 'Valokuvaaja']
+    # note: SLS uses "pht"
+    known_roles = ['kuvaaja', 'reprokuvaaja', 'valokuvaaja', 'Valokuvaaja', 'pht']
     non_presenter_authors = finna_image.non_presenter_authors.all()
 
     for author in non_presenter_authors:
