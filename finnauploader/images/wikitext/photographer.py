@@ -8,6 +8,9 @@ from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_institution_name_by_wikidata_id, \
                                     get_collection_wikidata_id
 
+from images.pywikibot_helpers import get_copyright_template_name
+
+
 
 def lang_template(lang, text):
     text = str(text)
@@ -102,17 +105,9 @@ def get_institution_templates(finna_image):
             institution_templates.append(template)
     return "".join(institution_templates)
 
-def get_copyright_template(finna_image):
-    copyright = finna_image.image_right.get_copyright()
-    if copyright == "CC0":
-        return "{{CC0}}\n{{FinnaReview}}"
-    elif copyright == "CC BY 4.0":
-        return "{{CC-BY-4.0}}\n{{FinnaReview}}"
-    elif copyright == "CC BY-SA 4.0":
-        return "{{CC BY-SA 4.0}}\n{{FinnaReview}}"
-    else:
-        print("Unknown copyright: " + copyright)
-        exit(1)
+def get_copyright_template_with_review(finna_image):
+    template_name = get_copyright_template_name(finna_image)
+    return "{{" + template_name + "}}\n{{FinnaReview}}"
 
 def get_permission_string(finna_image):
     link = finna_image.image_right.get_link()
@@ -180,7 +175,7 @@ def get_wikitext_for_new_image(finna_image):
     wikitext_parts.append("== {{int:filedesc}} ==")
     wikitext_parts.append(creator + '\n')
     wikitext_parts.append("== {{int:license-header}} ==")
-    wikitext_parts.append(get_copyright_template(finna_image))
+    wikitext_parts.append(get_copyright_template_with_review(finna_image))
     wikitext_parts.append(create_categories_new(finna_image))
     wikitext = "\n".join(wikitext_parts)
     return wikitext

@@ -89,6 +89,10 @@ def get_category_place(subject_places, depicted_places):
         return "Vyborg"
     #if ('Helsingin maalaiskunta' in depicted_places):
         #return "Vantaa"
+    if ('Pietarsaari' in depicted_places):
+        return "Jakobstad"
+    if ('Tammisaari' in depicted_places):
+        return "Ekenäs"
 
     cat_place = {
         "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Jyväskylä","Jämsä","Kaarina","Kajaani","Kauhajoki","Kerava","Kemi","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Naantali","Pietarsaari","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Virolahti"
@@ -182,8 +186,8 @@ def create_categories_new(finna_image):
         'naiset' : 'Women of',
         'perheet' : 'Families of',
         'miesten puvut': 'Men wearing suits in',
+        #'naisten puvut': 'Women wearing suits in',
         'muotinäytökset' : 'Fashion shows in',
-        'lentonäytökset': 'Air shows in',
         'veturit' : 'Locomotives of',
         'junat' : 'Trains of',
         'junanvaunut' : 'Railway coaches of',
@@ -195,7 +199,9 @@ def create_categories_new(finna_image):
         'moottoriveneet' : 'Motorboats in',
         'lossit' : 'Cable ferries in',
         'traktorit' : 'Tractors in',
+        'lentonäytökset': 'Air shows in',
         'lentokoneet' : 'Aircraft in',
+        'purjelento' : 'Gliding in',
         'moottoripyörät' : 'Motorcycles in',
         'moottoripyöräurheilu' : 'Motorcycle racing in',
         'moottoriurheilu' : 'Motorsports in',
@@ -215,6 +221,7 @@ def create_categories_new(finna_image):
         'kerrostalot' : 'Apartment buildings in',
         'osuusliikkeet' : 'Consumers\' cooperatives in',
         'saunat' : 'Sauna buildings in',
+        'alastomuus' : 'Nudity in',
         'nosturit' : 'Cranes in',
         'kaivinkoneet' : 'Excavators in',
         'tehtaat' : 'Factories in',
@@ -232,10 +239,14 @@ def create_categories_new(finna_image):
         'sairaalat' : 'Hospitals in',
         'sairaanhoitajat' : 'Nurses from',
         'museot' : 'Museums in',
+        'kirjat' : 'Books of',
         'kirjastorakennukset' : 'Libraries in',
         'rakennushankkeet' : 'Construction in',
         'rakennustarvikkeet' : 'Construction equipment in',
+        #'työvälineet'
         'puusepänteollisuus' : 'Carpentry in',
+        'sängyt' : 'Beds in',
+        'parisängyt' : 'Beds in',
         'laulujuhlat' : 'Music festivals in',
         'festivaalit' : 'Music festivals in',
         'neulonta' : 'Knitting in',

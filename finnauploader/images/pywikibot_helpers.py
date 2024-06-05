@@ -63,6 +63,20 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
 
     return file_page
 
+def get_copyright_template_name(finna_image):
+    copyright = finna_image.image_right.get_copyright()
+
+    if "CC0" in copyright:
+        return "CC0"
+    elif "CC BY 4.0" in copyright:
+        return "CC-BY-4.0"
+    elif "CC BY-SA 4.0" in copyright:
+        return "CC BY-SA 4.0"
+    else:
+        print("Copyright error")
+        print(finna_image.image_right.copyright)
+        exit(1)
+
 def get_comment_text(finna_image):
     authorlist = list()
     npauthors = finna_image.non_presenter_authors.all()
@@ -72,16 +86,9 @@ def get_comment_text(finna_image):
 
     ret = "Uploading \'" + finna_image.short_title + "\'"
     ret = ret + " by \'" + "; ".join(authorlist) + "\'"   
-            
-    if "CC BY 4.0" in finna_image.image_right.copyright:
-        copyrighttemplate = "CC-BY-4.0"
-    elif "CC BY-SA 4.0" in finna_image.image_right.copyright:
-        copyrighttemplate = "CC BY-SA 4.0"
-    else:
-        print("Copyright error")
-        print(finna_image.image_right.copyright)
-        exit(1)
-                    
+
+    copyrighttemplate = get_copyright_template_name(finna_image)
+
     ret = f'{ret} with licence {copyrighttemplate}'
     ret = f'{ret} from {finna_image.url}'
     return ret
