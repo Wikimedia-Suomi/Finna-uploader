@@ -10,7 +10,7 @@ class MappingCache:
         self.institutionsCache = None
         self.collectionsCache = None
         self.subjectActorsCache = None
-        self.subjectPlacesCache = None
+        #self.subjectPlacesCache = None
 
     def parse_name_and_q_item(self, text):
         pattern = r'\*\s(.*?)\s:\s\{\{Q\|(Q\d+)\}\}'
@@ -44,7 +44,9 @@ class MappingCache:
         self.institutionsCache = self.parse_cache_page(pywikibot, site, 'User:FinnaUploadBot/data/institutions')
         self.collectionsCache = self.parse_cache_page(pywikibot, site, 'User:FinnaUploadBot/data/collections')
         self.subjectActorsCache = self.parse_cache_page(pywikibot, site, 'User:FinnaUploadBot/data/subjectActors')
-        self.subjectPlacesCache = self.parse_cache_page(pywikibot, site, 'User:FinnaUploadBot/data/subjectPlaces')
+        
+        # may have very long strings and not used currently
+        #self.subjectPlacesCache = self.parse_cache_page(pywikibot, site, 'User:FinnaUploadBot/data/subjectPlaces')
 
 # main()
 pywikibot.config.socket_timeout = 120
