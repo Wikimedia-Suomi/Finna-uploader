@@ -201,6 +201,7 @@ def create_categories_new(finna_image):
         'traktorit' : 'Tractors in',
         'lentonäytökset': 'Air shows in',
         'lentokoneet' : 'Aircraft in',
+        'helikopterit' : 'Helicopters in',
         'purjelento' : 'Gliding in',
         'moottoripyörät' : 'Motorcycles in',
         'moottoripyöräurheilu' : 'Motorcycle racing in',
@@ -238,6 +239,7 @@ def create_categories_new(finna_image):
         'ammatit opettajat' : 'Teachers from',
         'sairaalat' : 'Hospitals in',
         'sairaanhoitajat' : 'Nurses from',
+        'lääkärit' : 'Physicians from',
         'museot' : 'Museums in',
         'kirjat' : 'Books of',
         'kirjastorakennukset' : 'Libraries in',
@@ -268,6 +270,7 @@ def create_categories_new(finna_image):
         'mainoskuvat' : 'Advertisements in',
         'näyteikkunat' : 'Shop windows in',
         'koira' : 'Dogs of',
+        'koiranäyttelyt' : 'Dog shows in',
         'hevosajoneuvot' : 'Horse-drawn vehicles in',
         'polkupyörät' : 'Bicycles in',
         'aikakauslehdet' : 'Magazines of',
@@ -287,6 +290,7 @@ def create_categories_new(finna_image):
         'retkeily' : 'Camping in',
         'tuolit' : 'Chairs in',
         'keittiöt' : 'Kitchens in',
+        'kylpyhuoneet' : 'Bathrooms in',
         'näyttelyt' : 'Exhibitions in',
         'messut' : 'Trade fairs in',
         'messut (tapahtumat)' : 'Trade fairs in',
@@ -297,7 +301,8 @@ def create_categories_new(finna_image):
         #'maaottelut' : ''
         #'autokorjaamot' : '',
         'huoltamot' : 'Petrol stations in',
-        'huoltoasemat' : 'Petrol stations in'
+        'huoltoasemat' : 'Petrol stations in',
+        'hautajaiset' : 'Funerals in'
     }
     
     # iron works
