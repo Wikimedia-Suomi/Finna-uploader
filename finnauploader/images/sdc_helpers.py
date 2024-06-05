@@ -82,6 +82,7 @@ def create_P6216_copyright_state(value):
         return None
 
     # CC0: public domain? (Q19652)
+    # -> no, copyright still exists
     copyright_states = {
         'CC0': 'Q50423863',
         'CC BY 4.0': 'Q50423863',
