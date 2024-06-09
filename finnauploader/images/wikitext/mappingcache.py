@@ -49,9 +49,6 @@ class MappingCache:
         #self.subjectPlacesCache = self.parse_cache_page(pywikibot, site, 'User:FinnaUploadBot/data/subjectPlaces')
 
 # main()
-pywikibot.config.socket_timeout = 120
-site = pywikibot.Site("commons", "commons")  # for Wikimedia Commons
-site.login()
+# wikidata_helpers.py has loading and creates instance, no need to do that here
+#print("Loading mappings from name to qcode")
 
-cache = MappingCache()
-cache.parse_cache(pywikibot, site)
