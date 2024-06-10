@@ -390,7 +390,7 @@ def create_categories_new(finna_image):
 
     # not in subjects like usual
     if ('Lamminahon talo' in depicted_places):
-        categories.add("'Lamminaho House")
+        categories.add('Lamminaho House')
 
     isInPortraits = False
     for subject in finna_image.subjects.all():
