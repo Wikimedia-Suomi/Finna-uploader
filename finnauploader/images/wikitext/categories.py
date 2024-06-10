@@ -85,6 +85,8 @@ def get_category_place(subject_places, depicted_places):
         return "Nokia, Finland"
     if ('Maarianhamina' in depicted_places):
         return "Mariehamn"
+    if ('Raasepori' in depicted_places):
+        return "Raseborg"
     if ('Viipuri' in depicted_places):
         return "Vyborg"
     #if ('Helsingin maalaiskunta' in depicted_places):
@@ -93,9 +95,11 @@ def get_category_place(subject_places, depicted_places):
         return "Jakobstad"
     if ('Tammisaari' in depicted_places):
         return "Ekenäs"
+    if ('Jääski' in depicted_places):
+        return "Lesogorsky"
 
     cat_place = {
-        "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Jyväskylä","Jämsä","Kaarina","Kajaani","Kauhajoki","Kerava","Kemi","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Naantali","Pietarsaari","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Virolahti"
+        "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Joutseno","Jyväskylä","Jämsä","Kaarina","Karkkila","Kajaani","Kauhajoki","Kerava","Kemi","Kitee","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Muhos","Naantali","Padasjoki","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tammela","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Virolahti","Virrat"
     }
     for p in cat_place:
         if p in depicted_places:
@@ -166,8 +170,11 @@ def create_categories_new(finna_image):
         'Hämeen linna' : 'Häme Castle',
         'Olavinlinna' : 'Olavinlinna',
         'Raaseporin linna' : 'Raseborg castle',
-        'Hvitträsk': 'Hvitträsk'
+        'Hvitträsk': 'Hvitträsk',
+        'Lamminahon talo' : 'Lamminaho House',
+        'taksinkuljettajat' : 'Taxi drivers'
         #'kiväärit' : 'Rifles'
+        #'mikroskoopit' : 'Microscopes'
     }
     
     ## categories by type of photograph (portrait, nature..)
@@ -187,15 +194,25 @@ def create_categories_new(finna_image):
         'perheet' : 'Families of',
         'miesten puvut': 'Men wearing suits in',
         #'naisten puvut': 'Women wearing suits in',
+        'kengät' : 'Shoes of',
         'muotinäytökset' : 'Fashion shows in',
+        'kampaukset' : 'Hair fashion in',
         'veturit' : 'Locomotives of',
         'junat' : 'Trains of',
         'junanvaunut' : 'Railway coaches of',
         'rautatieasemat' : 'Train stations in',
+        #'merimiesvaatteet' : '',
+        'telakat' : 'Shipyards in',
         'laivat' : 'Ships in',
+        'rahtilaivat' : 'Cargo ships in',
+        'sotalaivat' : 'Naval ships in',
+        'sota-alukset' : 'Naval ships in',
+        'sukellusveneet' : 'Submarines in',
         'veneet' : 'Boats in',
+        'jäänmurtajat' : 'Ice breakers in',
         'matkustajalaivat' : 'Passenger ships in',
         'purjeveneet' : 'Sailboats in',
+        #'purjelaivat' : 'Sailing ships'
         'moottoriveneet' : 'Motorboats in',
         'lossit' : 'Cable ferries in',
         'traktorit' : 'Tractors in',
@@ -213,6 +230,8 @@ def create_categories_new(finna_image):
         'autourheilu' : 'Automobile racing in',
         'autokilpailut' : 'Automobile races in',
         'auto-onnettomuudet' : 'Automobile accidents in',
+        'taksit' : 'Taxis in',
+        'taksiasemat' : 'Taxi stands in',
         'hotellit' : 'Hotels in',
         'kodit' : 'Accommodation buildings in',
         'asuinrakennukset' : 'Houses in',
@@ -243,17 +262,37 @@ def create_categories_new(finna_image):
         'museot' : 'Museums in',
         'kirjat' : 'Books of',
         'kirjastorakennukset' : 'Libraries in',
+        #'kirjastoautot': 'Bookmobiles in',
         'rakennushankkeet' : 'Construction in',
         'rakennustarvikkeet' : 'Construction equipment in',
         #'työvälineet'
         'puusepänteollisuus' : 'Carpentry in',
+        'ompelukone' : 'Sewing machines in',
         'sängyt' : 'Beds in',
         'parisängyt' : 'Beds in',
+        'pyykinpesu' : 'Laundry in‎',
+        #'pyykinpesuvälineet' : '',
+        'pesukoneet' : 'Washing machines in',
+        'mankelit' : 'Mangles in',
+        'sohvat' : 'Couches in',
+        'tuolit' : 'Chairs in',
+        #'muusikot' : 'Musicians from', # who is playing?
+        #'orkesterit' : 'Orchestras from', # who is playing?
+        #'yhtyeet' : 'Musical groups from', # who is playing?
+        #'piano'
         'laulujuhlat' : 'Music festivals in',
         'festivaalit' : 'Music festivals in',
         'neulonta' : 'Knitting in',
         'työvaatteet' : 'Work clothing in',
         'rukit' : 'Spinning wheels in',
+        'kehruu' : 'Spinning in',
+        'kutojat' : 'Weavers in',
+        'kudonta' : 'Weaving in',
+        'kutominen' : 'Weaving in',
+        #kudinpuut 
+        'kangaspuut' : 'Looms in',
+        'räsymatot' : 'Rugs and carpets of',
+        'nuket' : 'Dolls in',
         'meijerit' : 'Dairies in',
         'elintarvikeliikkeet' : 'Grocery stores in',
         'myymälät' : 'Shops in',
@@ -263,6 +302,7 @@ def create_categories_new(finna_image):
         'leipomoteollisuus' : 'Bread industry in',
         #'leipomotuotteet' : '',
         #'leipomotyöntekijät' : '',
+        'leipominen' : 'Baking in',
         'leivinuunit' : 'Baking ovens in',
         'musiikkiliikkeet' : 'Music stores in',
         #'laulajat' : 'Vocalists from',
@@ -284,11 +324,14 @@ def create_categories_new(finna_image):
         'peltoviljely' : 'Agriculture in',
         'maanviljely' : 'Agriculture in',
         'maatalous' : 'Agriculture in',
+        'tukinuitto' : 'Timber floating in',
         'uitto' : 'Timber floating in',
         'uittorännit' : 'Timber floating in',
+        'kalanviljely' : 'Fish farming in',
+        'kalanviljelylaitokset' : 'Fish farming in',
+        'luonnonmaisema' : 'Landscapes of',
         # retkeilyalueet, retkeilyvarusteet
         'retkeily' : 'Camping in',
-        'tuolit' : 'Chairs in',
         'keittiöt' : 'Kitchens in',
         'kylpyhuoneet' : 'Bathrooms in',
         'näyttelyt' : 'Exhibitions in',
@@ -302,12 +345,19 @@ def create_categories_new(finna_image):
         #'autokorjaamot' : '',
         'huoltamot' : 'Petrol stations in',
         'huoltoasemat' : 'Petrol stations in',
+        'panssarivaunut' : 'Tanks',
+        'takka' : 'Fireplaces in',
+        'takat' : 'Fireplaces in',
         'hautajaiset' : 'Funerals in'
     }
     
     # iron works
     # metal industry
     # Metalworkers
+
+    # lentokentät ja satamat ?
+    # aircraft at ...
+    # Sailing ships in port of ...
 
     manor_categories_by_location = {
         'Louhisaari' : 'Louhisaari Manor',
@@ -334,8 +384,13 @@ def create_categories_new(finna_image):
             #cat_place = "Finland"
     else:
         # for now, we recognize mostly places in finland..
-        if ('Viipuri' not in depicted_places and 'Petsamo' not in depicted_places):
+        # these places that we recognize are no longer part of finland, if not one of them -> assume in finland
+        if ('Viipuri' not in depicted_places and 'Petsamo' not in depicted_places and 'Sortavala' not in depicted_places and 'Jääski' not in depicted_places):
             isInFinland = True
+
+    # not in subjects like usual
+    if ('Lamminahon talo' in depicted_places):
+        categories.add("'Lamminaho House")
 
     isInPortraits = False
     for subject in finna_image.subjects.all():
@@ -373,7 +428,7 @@ def create_categories_new(finna_image):
         if (subject.name in subject_categories_with_country and isInFinland == True):
             category = subject_categories_with_country[subject.name] + " " + "Finland"
             categories.add(category)
-
+            
         # or Askainen
         if (subject.name == 'kartanot' and 'Louhisaari' in depicted_places):
             categories.add('Louhisaari Manor')
@@ -394,8 +449,22 @@ def create_categories_new(finna_image):
         if (subject.name == 'kartanot' and 'Knuutila' in depicted_places):
             categories.add('Knuutila Manor')
 
+
         if (subject.name == 'parlamentit' and 'Helsinki' in depicted_places):
             categories.add('Parliament House, Helsinki')
+
+        if (subject.name == 'linnat' and 'Turun linna' in depicted_places):
+            categories.add('Turku Castle')
+
+        if (subject.name == 'linnat' and 'Hämeen linna' in depicted_places):
+            categories.add('Häme Castle')
+
+        if (subject.name == 'linnat' and 'Olavinlinna' in depicted_places):
+            categories.add('Olavinlinna')
+
+        # or Snappertuna
+        if (subject.name == 'linnat' and 'Raaseporin linna' in depicted_places):
+            categories.add('Raseborg castle')
 
         # Svartholma, Loviisa
         if (subject.name == 'linnakkeet' and 'Svartholma' in depicted_places):
@@ -411,10 +480,16 @@ def create_categories_new(finna_image):
         #if (subject.name == "teatterirakennukset" and 'Turku' in depicted_places):
             #categories.add('Turku City Theatre')
 
-        # categorize by city if in Finland
-        if (subject.name == 'kirkot' and len(cat_place) > 0 and isInFinland == True):
-            cattext = 'Churches in ' + cat_place
+        # categorize by location if in finland
+        if (subject.name == 'luontokuvat' and len(cat_place) > 0 and isInFinland == True):
+            cattext = 'Nature of ' + cat_place
             categories.add(cattext)
+
+        # categorize by city if in Finland
+        if (subject.name == 'kirkot' or subject.name == 'kirkkorakennukset'):
+            if (len(cat_place) > 0 and isInFinland == True):
+                cattext = 'Churches in ' + cat_place
+                categories.add(cattext)
 
     
     for add_category in finna_image.add_categories.all():
