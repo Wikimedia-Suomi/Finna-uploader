@@ -26,18 +26,6 @@ def invalidateWikidataCaches():
     subjectCategories.clear()
 
 
-def parse_name_and_q_item(text):
-    pattern = r'\*\s(.*?)\s:\s\{\{Q\|(Q\d+)\}\}'
-    matches = re.findall(pattern, text)
-
-    # Extracted names and Q-items
-    parsed_data = {}
-    for name, q_item in matches:
-        name = name.strip()
-        parsed_data[name] = q_item
-    return parsed_data
-
-
 def get_institution_name(institutions):
     if len(institutions) != 1:
         print('incorrect number of institutions')
