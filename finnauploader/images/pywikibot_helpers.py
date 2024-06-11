@@ -4,8 +4,8 @@ import json
 import re
 from datetime import datetime
 
-site = pywikibot.Site('commons', 'commons')
-site.login()
+commonssite = pywikibot.Site('commons', 'commons')
+commonssite.login()
 
 dtstart = datetime.now()
 
@@ -14,11 +14,11 @@ dtstart = datetime.now()
 def edit_commons_mediaitem(page, data):
     # Reload file_page to be sure that we have updated page_id
 
-    file_page = pywikibot.FilePage(site, page.title())
+    file_page = pywikibot.FilePage(commonssite, page.title())
     media_identifier = 'M' + str(file_page.pageid)
     print(media_identifier)
 
-    csrf_token = site.tokens['csrf']
+    csrf_token = commonssite.tokens['csrf']
     payload = {
         'action': 'wbeditentity',
         'format': u'json',
@@ -27,14 +27,14 @@ def edit_commons_mediaitem(page, data):
         'token': csrf_token,
         'bot': True,  # in case you're using a bot account (which you should)
     }
-    request = site.simple_request(**payload)
+    request = commonssite.simple_request(**payload)
     ret = request.submit()
     return ret
 
 
 def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
     commons_file_name = "File:" + file_name
-    file_page = pywikibot.FilePage(site, commons_file_name)
+    file_page = pywikibot.FilePage(commonssite, commons_file_name)
     file_page.text = wikitext
 
     # Check if the page exists
@@ -43,9 +43,9 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
         exit()
 
     # Check if the page exists
-    if site.userinfo['messages']:
-        #talk_page = site.user.getUserTalkPage()
-        user = pywikibot.User(site, site.username())
+    if commonssite.userinfo['messages']:
+        #talk_page = commonssite.user.getUserTalkPage()
+        user = pywikibot.User(commonssite, commonssite.username())
         talk_page = user.getUserTalkPage()
         latestdt = talk_page.latest_revision.timestamp
         if (latestdt > dtstart):
