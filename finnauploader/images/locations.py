@@ -1,18 +1,12 @@
-from images.wikitext.wikidata_helpers import parse_cache_page
 import hashlib
 from pywikibot.data.sparql import SparqlQuery
 from images.models import LocationTestCache, FintoYsoMissingCache, \
                           FintoYsoPlace, FintoYsoCloseMatch, \
                           FintoYsoMMLPlaceType, FintoYsoWikidataPlaceType, \
                           FintoYsoLabel, CacheSparqlBool
-from images.finto import finto_search, get_finto_term_information
-
+from images.finto import finto_search
 
 sparql = SparqlQuery()
-page_title = 'User:FinnaUploadBot/data/locationOverride'
-locationOverrideCache = parse_cache_page(page_title)
-page_title = "User:FinnaUploadBot/data/locationKeywords"
-locationKeywords = parse_cache_page(page_title)
 
 
 def get_wikidata_items_using_yso(yso_id):
@@ -62,8 +56,9 @@ def get_p31_values(qid):
 
     print(query)
     rows = sparql.select(query)
-    for row in rows:
-        ret.append(row['values'])
+    if rows:
+        for row in rows:
+            ret.append(row['values'])
     return ret
 
 
@@ -86,7 +81,6 @@ def is_location_within_administrative_entity(location, entity, slow):
                                               location=location,
                                               entity=entity).first()
     if 0 and cached_result:
-        print("Cached")
         return cached_result.value
 
     location_id = location.replace('http://www.wikidata.org/entity/', '')
@@ -99,9 +93,8 @@ def is_location_within_administrative_entity(location, entity, slow):
         query = f'SELECT * WHERE {{ wd:{location_id}  (wdt:P7888|wdt:P276|p:P1365/ps:P1365|p:P1366/ps:P1366|p:P361/ps:P361|p:P131/ps:P131)* wd:{entity_id} }}' # noqa
     else:
         query = f'SELECT * WHERE {{ wd:{location_id} (wdt:P7888|wdt:P276|wdt:P1365|wdt:P1366|wdt:P361|wdt:P131)* wd:{entity_id} }}' # noqa
-    print(query)
     data = sparql.select(query)
-    print(query)
+
     if data:
         LocationTestCache.objects.get_or_create(
                                   location=location,
@@ -148,11 +141,9 @@ def test_property_value(entity, property, target):
     hashkey = calculate_md5(query)
     cached_result = CacheSparqlBool.objects.filter(query_id=hashkey).first()
     if cached_result:
-        print("Cached")
         return cached_result.value
 
     data = sparql.select(query)
-    print(query)
     if data:
         CacheSparqlBool.objects.get_or_create(
                                 query_id=hashkey,
@@ -172,104 +163,104 @@ def test_is_property_placename(location):
     query = f'SELECT * WHERE {{ wd:{location_id}  wdt:P131* ?p131 . ?p131 wdt:P31 wd:Q856076  }}' # noqa
 
     data = sparql.select(query)
-    print(query)
     if data:
         return True
     else:
         return False
 
 
-def get_location_override(finna_image):
-    ret = []
-    if finna_image.finna_id in locationOverrideCache:
-        ret.append(locationOverrideCache[finna_image.finna_id])
-
-    for subject_place in finna_image.subject_places.all():
-        if subject_place.name in locationOverrideCache:
-            ret.append(locationOverrideCache[subject_place.name])
-
-    return ret
-
-
-def translate_location_keyword(keyword):
-    lang = 'fi'
-    if keyword in locationKeywords:
-        finto_uri = get_yso_using_wikidata_id(locationKeywords[keyword])[0]
-        f = get_finto_term_information('yso', finto_uri)
-        if 'graph' not in f:
-            return
-
-        for graph in f['graph']:
-            if 'prefLabel' in graph:
-                for label in graph['prefLabel']:
-                    if label['lang'] == lang:
-                        keyword = label['value']
-    return keyword
-
-
-def parse_subject_place_string(finna_image):
-    subject_places = []
-    for subject_place in finna_image.subject_places.all():
-        if subject_place.name in locationOverrideCache:
-            uri = 'http://www.wikidata.org/entity/'
-            uri += locationOverrideCache[subject_place.name]
-            subject_places.append(uri)
-            continue
-
-        for subject_place_part in str(subject_place).split('; '):
-            for place_name in subject_place_part.split(', '):
-                place_name = place_name.strip()
-                place_name = translate_location_keyword(place_name)
-                if place_name and place_name not in subject_places:
-                    subject_places.append(place_name)
-
-    return subject_places
-
-
 def update_yso_places(subject_places, finna_id):
     for subject_place in subject_places:
         keyword = str(subject_place)
         qs = FintoYsoLabel.objects.filter(value=keyword)
-        if not qs.exists():
-            ret = add_finto_location(keyword, finna_id, 'fi')
-            if not ret:
-                ret = add_finto_location(keyword, finna_id, 'sv')
+
+        if qs.exists():
+            continue
+
+        ret = add_finto_location(keyword, finna_id, 'fi', subject_places)
+        if not ret:
+            ret = add_finto_location(keyword, finna_id, 'sv', subject_places)
 
 
-def add_finto_location(keyword, finna_id, lang):
+def add_finto_location(keyword, finna_id, lang, subject_places):
     f = None
     ret = False
-    missing_test = FintoYsoMissingCache.objects.filter(
-                                                value=keyword,
-                                                finna_id=finna_id)
-    if not f and missing_test.exists():
-        print('Cached missing: {keyword}')
-        return ret
 
-    if not f:
+    if not ret:
         f = finto_search(keyword, vocab='yso-paikat')
-    if not f:
-        f = finto_search(keyword, vocab='yso')
+        if f:
+            ret = confirm_finto_location(f, keyword, lang, subject_places)
 
-    if not f:
+    if not ret:
+        f = finto_search(keyword, vocab='yso')
+        if f:
+            ret = confirm_finto_location(f, keyword, lang, subject_places)
+
+    if not ret:
         FintoYsoMissingCache.objects.get_or_create(
                                      value=keyword,
                                      finna_id=finna_id)
         print(f'Not found: {keyword}')
         return ret
 
+
+def confirm_finto_location(finto_result, keyword, lang, subject_places):
+    ret = False
+
     mml_place_type_uri = 'http://www.yso.fi/onto/yso-meta/mmlPlaceType'
     wd_place_type_uri = 'http://www.yso.fi/onto/yso-meta/wikidataPlaceType'
     wgs84_uri = 'http://www.w3.org/2003/01/geo/wgs84_pos'
 
-    for graph in f['graph']:
+    orig_keyword = keyword
+    for graph in finto_result['graph']:
         if 'prefLabel' in graph:
             print(graph['prefLabel'])
+
             if 'lang' in graph['prefLabel']:
                 graph['prefLabel'] = [graph['prefLabel']]
 
             for label in graph['prefLabel']:
-                if label['value'] == keyword and label['lang'] == lang:
+
+                if label['value'] != keyword and label['lang'] == lang:
+                    key_parts = keyword.split(' ')
+                    if len(key_parts) == 2:
+                        new_keyword = f'{key_parts[0]} ({key_parts[1]})'
+                        label_value = label['value']
+                        label_lang = label['lang']
+                        if label_value == new_keyword and label_lang == lang:
+                            keyword = new_keyword
+
+                qualifiers = ['kunta', 'kaupunki', 'kylä']
+                for qualifier in qualifiers:
+                    if label['value'] != keyword and label['lang'] == lang:
+                        key_parts = orig_keyword.split(' ')
+                        if len(key_parts) == 2:
+                            new_keyword = f'{key_parts[0]} ({key_parts[1]} : {qualifier})' # noqa
+                            label_value = label['value']
+                            label_lang = label['lang']
+
+                            if label_value == new_keyword and label_lang == lang: # noqa
+                                keyword = new_keyword
+
+                qualifier_texts = []
+                qualifiers = ['kunta', 'kaupunki', 'kylä']
+                qualifier_texts += qualifiers
+                qualifier_texts += subject_places
+                for subject_place in subject_places:
+                    for qualifier in qualifiers:
+                        long_qualifier = f'{subject_place} : {qualifier}'
+                        qualifier_texts.append(long_qualifier)
+
+                label_value = label['value']
+                label_lang = label['lang']
+
+                for qualifier in qualifier_texts:
+                    if label_value != keyword and label_lang == lang:
+                        new_keyword = f'{orig_keyword} ({qualifier})'
+                        if label_value == new_keyword and label_lang == lang:
+                            keyword = new_keyword
+
+                if label_value == keyword and label_lang == lang:
                     print(graph['prefLabel'])
                     print(graph['uri'])
                     if 'closeMatch' in graph:

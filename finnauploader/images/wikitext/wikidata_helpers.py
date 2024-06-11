@@ -1,6 +1,8 @@
 # for queries from wikidata-context
 #
-# these get called from photographer.py, sdc_helpers.py, categories.py and models.py
+# these get called from photographer.py, sdc_helpers.py,
+# categories.py and models.py
+#
 # during generating data for upload
 
 from images.exceptions import MissingNonPresenterAuthorError, \
@@ -16,11 +18,39 @@ institutionNames = {}
 creatorNames = {}
 subjectCategories = {}
 
+
 # if there is update, just invalidate all
 def invalidateWikidataCaches():
     institutionNames.clear()
     creatorNames.clear()
     subjectCategories.clear()
+
+
+def parse_name_and_q_item(text):
+    pattern = r'\*\s(.*?)\s:\s\{\{Q\|(Q\d+)\}\}'
+    matches = re.findall(pattern, text)
+
+    # Extracted names and Q-items
+    parsed_data = {}
+    for name, q_item in matches:
+        name = name.strip()
+        parsed_data[name] = q_item
+    return parsed_data
+
+
+def get_institution_name(institutions):
+    if len(institutions) != 1:
+        print('incorrect number of institutions')
+        exit(1)
+    for institution in institutions:
+        if institution['value'] in cache.institutionsCache:
+            return institution['value']
+
+    print("Unknown institution: " + str(institutions))
+    url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/institutions' # noqa
+    print(f'Missing in {url}')
+    exit(1)
+
 
 # Allowed --collections values
 # See also finna.py: do_finna_search()
@@ -33,7 +63,7 @@ def get_collection_names():
                   'SA-kuva',
                   'Kansallisgalleria Ateneumin taidemuseo'
                   ]
-    if (cache.collectionsCache != None):
+    if (cache.collectionsCache is not None):
         clist = list()
         for k in cache.collectionsCache:
             clist.append(k)
@@ -55,6 +85,12 @@ def get_collection_name_from_alias(name):
     else:
         return name
 
+
+def get_subject_place_wikidata_id(location_string):
+    if location_string in cache.subjectPlacesCache:
+        return cache.subjectPlacesCache[location_string]
+
+
 # use mapping from Finna-string to qcode
 def get_collection_wikidata_id(name):
     if name in cache.collectionsCache:
@@ -62,18 +98,6 @@ def get_collection_wikidata_id(name):
     print("Unknown collection: " + str(name))
     exit(1)
 
-def get_institution_name(institutions):
-    if len(institutions) != 1:
-        print('incorrect number of institutions')
-        exit(1)
-    for institution in institutions:
-        if institution['value'] in cache.institutionsCache:
-            return institution['value']
-
-    print("Unknown institution: " + str(institutions))
-    url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/institutions' # noqa
-    print(f'Missing in {url}')
-    exit(1)
 
 # use mapping from Finna-string to qcode
 def get_institution_wikidata_id(institution_name):
@@ -82,26 +106,30 @@ def get_institution_wikidata_id(institution_name):
     print("Unknown institution: " + str(institution_name))
     exit(1)
 
+
 def setInstitutionName(wikidata_id, name):
     institutionNames[wikidata_id] = name
+
 
 def getInstitutionName(wikidata_id):
     if (wikidata_id in institutionNames):
         return institutionNames[wikidata_id]
     return None
 
+
 def isInstitutionName(wikidata_id):
     if (wikidata_id in institutionNames):
         return True
     return False
 
+
 def get_institution_name_by_wikidata_id(wikidata_id):
 
     # reduce repeated queries a bit
-    if (isInstitutionName(wikidata_id) == True):
+    if (isInstitutionName(wikidata_id) is True):
         institution_template_name = getInstitutionName(wikidata_id)
         return institution_template_name
-    
+
     # Connect to Wikidata
     site = pywikibot.Site("wikidata", "wikidata")
     repo = site.data_repository()
@@ -120,10 +148,10 @@ def get_institution_name_by_wikidata_id(wikidata_id):
     if 'P1612' in claims:
         institution_page_claim = claims['P1612'][0]
         institution_template_name = institution_page_claim.getTarget()
-        
+
         # reduce repeated queries a bit
         setInstitutionName(wikidata_id, institution_template_name)
-        
+
         return institution_template_name
     else:
         print(f"Item {wikidata_id} does not exist!")
@@ -134,7 +162,8 @@ def get_author_name(nonPresenterAuthors):
     ret = None
     for nonPresenterAuthor in nonPresenterAuthors:
         name = nonPresenterAuthor['name']
-        role = nonPresenterAuthor['role']
+        # not used
+        # role = nonPresenterAuthor['role']
 
         if (nonPresenterAuthor.is_photographer()):
             if name in cache.nonPresenterAuthorsCache:
@@ -155,6 +184,7 @@ def get_author_name(nonPresenterAuthors):
 
     return ret
 
+
 # use mapping from Finna-string to qcode
 def get_author_wikidata_id(name):
     if name in cache.nonPresenterAuthorsCache:
@@ -165,27 +195,31 @@ def get_author_wikidata_id(name):
         print(f'Unknown author: "{name}". Add author to {url}')
         exit(1)
 
+
 def setCreatorName(wikidata_id, name):
     creatorNames[wikidata_id] = name
+
 
 def getCreatorName(wikidata_id):
     if (wikidata_id in creatorNames):
         return creatorNames[wikidata_id]
     return None
 
+
 def isCreatorName(wikidata_id):
     if (wikidata_id in creatorNames):
         return True
     return False
 
+
 # creator name according wikidata entry for creator template
 def get_creator_nane_by_wikidata_id(wikidata_id):
 
     # reduce repeated queries a bit
-    if (isCreatorName(wikidata_id) == True):
+    if (isCreatorName(wikidata_id) is True):
         creator_name = getCreatorName(wikidata_id)
         return creator_name
-    
+
     # Connect to Wikidata
     site = pywikibot.Site("wikidata", "wikidata")
     repo = site.data_repository()
@@ -200,13 +234,13 @@ def get_creator_nane_by_wikidata_id(wikidata_id):
 
     # Try to fetch the value of the property P1472 (Commons Creator page)
     # Creator-tekijämalline Wikimedia Commonsissa (P1472)
-    
+
     claims = item.get().get('claims')
 
     if 'P1472' in claims:
         creator_page_claim = claims['P1472'][0]
         creator_name = creator_page_claim.getTarget()
-        
+
         # reduce repeated queries a bit
         setCreatorName(wikidata_id, creator_name)
 
@@ -214,10 +248,11 @@ def get_creator_nane_by_wikidata_id(wikidata_id):
     else:
         return None
 
+
 def isCategoryExistingInCommons(commons_site, category_name):
     if (category_name.find("Category:") < 0):
         category_name = "Category:" + category_name
-   
+
     photo_category = pywikibot.Category(commons_site, category_name)
 
     # Check if the category exists
@@ -229,27 +264,30 @@ def isCategoryExistingInCommons(commons_site, category_name):
 def setSubjectCategory(wikidata_id, name):
     subjectCategories[wikidata_id] = name
 
+
 def getSubjectCategory(wikidata_id):
     if (wikidata_id in subjectCategories):
         return subjectCategories[wikidata_id]
     return None
+
 
 def isSubjectCategory(wikidata_id):
     if (wikidata_id in subjectCategories):
         return True
     return False
 
+
 # Commons-category associated with wikidata-entry
 # Commons-luokka (P373)
 def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
-    
+
     # reduce repeated queries a bit
-    if (isSubjectCategory(wikidata_id) == True):
+    if (isSubjectCategory(wikidata_id) is True):
         return getSubjectCategory(wikidata_id)
-    
+
     # Connect to Wikidata
     site = pywikibot.Site("wikidata", "wikidata")
-    commons_site = pywikibot.Site("commons", "commons")
+    # commons_site = pywikibot.Site("commons", "commons")
     repo = site.data_repository()
 
     item = None
@@ -272,27 +310,27 @@ def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
     if 'P373' in claims:
         commons_category_claim = claims['P373'][0]
         category_name = commons_category_claim.getTarget()
-        
+
         # reduce repeated queries a bit
         setSubjectCategory(wikidata_id, category_name)
         return category_name
- 
-        #photo_category = pywikibot.Category(commons_site, category_name)
+
+        # photo_category = pywikibot.Category(commons_site, category_name)
 
         # Check if the category exists
-        # this is pointless: you can't have non-existing categories in wikidata?
+        # this is pointless: you can't have non-existing categories in wikidata? # noqa
         # also, you can generate various sub-categories based on this..
-        #if photo_category.exists():
-            #category_name = photo_category.title()
-            
-            # reduce repeated queries a bit
-            #setSubjectCategory(wikidata_id, category_name)
-            #return category_name
+        # if photo_category.exists():
+        #     category_name = photo_category.title()
+        #     reduce repeated queries a bit
+        #     setSubjectCategory(wikidata_id, category_name)
+        #     return category_name
 
     if mandatory:
         print(f'ERROR: Commons P373 category in https://wikidata.org/wiki/{wikidata_id} is missign.') # noqa
         exit(1)
     return None
+
 
 class WikidataPlace:
     def __init__(self):
@@ -302,15 +340,16 @@ class WikidataPlace:
         self.region = None
         self.nation = None
 
+
 def get_place_by_wikidata_id(wikidata_id):
-    
+
     # reduce repeated queries a bit
-    #if (isPlaceCategory(wikidata_id) == True):
-        #return getPlaceCategory(wikidata_id)
-    
+    # if (isPlaceCategory(wikidata_id) is True):
+    #     return getPlaceCategory(wikidata_id)
+
     # Connect to Wikidata
     site = pywikibot.Site("wikidata", "wikidata")
-    commons_site = pywikibot.Site("commons", "commons")
+    # commons_site = pywikibot.Site("commons", "commons")
     repo = site.data_repository()
 
     item = None
@@ -355,6 +394,7 @@ def get_place_by_wikidata_id(wikidata_id):
 
     return wdp
 
+
 def get_subject_actors_wikidata_ids(subjectActors):
     ret = []
     for subjectActor in subjectActors:
@@ -383,4 +423,3 @@ site.login()
 
 cache = MappingCache()
 cache.parse_cache(pywikibot, site)
-

@@ -1,7 +1,5 @@
 # mappingcache: only contains mappings from finna-strings to wikidata-qcodes
-#
 
-import pywikibot
 import re
 
 class MappingCache:
@@ -10,7 +8,7 @@ class MappingCache:
         self.institutionsCache = None
         self.collectionsCache = None
         self.subjectActorsCache = None
-        #self.subjectPlacesCache = None
+        self.subjectPlacesCache = None
 
     def parse_name_and_q_item(self, text):
         pattern = r'\*\s(.*?)\s:\s\{\{Q\|(Q\d+)\}\}'
@@ -19,6 +17,7 @@ class MappingCache:
         # Extracted names and Q-items
         parsed_data = {}
         for name, q_item in matches:
+            name = name.strip()
             # if something is wrong, skip it
             if (name.find("http:") >= 0 or name.find("https:") >= 0):
                 continue
@@ -46,7 +45,7 @@ class MappingCache:
         self.subjectActorsCache = self.parse_cache_page(pywikibot, site, 'User:FinnaUploadBot/data/subjectActors')
         
         # may have very long strings and not used currently
-        #self.subjectPlacesCache = self.parse_cache_page(pywikibot, site, 'User:FinnaUploadBot/data/subjectPlaces')
+        self.subjectPlacesCache = self.parse_cache_page(pywikibot, site, 'User:FinnaUploadBot/data/subjectPlaces')
 
 # main()
 # wikidata_helpers.py has loading and creates instance, no need to do that here

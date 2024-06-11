@@ -201,6 +201,7 @@ class FinnaSubjectWikidataPlace(models.Model):
 
 class FinnaSubjectPlace(models.Model):
     name = models.CharField(max_length=200)
+    wikidata_id = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -332,7 +333,7 @@ class FinnaRecordManager(models.Manager):
 
         # Extract and handle subjectPlaces data
         subject_places_data = data.pop('subjectPlaces', [])
-        subject_places = [FinnaSubjectPlace.objects.get_or_create(name=subject_place_name)[0] for subject_place_name in subject_places_data]
+        subject_places = [FinnaSubjectPlace.objects.get_or_create(name=subject_place_name.strip())[0] for subject_place_name in subject_places_data]
 
         # Extract and handle subjectActors data
         subject_actors_data = data.pop('subjectActors', [])
