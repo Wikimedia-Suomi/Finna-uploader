@@ -76,43 +76,124 @@ def get_subject_category(finna_subject):
     wikidata_id = finna_subject.get_wikidata_id()
     return get_category_by_wikidata_id(wikidata_id)
 
-def get_category_place(subject_places, depicted_places):
+def get_category_for_building(subject_name, depicted_places):
+    
+    manor_categories_by_location = {
+        'Louhisaari' : 'Louhisaari Manor',
+        'Piikkiö' : 'Pukkila Manor',
+        'Kuusisto' : 'Kuusisto Manor',
+        'Knuutila' : 'Knuutila Manor'
+    }
+    
+    categories = set()
+
+    #if (subject.name == 'kartanot' and 'Vesilahti' in depicted_places):
+        #categories.add('Laukko Manor')
+    if (subject_name == "Laukon kartano"):
+        categories.add('Laukko Manor')
+
+    # not in subjects like usual
+    if ('Lamminahon talo' in depicted_places):
+        categories.add('Lamminaho House')
+
+    #Vuojoen kartano : Vuojoki Manor
+
+    return categories
+
+# for place names, we want full exact match, not partial:
+# "Kotkaniemi" is not same as "Kotka"
+def is_entry_in_list(name : str, subject_places : list):
+    for p in subject_places:
+        if (p == name):
+            return True
+        #elif (name == "Suomi, " + p):
+            #return True
+    return False
+
+def get_category_place(subject_places):
     print("DEBUG: get_category_place, subject places: ", str(subject_places) )
-    print("DEBUG: get_category_place, depicted places: ", str(depicted_places) )
+    #print("DEBUG: get_category_place, depicted places: ", str(depicted_places) )
 
     # for now, use hack to translate into category
-    if ('Nokia' in depicted_places):
+    if ('Nokia' in subject_places):
         return "Nokia, Finland"
-    if ('Maarianhamina' in depicted_places):
+    if ('Maarianhamina' in subject_places):
         return "Mariehamn"
-    if ('Raasepori' in depicted_places):
-        return "Raseborg"
-    if ('Viipuri' in depicted_places):
+    if ('Raasepori' in subject_places):
+        #return "Raseborg"
+        return "Raasepori"
+    if ('Viipuri' in subject_places):
         return "Vyborg"
-    #if ('Helsingin maalaiskunta' in depicted_places):
+    #if ('Helsingin maalaiskunta' in subject_places):
         #return "Vantaa"
-    if ('Pietarsaari' in depicted_places):
+    if ('Pietarsaari' in subject_places):
         return "Jakobstad"
-    if ('Tammisaari' in depicted_places):
+    if ('Tammisaari' in subject_places):
         return "Ekenäs"
-    if ('Jääski' in depicted_places):
+    if ('Jääski' in subject_places):
         return "Lesogorsky"
 
     cat_place = {
         "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Joutseno","Jyväskylä","Jämsä","Kaarina","Karkkila","Kajaani","Kauhajoki","Kerava","Kemi","Kitee","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Muhos","Naantali","Padasjoki","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tammela","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Virolahti","Virrat"
     }
     for p in cat_place:
-        if p in depicted_places:
+        # we want exact match: not partial name
+        if (is_entry_in_list(p, subject_places) == True):
             return p
         # may need combination location (country, subdivision etc)
-        tmp = "Suomi, " + p
-        if (tmp in depicted_places):
-            return p
+        #tmp = "Suomi, " + p
+        #if (is_entry_in_list(tmp, subject_places) == True):
+            #return p
     return ""
+
+# filter some possible errors in names:
+# extra spaces, commas etc.
+def places_cleaner(finna_image):
+    places = list()
+    subject_places = finna_image.subject_places.values_list('name', flat=True)
+    print("DEBUG: input places: ", str(subject_places) )
+
+    for p in subject_places:
+        
+        # if it is plain comma -> skip
+        if (p == ","):
+            continue
+        
+        # if it only begins with a comma -> strip it
+        if (p.startswith(",")):
+            p = p[1:]
+        
+        # remove leading/trailing whitespaces if any
+        p = p.lstrip()
+        p = p.rstrip()
+
+        # if it is comma-separate location -> split into components
+        if (p.find(",") > 0):
+            tmp = p.split(",")
+            for t in tmp:
+                #print("DEBUG: t in places: ", str(t) )
+                
+                # if it only begins with a comma -> strip it
+                if (t.startswith(",")):
+                    t = t[1:]
+                    
+                # remove leading/trailing whitespaces if any
+                t = t.lstrip()
+                t = t.rstrip()
+
+                # avoid duplicates
+                if (t not in places):
+                    places.append(t)
+        else:
+            if (p not in places):
+                places.append(p)
+
+    print("DEBUG: output places: ", str(places) )
+    return places
 
 def create_categories_new(finna_image):
     subject_names = finna_image.subjects.values_list('name', flat=True)
-    subject_places = finna_image.subject_places.values_list('name', flat=True)
+    subject_places = places_cleaner(finna_image) # clean some issues in data
     depicted_places = str(list(subject_places))
 
     # may start with comma and space -> clean it
@@ -172,7 +253,8 @@ def create_categories_new(finna_image):
         'Raaseporin linna' : 'Raseborg castle',
         'Hvitträsk': 'Hvitträsk',
         'Lamminahon talo' : 'Lamminaho House',
-        'taksinkuljettajat' : 'Taxi drivers'
+        'taksinkuljettajat' : 'Taxi drivers',
+        'kronometrit' : 'Chronometers'
         #'kiväärit' : 'Rifles'
         #'mikroskoopit' : 'Microscopes'
     }
@@ -194,6 +276,8 @@ def create_categories_new(finna_image):
         'perheet' : 'Families of',
         'miesten puvut': 'Men wearing suits in',
         #'naisten puvut': 'Women wearing suits in',
+        'univormut' : 'Uniforms of',
+        #'kansallispuvut' : 'Traditional clothing of',
         'kengät' : 'Shoes of',
         'muotinäytökset' : 'Fashion shows in',
         'kampaukset' : 'Hair fashion in',
@@ -283,6 +367,7 @@ def create_categories_new(finna_image):
         'laulujuhlat' : 'Music festivals in',
         'festivaalit' : 'Music festivals in',
         'neulonta' : 'Knitting in',
+        'virkkaus' : 'Crochet in',
         'työvaatteet' : 'Work clothing in',
         'rukit' : 'Spinning wheels in',
         'kehruu' : 'Spinning in',
@@ -330,6 +415,7 @@ def create_categories_new(finna_image):
         'kalanviljely' : 'Fish farming in',
         'kalanviljelylaitokset' : 'Fish farming in',
         'luonnonmaisema' : 'Landscapes of',
+        #'maisemavalokuvaus' : '',
         # retkeilyalueet, retkeilyvarusteet
         'retkeily' : 'Camping in',
         'keittiöt' : 'Kitchens in',
@@ -346,6 +432,7 @@ def create_categories_new(finna_image):
         'huoltamot' : 'Petrol stations in',
         'huoltoasemat' : 'Petrol stations in',
         'panssarivaunut' : 'Tanks',
+        'paloautot' : 'Fire engines of',
         'takka' : 'Fireplaces in',
         'takat' : 'Fireplaces in',
         'hautajaiset' : 'Funerals in'
@@ -359,15 +446,9 @@ def create_categories_new(finna_image):
     # aircraft at ...
     # Sailing ships in port of ...
 
-    manor_categories_by_location = {
-        'Louhisaari' : 'Louhisaari Manor',
-        'Piikkiö' : 'Pukkila Manor',
-        'Kuusisto' : 'Kuusisto Manor',
-        'Knuutila' : 'Knuutila Manor'
-    }
-    
+
     isInFinland = False
-    cat_place = get_category_place(subject_places, depicted_places)
+    cat_place = get_category_place(subject_places)
     if (len(cat_place) == 0):
         # TODO: try to cache the lookups
         # if we didn't have fast recognizing, try slow one
@@ -389,8 +470,12 @@ def create_categories_new(finna_image):
             isInFinland = True
 
     # not in subjects like usual
-    if ('Lamminahon talo' in depicted_places):
+    if ('Lamminahon talo' in subject_places):
         categories.add('Lamminaho House')
+
+    # Luumäki; Kotkaniemi
+    if ('Kotkaniemi' in subject_places):
+        categories.add('Kotkaniemi')
 
     isInPortraits = False
     for subject in finna_image.subjects.all():
@@ -430,54 +515,54 @@ def create_categories_new(finna_image):
             categories.add(category)
             
         # or Askainen
-        if (subject.name == 'kartanot' and 'Louhisaari' in depicted_places):
+        if (subject.name == 'kartanot' and 'Louhisaari' in subject_places):
             categories.add('Louhisaari Manor')
 
-        if (subject.name == 'kartanot' and 'Piikkiö' in depicted_places):
+        if (subject.name == 'kartanot' and 'Piikkiö' in subject_places):
             categories.add('Pukkila Manor')
 
-        #if (subject.name == 'kartanot' and 'Vesilahti' in depicted_places):
+        #if (subject.name == 'kartanot' and 'Vesilahti' in subject_places):
             #categories.add('Laukko Manor')
         if (subject.name == "Laukon kartano"):
             categories.add('Laukko Manor')
 
         # Kuusisto, Kaarina
-        if (subject.name == 'kartanot' and 'Kuusisto' in depicted_places):
+        if (subject.name == 'kartanot' and 'Kuusisto' in subject_places):
             categories.add('Kuusisto Manor')
 
         # Knuutila, Nokia
-        if (subject.name == 'kartanot' and 'Knuutila' in depicted_places):
+        if (subject.name == 'kartanot' and 'Knuutila' in subject_places):
             categories.add('Knuutila Manor')
 
 
-        if (subject.name == 'parlamentit' and 'Helsinki' in depicted_places):
+        if (subject.name == 'parlamentit' and 'Helsinki' in subject_places):
             categories.add('Parliament House, Helsinki')
 
-        if (subject.name == 'linnat' and 'Turun linna' in depicted_places):
+        if (subject.name == 'linnat' and 'Turun linna' in subject_places):
             categories.add('Turku Castle')
 
-        if (subject.name == 'linnat' and 'Hämeen linna' in depicted_places):
+        if (subject.name == 'linnat' and 'Hämeen linna' in subject_places):
             categories.add('Häme Castle')
 
-        if (subject.name == 'linnat' and 'Olavinlinna' in depicted_places):
+        if (subject.name == 'linnat' and 'Olavinlinna' in subject_places):
             categories.add('Olavinlinna')
 
         # or Snappertuna
-        if (subject.name == 'linnat' and 'Raaseporin linna' in depicted_places):
+        if (subject.name == 'linnat' and 'Raaseporin linna' in subject_places):
             categories.add('Raseborg castle')
 
         # Svartholma, Loviisa
-        if (subject.name == 'linnakkeet' and 'Svartholma' in depicted_places):
+        if (subject.name == 'linnakkeet' and 'Svartholma' in subject_places):
             categories.add('Svartholm Fortress')
         elif (subject.name == 'linnakkeet' and isInFinland == True):
             categories.add('Fortresses in Finland')
 
-        if (subject.name == 'kanavat' and 'Kimolan kanava' in depicted_places):
+        if (subject.name == 'kanavat' and 'Kimolan kanava' in subject_places):
             categories.add('Kimola Canal')
-        if (subject.name == 'kanavat' and 'Vääksyn Vesijärven kanava' in depicted_places):
+        if (subject.name == 'kanavat' and 'Vääksyn Vesijärven kanava' in subject_places):
             categories.add('Vääksy Canal')
 
-        #if (subject.name == "teatterirakennukset" and 'Turku' in depicted_places):
+        #if (subject.name == "teatterirakennukset" and 'Turku' in subject_places):
             #categories.add('Turku City Theatre')
 
         # categorize by location if in finland
