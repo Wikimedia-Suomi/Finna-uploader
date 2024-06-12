@@ -254,9 +254,15 @@ def create_categories_new(finna_image):
         'Hvitträsk': 'Hvitträsk',
         'Lamminahon talo' : 'Lamminaho House',
         'taksinkuljettajat' : 'Taxi drivers',
-        'kronometrit' : 'Chronometers'
-        #'kiväärit' : 'Rifles'
+        'kronometrit' : 'Chronometers',
+        'keinuhevoset' : 'Rocking horses',
         #'mikroskoopit' : 'Microscopes'
+        #'aseet' : 'weapons'
+        #'ampuma-aseet' : 'Firearms',
+        #'käsiaseet' : 'Handguns'
+        #'kiväärit' : 'Rifles'
+        'pistoolit' : 'Pistols'
+        #'revolverit' : 'Revolvers'
     }
     
     ## categories by type of photograph (portrait, nature..)
@@ -378,6 +384,7 @@ def create_categories_new(finna_image):
         'kangaspuut' : 'Looms in',
         'räsymatot' : 'Rugs and carpets of',
         'nuket' : 'Dolls in',
+        'leikkikalut' : 'Toys in',
         'meijerit' : 'Dairies in',
         'elintarvikeliikkeet' : 'Grocery stores in',
         'myymälät' : 'Shops in',
@@ -419,6 +426,7 @@ def create_categories_new(finna_image):
         # retkeilyalueet, retkeilyvarusteet
         'retkeily' : 'Camping in',
         'keittiöt' : 'Kitchens in',
+        'ruoanvalmistus' : 'Cooking in',
         'kylpyhuoneet' : 'Bathrooms in',
         'näyttelyt' : 'Exhibitions in',
         'messut' : 'Trade fairs in',
@@ -476,6 +484,9 @@ def create_categories_new(finna_image):
     # Luumäki; Kotkaniemi
     if ('Kotkaniemi' in subject_places):
         categories.add('Kotkaniemi')
+
+    if ('Kotka' in subject_places and 'Varissaari' in subject_places):
+        categories.add('Varissaari')
 
     isInPortraits = False
     for subject in finna_image.subjects.all():
@@ -556,6 +567,9 @@ def create_categories_new(finna_image):
             categories.add('Svartholm Fortress')
         elif (subject.name == 'linnakkeet' and isInFinland == True):
             categories.add('Fortresses in Finland')
+
+        if (subject.name == 'linnoitukset' and 'Kyminlinna' in subject_places):
+            categories.add('Kyminlinna')
 
         if (subject.name == 'kanavat' and 'Kimolan kanava' in subject_places):
             categories.add('Kimola Canal')
