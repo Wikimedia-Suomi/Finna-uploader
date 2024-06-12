@@ -114,6 +114,11 @@ def get_category_place(subject_places):
     print("DEBUG: get_category_place, subject places: ", str(subject_places) )
     #print("DEBUG: get_category_place, depicted places: ", str(depicted_places) )
 
+    if ('Helsingin maalaiskunta' in subject_places):
+        return "Vantaa"
+    if ('Espoon maalaiskunta' in subject_places):
+        return "Espoo"
+
     # for now, use hack to translate into category
     if ('Nokia' in subject_places):
         return "Nokia, Finland"
@@ -132,9 +137,13 @@ def get_category_place(subject_places):
         return "Ekenäs"
     if ('Jääski' in subject_places):
         return "Lesogorsky"
+    if ('Sortavala' in subject_places):
+        return "Sortavala"
+    if ('Petsamo'  in subject_places):
+        return "Petsamo"
 
     cat_place = {
-        "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Joutseno","Jyväskylä","Jämsä","Kaarina","Karkkila","Kajaani","Kauhajoki","Kerava","Kemi","Kitee","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Muhos","Naantali","Padasjoki","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tammela","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Virolahti","Virrat"
+        "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Joutseno","Jyväskylä","Jämsä","Kaarina","Karkkila","Kajaani","Kauhajoki","Kerava","Kemi","Kitee","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Muhos","Naantali","Padasjoki","Perniö","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tammela","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Virolahti","Virrat"
     }
     for p in cat_place:
         # we want exact match: not partial name
@@ -310,6 +319,7 @@ def create_categories_new(finna_image):
         'lentokoneet' : 'Aircraft in',
         'helikopterit' : 'Helicopters in',
         'purjelento' : 'Gliding in',
+        'mopot' : 'Mopeds in',
         'moottoripyörät' : 'Motorcycles in',
         'moottoripyöräurheilu' : 'Motorcycle racing in',
         'moottoriurheilu' : 'Motorsports in',
@@ -326,6 +336,7 @@ def create_categories_new(finna_image):
         'kodit' : 'Accommodation buildings in',
         'asuinrakennukset' : 'Houses in',
         'liikerakennukset' : 'Buildings in',
+        'kioskit' : 'Kiosks in',
         'virastotalot' : 'Government buildings in',
         'toimistorakennukset' : 'Office buildings in',
         'kerrostalot' : 'Apartment buildings in',
@@ -351,6 +362,10 @@ def create_categories_new(finna_image):
         'lääkärit' : 'Physicians from',
         'museot' : 'Museums in',
         'kirjat' : 'Books of',
+        'kirjapainot' : 'Printing in',
+        'kirjapainotekniikka' : 'Printing equipment in',
+        #'kirjapainotyöntekijät'
+        #'kirjapainajat'
         'kirjastorakennukset' : 'Libraries in',
         #'kirjastoautot': 'Bookmobiles in',
         'rakennushankkeet' : 'Construction in',
@@ -404,6 +419,8 @@ def create_categories_new(finna_image):
         'koira' : 'Dogs of',
         'koiranäyttelyt' : 'Dog shows in',
         'hevosajoneuvot' : 'Horse-drawn vehicles in',
+        'ravit' : 'Harness racing in',
+        'raviurheilu' : 'Harness racing in',
         'polkupyörät' : 'Bicycles in',
         'aikakauslehdet' : 'Magazines of',
         # sanomalehtipaperi
@@ -435,8 +452,7 @@ def create_categories_new(finna_image):
         'talviurheilulajit' : 'Winter sports in',
         'talviurheilu' : 'Winter sports in',
         'kilpaurheilu' : 'Sports competitions in',
-        #'maaottelut' : ''
-        #'autokorjaamot' : '',
+        'autokorjaamot' : 'Automobile repair shops in',
         'huoltamot' : 'Petrol stations in',
         'huoltoasemat' : 'Petrol stations in',
         'panssarivaunut' : 'Tanks',
@@ -444,6 +460,8 @@ def create_categories_new(finna_image):
         'takka' : 'Fireplaces in',
         'takat' : 'Fireplaces in',
         'hautajaiset' : 'Funerals in'
+        #'maaottelut' : ''
+        #'turkikset'
     }
     
     # iron works
