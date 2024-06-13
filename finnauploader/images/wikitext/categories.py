@@ -143,7 +143,7 @@ def get_category_place(subject_places):
         return "Petsamo"
 
     cat_place = {
-        "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Joutseno","Jyväskylä","Jämsä","Kaarina","Karkkila","Kajaani","Kauhajoki","Kerava","Kemi","Kitee","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Muhos","Naantali","Padasjoki","Perniö","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tammela","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Virolahti","Virrat"
+        "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Joutseno","Juupajoki","Jyväskylä","Jämsä","Kaarina","Karkkila","Kajaani","Kauhajoki","Kerava","Kemi","Kitee","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Muhos","Naantali","Padasjoki","Perniö","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tammela","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Vihti","Virolahti","Virrat"
     }
     for p in cat_place:
         # we want exact match: not partial name
@@ -296,6 +296,10 @@ def create_categories_new(finna_image):
         'kengät' : 'Shoes of',
         'muotinäytökset' : 'Fashion shows in',
         'kampaukset' : 'Hair fashion in',
+        'kampaamot' : 'Hair dressing shops in',
+        'parturit' : 'Barber shops in',
+        #'parturi-kampaamot' : 'Barber shops in',
+        #'parturi-kampaamot' : 'Hair dressing shops in',
         'veturit' : 'Locomotives of',
         'junat' : 'Trains of',
         'junanvaunut' : 'Railway coaches of',
@@ -351,6 +355,10 @@ def create_categories_new(finna_image):
         'paperiteollisuus' : 'Pulp and paper industry in',
         'sahateollisuus' : 'Sawmills in',
         'metsänhoito' : 'Forestry in',
+        'aitta' : 'Granaries in',
+        'aitat' : 'Granaries in',
+        #'lato' : 'Barns in',
+        #'ladot' : 'Barns in',
         'koulurakennukset' : 'School buildings in',
         'koululaiset' : 'School children of',
         'koulutus' : 'Education in',
@@ -505,6 +513,9 @@ def create_categories_new(finna_image):
 
     if ('Kotka' in subject_places and 'Varissaari' in subject_places):
         categories.add('Varissaari')
+
+    if ('Kaukas OY' in subject_places and 'Lappeenranta' in subject_places):
+        categories.add('Kaukas mill site')
 
     isInPortraits = False
     for subject in finna_image.subjects.all():
