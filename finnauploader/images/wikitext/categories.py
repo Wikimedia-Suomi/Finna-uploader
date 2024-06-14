@@ -300,6 +300,7 @@ def create_categories_new(finna_image):
         'parturit' : 'Barber shops in',
         #'parturi-kampaamot' : 'Barber shops in',
         #'parturi-kampaamot' : 'Hair dressing shops in',
+        'raitiovaunut' : 'Trams in',
         'veturit' : 'Locomotives of',
         'junat' : 'Trains of',
         'junanvaunut' : 'Railway coaches of',
@@ -311,6 +312,7 @@ def create_categories_new(finna_image):
         'sotalaivat' : 'Naval ships in',
         'sota-alukset' : 'Naval ships in',
         'sukellusveneet' : 'Submarines in',
+        #'panssarilaivat'
         'veneet' : 'Boats in',
         'jäänmurtajat' : 'Ice breakers in',
         'matkustajalaivat' : 'Passenger ships in',
