@@ -392,6 +392,7 @@ def create_categories_new(finna_image):
         #'pyykinpesuvälineet' : '',
         'pesukoneet' : 'Washing machines in',
         'mankelit' : 'Mangles in',
+        'huonekalut' : 'Furniture in',
         'sohvat' : 'Couches in',
         'tuolit' : 'Chairs in',
         'jääkaapit' : 'Refrigerators in‎',
