@@ -264,6 +264,7 @@ def create_categories_new(finna_image):
         'Lamminahon talo' : 'Lamminaho House',
         'taksinkuljettajat' : 'Taxi drivers',
         'kronometrit' : 'Chronometers',
+        'kahvimyllyt' : 'Coffee grinders',
         'keinuhevoset' : 'Rocking horses',
         #'mikroskoopit' : 'Microscopes'
         #'aseet' : 'weapons'
@@ -381,6 +382,7 @@ def create_categories_new(finna_image):
         'rakennushankkeet' : 'Construction in',
         'rakennustarvikkeet' : 'Construction equipment in',
         #'työvälineet'
+        'puutyöt' : 'Woodworking in',
         'puusepänteollisuus' : 'Carpentry in',
         'ompelukone' : 'Sewing machines in',
         'sängyt' : 'Beds in',
@@ -413,6 +415,7 @@ def create_categories_new(finna_image):
         'leikkikalut' : 'Toys in',
         'meijerit' : 'Dairies in',
         'elintarvikeliikkeet' : 'Grocery stores in',
+        'elokuvateatterit' : 'Cinemas in',
         'myymälät' : 'Shops in',
         'ravintolat' : 'Restaurants in',
         'kahvilat' : 'Coffee shops in',
