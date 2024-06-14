@@ -391,6 +391,7 @@ def create_categories_new(finna_image):
         'mankelit' : 'Mangles in',
         'sohvat' : 'Couches in',
         'tuolit' : 'Chairs in',
+        'jääkaapit' : 'Refrigerators in‎',
         #'muusikot' : 'Musicians from', # who is playing?
         #'orkesterit' : 'Orchestras from', # who is playing?
         #'yhtyeet' : 'Musical groups from', # who is playing?
@@ -446,6 +447,8 @@ def create_categories_new(finna_image):
         'tukinuitto' : 'Timber floating in',
         'uitto' : 'Timber floating in',
         'uittorännit' : 'Timber floating in',
+        'kalastus' : 'Fishing in',
+        'pilkintä' : 'Ice fishing in',
         'kalanviljely' : 'Fish farming in',
         'kalanviljelylaitokset' : 'Fish farming in',
         'luonnonmaisema' : 'Landscapes of',
