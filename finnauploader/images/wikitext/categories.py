@@ -271,8 +271,9 @@ def create_categories_new(finna_image):
         #'ampuma-aseet' : 'Firearms',
         #'käsiaseet' : 'Handguns'
         #'kiväärit' : 'Rifles'
-        'pistoolit' : 'Pistols'
+        'pistoolit' : 'Pistols',
         #'revolverit' : 'Revolvers'
+        'panssarivaunut' : 'Tanks'
     }
     
     ## categories by type of photograph (portrait, nature..)
@@ -471,7 +472,6 @@ def create_categories_new(finna_image):
         'autokorjaamot' : 'Automobile repair shops in',
         'huoltamot' : 'Petrol stations in',
         'huoltoasemat' : 'Petrol stations in',
-        'panssarivaunut' : 'Tanks',
         'paloautot' : 'Fire engines of',
         'takka' : 'Fireplaces in',
         'takat' : 'Fireplaces in',
