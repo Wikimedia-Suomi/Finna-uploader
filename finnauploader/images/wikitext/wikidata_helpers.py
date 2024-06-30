@@ -5,13 +5,17 @@
 #
 # during generating data for upload
 
+from images.models_mappingcache import SubjectPlacesCache, \
+                                       CollectionsCache, \
+                                       InstitutionsCache, \
+                                       NonPresenterAuthorsCache, \
+                                       SubjectActorsCache
+
 from images.exceptions import MissingNonPresenterAuthorError, \
                               MultipleNonPresenterAuthorError, \
                               MissingSubjectActorError
-from images.wikitext.mappingcache import MappingCache
 
 import pywikibot
-import re
 
 # reduce repeated queries a bit
 institutionNames = {}
@@ -30,9 +34,12 @@ def get_institution_name(institutions):
     if len(institutions) != 1:
         print('incorrect number of institutions')
         exit(1)
+
     for institution in institutions:
-        if institution['value'] in cache.institutionsCache:
-            return institution['value']
+        institution_name = institution['value']
+        obj = InstitutionsCache.objects.get(name=institution_name)
+        if obj:
+            return institution_name
 
     print("Unknown institution: " + str(institutions))
     url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/institutions' # noqa
@@ -43,7 +50,7 @@ def get_institution_name(institutions):
 # Allowed --collections values
 # See also finna.py: do_finna_search()
 def get_collection_names():
-    collections = [
+    default_collections = [
                   'Kuvasiskot',
                   'Studio Kuvasiskojen kokoelma',
                   'JOKA',
@@ -51,12 +58,10 @@ def get_collection_names():
                   'SA-kuva',
                   'Kansallisgalleria Ateneumin taidemuseo'
                   ]
-    if (cache.collectionsCache is not None):
-        clist = list()
-        for k in cache.collectionsCache:
-            clist.append(k)
-        return clist
-    return collections
+
+    collections = CollectionsCache.objects.all()
+    collection_names = [collection.name for collection in collections]
+    return collection_names if collection_names else default_collections
 
 
 # Shortcut -> long-name translations
@@ -75,22 +80,27 @@ def get_collection_name_from_alias(name):
 
 
 def get_subject_place_wikidata_id(location_string):
-    if location_string in cache.subjectPlacesCache:
-        return cache.subjectPlacesCache[location_string]
+    place = SubjectPlacesCache.objects.get(name=location_string)
+    if place:
+        return place.wikidata_id
 
 
 # use mapping from Finna-string to qcode
 def get_collection_wikidata_id(name):
-    if name in cache.collectionsCache:
-        return cache.collectionsCache[name]
+    obj = CollectionsCache.objects.get(name=name)
+    if obj:
+        return obj.wikidata_id
+
     print("Unknown collection: " + str(name))
     exit(1)
 
 
 # use mapping from Finna-string to qcode
 def get_institution_wikidata_id(institution_name):
-    if institution_name in cache.institutionsCache:
-        return cache.institutionsCache[institution_name]
+    obj = InstitutionsCache.objects.get(name=institution_name)
+    if obj:
+        return obj.wikidata_id
+
     print("Unknown institution: " + str(institution_name))
     exit(1)
 
@@ -154,7 +164,8 @@ def get_author_name(nonPresenterAuthors):
         # role = nonPresenterAuthor['role']
 
         if (nonPresenterAuthor.is_photographer()):
-            if name in cache.nonPresenterAuthorsCache:
+            obj = NonPresenterAuthorsCache.objects.get(name=name)
+            if obj:
                 if not ret:
                     ret = name
                 else:
@@ -175,9 +186,9 @@ def get_author_name(nonPresenterAuthors):
 
 # use mapping from Finna-string to qcode
 def get_author_wikidata_id(name):
-    if name in cache.nonPresenterAuthorsCache:
-        wikidata_id = cache.nonPresenterAuthorsCache[name]
-        return wikidata_id
+    obj = NonPresenterAuthorsCache.objects.get(name=name)
+    if obj:
+        return obj.wikidata_id
     else:
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors' # noqa
         print(f'Unknown author: "{name}". Add author to {url}')
@@ -385,10 +396,10 @@ def get_place_by_wikidata_id(wikidata_id):
 
 def get_subject_actors_wikidata_ids(subjectActors):
     ret = []
-    for subjectActor in subjectActors:
-        if subjectActor in cache.subjectActorsCache:
-            sa = cache.subjectActorsCache[subjectActor]
-            ret.append(sa)
+    for subjects_actor_name in subjectActors:
+        obj = SubjectActorsCache.objects.get(name=subjects_actor_name)
+        if obj:
+            ret.append(obj.wikidata_id)
         else:
             url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/subjectActors' # noqa
             print('Error: Unknown actor "{subjectActor}". Add actor to {url}')
@@ -396,18 +407,16 @@ def get_subject_actors_wikidata_ids(subjectActors):
     return ret
 
 
-def get_subject_actors_wikidata_id(subject_actor):
-    if subject_actor in cache.subjectActorsCache:
-        return cache.subjectActorsCache[subject_actor]
+def get_subject_actors_wikidata_id(name):
+    obj = SubjectActorsCache.objects.get(name=name)
+    if obj:
+        return obj.wikidata_id
     else:
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/subjectActors' # noqa
-        print(f'Error: Unknown actor "{subject_actor}". Add actor to {url}')
+        print(f'Error: Unknown actor "{name}". Add actor to {url}')
         raise MissingSubjectActorError
 
 
 pywikibot.config.socket_timeout = 120
 site = pywikibot.Site("commons", "commons")  # for Wikimedia Commons
 site.login()
-
-cache = MappingCache()
-cache.parse_cache(pywikibot, site)
