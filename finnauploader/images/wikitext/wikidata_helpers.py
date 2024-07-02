@@ -80,9 +80,11 @@ def get_collection_name_from_alias(name):
 
 
 def get_subject_place_wikidata_id(location_string):
-    place = SubjectPlacesCache.objects.get(name=location_string)
-    if place:
+    try:
+        place = SubjectPlacesCache.objects.get(name=location_string)
         return place.wikidata_id
+    except:
+        return None
 
 
 # use mapping from Finna-string to qcode

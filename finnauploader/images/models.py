@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.db.utils import DataError
 import re
 import urllib
 from datetime import datetime
@@ -11,7 +12,7 @@ from images.finna import get_finna_record_url, parse_full_record
 from images.pywikibot_helpers import get_wikidata_id_from_url
 from images.wikitext.timestamps import parse_timestamp
 from images.duplicatedetection import is_already_in_commons
-
+# import images.models_mappingcache
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_institution_wikidata_id, \
@@ -136,10 +137,10 @@ class FinnaImageRight(models.Model):
 
     def get_link(self):
         return self.link
-    
+
     def get_copyright(self):
         return self.copyright
-    
+
     def get_description(self):
         return self.description
 
@@ -166,6 +167,7 @@ class FinnaNonPresenterAuthor(models.Model):
         if (self.role == 'arkkitehti' or self.role == 'Arkkitehti'):
             return True
         return False
+
 
 class FinnaAlternativeTitle(models.Model):
     text = models.TextField()
@@ -197,6 +199,17 @@ class FinnaSubjectWikidataPlace(models.Model):
 
     def __str__(self):
         return self.uri
+
+
+class FinnaSubjectExtented(models.Model):
+    heading = models.CharField(max_length=255)
+    type = models.CharField(max_length=50)
+    record_id = models.CharField(max_length=255, null=True, blank=True)
+    ids = models.JSONField(null=True, blank=True)
+    detail = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.heading
 
 
 class FinnaSubjectPlace(models.Model):
@@ -259,6 +272,7 @@ class FinnaLocalSubject(models.Model):
 
     def get_wikidata_id(self):
         return get_wikidata_id_from_url(self.value)
+
 
 # Managers
 class FinnaRecordManager(models.Manager):
@@ -335,6 +349,23 @@ class FinnaRecordManager(models.Manager):
         subject_places_data = data.pop('subjectPlaces', [])
         subject_places = [FinnaSubjectPlace.objects.get_or_create(name=subject_place_name.strip())[0] for subject_place_name in subject_places_data]
 
+        # Extract and handle subjectExtented data
+        subject_extented_data = data.pop('subjectsExtended', [])
+        subject_extented = []
+        for se in subject_extented_data:
+            heading = se['heading'][0].strip()
+            if 'id' not in se:
+                se['id'] = ''
+
+            if 'ids' not in se:
+                se['ids'] = []
+
+            if 'detail' not in se:
+                se['detail'] = ''
+
+            r, created = FinnaSubjectExtented.objects.get_or_create(heading=heading, type=se['type'], record_id=se['id'], ids=se['ids'], detail=se['detail'])
+            subject_extented.append(r)
+
         # Extract and handle subjectActors data
         subject_actors_data = data.pop('subjectActors', [])
         subject_actors = [FinnaSubjectActor.objects.get_or_create(name=subject_actor_name)[0] for subject_actor_name in subject_actors_data]
@@ -390,7 +421,7 @@ class FinnaRecordManager(models.Manager):
         # in some cases, url is not complete:
         # protocol and domain are not stored in the record, which we need later
         if (master_url.find("http://") < 0 and master_url.find("https://") < 0):
-            if (master_url.startswith("/Cover/Show") == True):
+            if (master_url.startswith("/Cover/Show") is True):
                 master_url = "https://finna.fi" + master_url
             else:
                 # might be another museovirasto link, but in different domain
@@ -445,10 +476,10 @@ class FinnaRecordManager(models.Manager):
             alt_title, created = obj.get_or_create(text=s['text'],
                                                    lang=s['attributes']['lang'],
                                                    pref=s['attributes']['pref'])
-            
+
             # TODO: parse classification><term lang="fi" label="luokitus"
             # has information like >mustavalkoinen  negatiivi< that we can further categorize with later
-            
+
             alternative_titles.append(alt_title)
 
         # classification
@@ -498,6 +529,9 @@ class FinnaRecordManager(models.Manager):
         for subject_place in subject_places:
             record.subject_places.add(subject_place)
 
+        for se in subject_extented:
+            record.subject_extented.add(se)
+
         for subject_actor in subject_actors:
             record.subject_actors.add(subject_actor)
 
@@ -525,7 +559,7 @@ class FinnaRecordManager(models.Manager):
 
         try:
             record.save()
-        except django.db.utils.DataError as e:
+        except DataError as e:
             print('Error: {}'.format(e))
             exit(1)
 
@@ -551,6 +585,7 @@ class FinnaImage(models.Model):
     non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor)
     summaries = models.ManyToManyField(FinnaSummary)
     subjects = models.ManyToManyField(FinnaSubject)
+    subject_extented = models.ManyToManyField(FinnaSubjectExtented)
     subject_places = models.ManyToManyField(FinnaSubjectPlace)
     subject_actors = models.ManyToManyField(FinnaSubjectActor)
     subject_details = models.ManyToManyField(FinnaSubjectDetail)
@@ -605,11 +640,11 @@ class FinnaImage(models.Model):
         extension = ""
         if self.master_format in format_to_extension:
             extension = format_to_extension[self.master_format]
-        
+
         if (len(extension) == 0):
             print(f'Unknown format: {self.master_format}')
             exit(1)
-            
+
         summaries_name = self.summaries.filter(lang='en').first()
         alt_title_name = self.alternative_titles.filter(lang='en').first()
 
@@ -622,29 +657,29 @@ class FinnaImage(models.Model):
 
         if not name:
             name = self.short_title
-            
+
         # filename in commons can't exceed 250 bytes:
         # let's assume we have narrow ASCII only..
         if (len(name) > 250):
-            if (self.short_title != None and len(self.short_title) < 250):
+            if (self.short_title is not None and len(self.short_title) < 250):
                 print("using short title name")
                 name = self.short_title
-            elif (alt_title_name != None and len(str(alt_title_name)) < 250):
+            elif (alt_title_name is not None and len(str(alt_title_name)) < 250):
                 print("using alt title name")
                 name = alt_title_name.text
-            elif (summaries_name != None and len(str(summaries_name)) < 250):
+            elif (summaries_name is not None and len(str(summaries_name)) < 250):
                 print("using summaries name")
                 name = summaries_name.text
             else:
                 print("unable to find name shorter than maximum for filename")
-            
+
         name = update_dates_in_filename(name)
         name = name.replace('content description: ', '')
         name = name.replace(".", "_")
         name = name.replace(" ", "_")
         name = name.replace(":", "_")
         name = name.replace("_", " ").strip()
-        
+
         if self.year and str(self.year) not in name:
             year = f'{self.year}'
         else:
@@ -652,9 +687,9 @@ class FinnaImage(models.Model):
 
         # if there is large difference in year don't add it to name:
         # year in different fields can vary a lot
-        if (self.date_string != None):
+        if (self.date_string is not None):
             timestamp, precision = parse_timestamp(self.date_string)
-            if (timestamp != None):
+            if (timestamp is not None):
                 if (year != str(timestamp.year)):
                     print("year " + year + " does not match date string " + str(timestamp.year) + ", ignoring it")
                     year = ''
@@ -662,17 +697,17 @@ class FinnaImage(models.Model):
             year = year + '_'
 
         # some images don't have identifier to be used
-        if (self.identifier_string != None):
+        if (self.identifier_string is not None):
             identifier = self.identifier_string.replace(":", "-")
             identifier = identifier.replace("/", "_")
         else:
             identifier = ''
 
         name = name.replace(" ", "_")
-        name = name.replace("/", "_") # don't allow slash in names
-        name = name.replace("\n", " ") # don't allow newline in names
-        name = name.replace("\t", " ") # don't allow tabulator in names
-        name = name.replace("\r", " ") # don't allow carriage return in names
+        name = name.replace("/", "_")   # don't allow slash in names
+        name = name.replace("\n", " ")  # don't allow newline in names
+        name = name.replace("\t", " ")  # don't allow tabulator in names
+        name = name.replace("\r", " ")  # don't allow carriage return in names
 
         # try to remove soft-hyphens from name while we can
         name = name.replace(u"\u00A0", "")
@@ -680,19 +715,19 @@ class FinnaImage(models.Model):
 
         if ((len(name) + len(year) + len(identifier)) > 240):
             print("filename is becoming too long, limiting it")
-            
+
         # each character with umlaut becomes at least three in HTML-encoding..
         quoted_name = urllib.parse.quote_plus(name)
         if (len(quoted_name) > 200):
             print("filename is becoming too long, limiting it")
             name = name[:200] + "__"
             print("new name: ", name)
-            
+
         # wiki doesn't allow soft hyphen in names:
         # normal replace() does not work on silent characters for some reason?
         # -> kludge around it
         quoted_name = urllib.parse.quote_plus(name)
-        quoted_name = quoted_name.replace("%C2%AD", "") 
+        quoted_name = quoted_name.replace("%C2%AD", "")
         name = urllib.parse.unquote(quoted_name)
 
         if (len(identifier) > 0):
@@ -707,7 +742,7 @@ class FinnaImage(models.Model):
         return self.finna_id
 
     def get_sdc_labels(self):
-        
+
         labels = {}
         labels['fi'] = {'language': 'fi', 'value': self.title}
 
@@ -716,13 +751,13 @@ class FinnaImage(models.Model):
 
         # TODO if label exceeds max length use title or short title instead,
         # use long description only if known to fit in 250 character limit
-        #for summary in self.summaries.all():
-            #text = str(summary.text)
-            #text = text.replace('sisällön kuvaus: ', '')
-            #text = text.replace('innehållsbeskrivning: ', '')
-            #text = text.replace('content description: ', '')
+        # for summary in self.summaries.all():
+            # text = str(summary.text)
+            # text = text.replace('sisällön kuvaus: ', '')
+            # text = text.replace('innehållsbeskrivning: ', '')
+            # text = text.replace('content description: ', '')
 
-            #labels[summary.lang] = {'language': summary.lang, 'value': text}
+            # labels[summary.lang] = {'language': summary.lang, 'value': text}
 
         return labels
 
@@ -732,7 +767,7 @@ class FinnaImage(models.Model):
 
     def get_date_string(self):
         return self.date_string
-    
+
     def is_entry_in_subjects(self, name):
         for subject in self.subjects.all():
             if name == subject.name:

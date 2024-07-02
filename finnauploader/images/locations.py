@@ -18,6 +18,17 @@ def get_wikidata_items_using_yso(yso_id):
     rows = sparql.select(query)
     for row in rows:
         ret.append(row['item'])
+
+    if len(ret) == 0:
+        query = f'SELECT ?item WHERE {{ ?item p:P2347 ?a . ?a ps:P2347 "{yso_id}" }}'  # noqa
+        rows = sparql.select(query)
+        for row in rows:
+            try:
+                ret.append(row['item'])
+            except:
+                print(rows)
+                exit(1)
+
     return ret
 
 

@@ -12,6 +12,7 @@ from images.wikitext.wikidata_helpers import get_collection_names, \
 s = requests.Session()
 s.headers.update({'User-Agent': 'FinnaUploader 0.1'})
 
+
 # used by finna_search.py
 def get_supported_collections():
     return get_collection_names()
@@ -74,11 +75,26 @@ def add_finna_api_default_field_parameters():
     url += finna_api_parameter('field[]', 'recordPage')
     url += finna_api_parameter('field[]', 'systemDetails')
     url += finna_api_parameter('field[]', 'fullRecord')
+    url += finna_api_parameter('field[]', 'containerReference')
+    url += finna_api_parameter('field[]', 'corporateAuthors')
+    url += finna_api_parameter('field[]', 'dedupIds')
+    url += finna_api_parameter('field[]', 'dissertationNote')
+    url += finna_api_parameter('field[]', 'genres')
+    url += finna_api_parameter('field[]', 'humanReadablePublicationDates')
+    url += finna_api_parameter('field[]', 'inscriptions')
+    url += finna_api_parameter('field[]', 'openUrl')
+    url += finna_api_parameter('field[]', 'previousTitles')
+    url += finna_api_parameter('field[]', 'primaryAuthors')
+    url += finna_api_parameter('field[]', 'subjectsExtended')
+    url += finna_api_parameter('field[]', 'first_indexed')
+    url += finna_api_parameter('field[]', 'firstIndexed')
+    url += finna_api_parameter('field[]', 'last_indexed')
+    url += finna_api_parameter('field[]', 'lastIndexed')
     return url
 
 
 def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, full=True): # noqa
-    
+
     data = None
     url = "https://api.finna.fi/v1/search?"
     url += add_finna_api_free_images_only_parameters()
@@ -139,12 +155,14 @@ def get_finna_record(id, full=False, lang=None):
         print("Finna API query failed: " + url)
         exit(1)
 
+
 def get_finna_record_by_id(id, full=False, lang=None):
 
     # Update to latest finna_record
     record = get_finna_record(id, True)
     record = record['records'][0]
     return record
+
 
 def get_summary_in_language(id, lang):
     urlencoded_id = urllib.parse.quote_plus(id)

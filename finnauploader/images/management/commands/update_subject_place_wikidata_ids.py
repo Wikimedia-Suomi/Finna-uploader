@@ -1,5 +1,7 @@
 from django.core.management.base import BaseCommand
-from images.models import FinnaSubjectPlace, FintoYsoLabel
+from images.models import FinnaSubjectPlace, \
+                          FintoYsoLabel, \
+                          FinnaSubjectExtented
 from pywikibot.data.sparql import SparqlQuery
 from django.db.models import Count
 import time
@@ -546,14 +548,72 @@ def save_wikidata_id(place, wikidata_id):
     place.save()
 
 
+def get_wikidata_from_subject_extented(place):
+    print(place.name)
+    subjects = FinnaSubjectExtented.objects.filter(heading=place.name,
+                                                   type='URI',
+                                                   record_id__isnull=False
+                                                   ).exclude(record_id='')
+    if len(subjects) == 0:
+        place_name = place.name.strip().replace('\n', ', ').rstrip(',')
+        print(place_name)
+        subjects = FinnaSubjectExtented.objects.filter(heading=place_name,
+                                                       type='URI',
+                                                       record_id__isnull=False
+                                                       ).exclude(record_id='')
+
+    if len(subjects) > 1:
+        print("ERROR:  get_wikidata_from_subject_extented")
+        for subject in subjects:
+            sample_finna_image = subject.finnaimage_set.first()
+            if sample_finna_image:
+                sample_finna_id = sample_finna_image.finna_id
+            else:
+                sample_finna_id = None
+
+            print(f'Heading: {subject.heading}')
+            print(f'Type: {subject.type}')
+            print(f'Record ID: {subject.record_id}')
+            print(f'IDs: {subject.ids}')
+            print(f'Detail: {subject.detail}')
+            print(f'Finna id: {sample_finna_id}')
+            print(f'Data: {sample_finna_image.finna_json_url}')
+            print('')
+        print(subjects)
+        print(place)
+        exit(1)
+
+    print(len(subjects))
+    for subject in subjects:
+        if subject.type == 'topic':
+            continue
+
+        sample_finna_image = subject.finnaimage_set.first()
+        if sample_finna_image:
+            sample_finna_id = sample_finna_image.finna_id
+        else:
+            sample_finna_id = None
+
+        if 'http://www.yso.fi/onto/yso/p' in subject.record_id:
+            yso_id = subject.record_id
+            yso_id = yso_id.replace('http://www.yso.fi/onto/yso/', '')
+            wikidata_id = get_wikidata_items_using_yso(yso_id)
+            print(wikidata_id)
+            if wikidata_id:
+                return wikidata_id
+    return None
+
+
 class Command(BaseCommand):
     help = 'Print places'
 
     def handle(self, *args, **kwargs):
         seek = False
 #        seek='Suomi, Uusimaa, Helsinki, Malmi Helsinki, Malmin lentokenttä'
+#        FinnaSubjectPlace.objects.update(wikidata_id=None)
         common_places = FinnaSubjectPlace.objects.annotate(num_images=Count('finnaimage')).order_by('-num_images') # noqa
-        print(common_places.filter(wikidata_id__isnull=True).count())
+
+#        print(common_places.filter(wikidata_id__isnull=True).count())
         time.sleep(7)
         for place in common_places:
             if place.wikidata_id:
@@ -563,13 +623,17 @@ class Command(BaseCommand):
             if seek and place_name != seek:
                 continue
             seek = False
+            subject_extented_wikidata_id = get_wikidata_from_subject_extented(place)  # noqa
+
             subject_place_wikidata_id = get_subject_place_wikidata_id(place_name) # noqa
             if subject_place_wikidata_id:
+                print('get_subject_place_wikidata_id')
                 save_wikidata_id(place, subject_place_wikidata_id)
                 continue
             sample_finna_image = place.finnaimage_set.first()
             sample_finna_id = sample_finna_image.finna_id if sample_finna_image else "No Image" # noqa
-            print(f'\n{place.name}: {place.num_images} times. {sample_finna_id}') # noqa
+#            print(f'\n{place.name}: {place.num_images} times. {sample_finna_id}') # noqa
+            print(f'\n{place.name}: {sample_finna_id}') # noqa
             parsed_subject_places = parse_subject_place_string(place.name)
             print(parsed_subject_places)
             update_yso_places(parsed_subject_places, sample_finna_id)
@@ -584,11 +648,37 @@ class Command(BaseCommand):
                 print(wikidata_location_ids)
                 if len(wikidata_location_ids) == 1:
                     new_wikidata_id = next(iter(wikidata_location_ids), None)
+                    if subject_extented_wikidata_id:
+                        subject_extented_wikidata_id = subject_extented_wikidata_id[0]  # noqa
+                        skip_list = [
+                                  'http://www.wikidata.org/entity/Q33',
+                                  'http://www.wikidata.org/entity/Q47048',
+                                  'http://www.wikidata.org/entity/Q990569',
+                                  'http://www.wikidata.org/entity/Q3177103',
+                                  'http://www.wikidata.org/entity/Q1757',
+                                  'http://www.wikidata.org/entity/Q849934',
+                                  'http://www.wikidata.org/entity/Q830009',
+                                  'http://www.wikidata.org/entity/Q3070494',
+                                  'http://www.wikidata.org/entity/Q122051809'
+                                  ]
+                        if subject_extented_wikidata_id in skip_list:
+                            pass
+                        elif is_location_within_administrative_entity(new_wikidata_id, subject_extented_wikidata_id, True):  # noqa
+                            pass
+                        elif is_location_within_administrative_entity(subject_extented_wikidata_id, new_wikidata_id, True):  # noqa
+                            new_wikidata_id = subject_extented_wikidata_id
+                        elif subject_extented_wikidata_id != new_wikidata_id:
+                            s = f'ERROR: {subject_extented_wikidata_id} != {new_wikidata_id}'  # noqa
+                            print(s)
+                            exit(1)
+
                     if new_wikidata_id != place.wikidata_id:
                         print(f'SAVING {new_wikidata_id} to {place}')
                         place.wikidata_id = new_wikidata_id
                         place.save()
                 elif len(wikidata_location_ids) > 1:
+                    print("Multiple wikidata location ids")
                     print(row)
                     continue
                 print("--- ### ---")
+        print("OK")
