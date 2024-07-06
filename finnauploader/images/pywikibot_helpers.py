@@ -3,6 +3,8 @@ from pywikibot.exceptions import NoPageError
 import json
 import re
 from datetime import datetime
+from pywikibot.data.sparql import SparqlQuery
+
 
 commonssite = pywikibot.Site('commons', 'commons')
 commonssite.login()
@@ -44,7 +46,7 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
 
     # Check if the page exists
     if commonssite.userinfo['messages']:
-        #talk_page = commonssite.user.getUserTalkPage()
+        # talk_page = commonssite.user.getUserTalkPage()
         user = pywikibot.User(commonssite, commonssite.username())
         talk_page = user.getUserTalkPage()
         latestdt = talk_page.latest_revision.timestamp
@@ -63,6 +65,7 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
 
     return file_page
 
+
 def get_copyright_template_name(finna_image):
     copyright = finna_image.image_right.get_copyright()
 
@@ -77,6 +80,7 @@ def get_copyright_template_name(finna_image):
         print(finna_image.image_right.copyright)
         exit(1)
 
+
 def get_comment_text(finna_image):
     authorlist = list()
     npauthors = finna_image.non_presenter_authors.all()
@@ -84,8 +88,11 @@ def get_comment_text(finna_image):
         if (author.is_photographer()):
             authorlist.append(author.name)
 
+    if not authorlist:
+        authorlist.append('unknown')
+
     ret = "Uploading \'" + finna_image.short_title + "\'"
-    ret = ret + " by \'" + "; ".join(authorlist) + "\'"   
+    ret = ret + " by \'" + "; ".join(authorlist) + "\'"
 
     copyrighttemplate = get_copyright_template_name(finna_image)
 
@@ -109,6 +116,7 @@ def parse_qid_from_wikidata_url(url):
         ret = url.replace('//wikidata.org/wiki/', '')
     return ret
 
+
 def parse_qid_from_commons_category(url):
     ret = None
 
@@ -130,7 +138,8 @@ def parse_wikidata_id_from_url(url):
         site = pywikibot.Site(url=url)
 
         # Extract the page title from the URL and get the Page object
-        title = url.split('/')[-1]  # This assumes the title is the last segment of the URL
+        # This assumes the title is the last segment of the URL
+        title = url.split('/')[-1]
         page = pywikibot.Page(site, title)
         data_item = page.data_item()
 
@@ -141,6 +150,7 @@ def parse_wikidata_id_from_url(url):
     except IndexError:
         return False
     return None
+
 
 def get_wikidata_id_from_url(url):
     if is_qid(url):
@@ -160,3 +170,19 @@ def get_wikidata_id_from_url(url):
 
     return None
 
+
+def test_if_finna_id_exists_in_commons(finna_id, slow=False):
+    query = """
+SELECT DISTINCT ?media ?finna_id ?phash ?dhash WHERE {
+    ?media wdt:P9478 __finna_id__ .
+    OPTIONAL { ?media wdt:P9310 ?phash }
+    OPTIONAL { ?media wdt:P12563 ?dhash }
+} LIMIT 3
+"""
+
+    query = query.replace('__finna_id__', f'"{finna_id}"')
+    endpoint = 'https://commons-query.wikimedia.org/sparql'
+    entity_url = 'https://commons.wikimedia.org/entity/'
+    sparql = SparqlQuery(endpoint=endpoint, entity_url=entity_url)
+    data = sparql.select(query)
+    return data

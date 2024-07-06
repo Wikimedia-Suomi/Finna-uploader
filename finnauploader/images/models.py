@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.db.utils import DataError
 import re
+import json
 import urllib
 from datetime import datetime
 # from images.locations import parse_subject_place_string
@@ -393,7 +394,13 @@ class FinnaRecordManager(models.Manager):
 
         # Extract and handle image_right data
         image_rights_data = data.pop('imageRights', {})
-        image_rights_copyright = image_rights_data['copyright']
+        try:
+            image_rights_copyright = image_rights_data['copyright']
+        except:
+            print("ERROR ----")
+            print(json.dumps(data))
+            print("ERROR ----")
+            exit(1)
         image_rights_link = image_rights_data['link']
         image_rights_description = image_rights_data.get('description', '')
         # TODO : if description has link to creative commons, replace http:// by https://
@@ -437,9 +444,6 @@ class FinnaRecordManager(models.Manager):
             if 'text' not in s:
                 continue
             if not s['text']:
-                continue
-
-            if 'JOKA' not in str(collections_data):
                 continue
 
             if 'lang' not in s['attributes']:
@@ -627,7 +631,7 @@ class FinnaImage(models.Model):
         return url
 
     @property
-    def pseudo_filename(self):
+    def filename_extension(self):
         format_to_extension = {
             'tif': 'tif',
             'tiff': 'tif',
@@ -637,14 +641,16 @@ class FinnaImage(models.Model):
             'image/jpeg': 'jpg'
         }
 
-        extension = ""
-        if self.master_format in format_to_extension:
+        try:
             extension = format_to_extension[self.master_format]
-
-        if (len(extension) == 0):
+            return extension
+        except:
             print(f'Unknown format: {self.master_format}')
             exit(1)
 
+    @property
+    def pseudo_filename(self):
+        filename_extension = self.filename_extension
         summaries_name = self.summaries.filter(lang='en').first()
         alt_title_name = self.alternative_titles.filter(lang='en').first()
 
@@ -731,10 +737,10 @@ class FinnaImage(models.Model):
         name = urllib.parse.unquote(quoted_name)
 
         if (len(identifier) > 0):
-            file_name = f'{name}_{year}({identifier}).{extension}'
+            file_name = f'{name}_{year}({identifier}).{filename_extension}'
         else:
             # in some odd cases there is no identifier (accession number) for the file
-            file_name = f'{name}_{year}.{extension}'
+            file_name = f'{name}_{year}.{filename_extension}'
 
         return file_name
 

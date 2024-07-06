@@ -2,14 +2,9 @@ import mwparserfromhell
 from images.wikitext.timestamps import parse_timestamp_string
 from images.wikitext.categories import create_categories_new
 
-from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
-                                    get_creator_nane_by_wikidata_id, \
-                                    get_institution_wikidata_id, \
-                                    get_institution_name_by_wikidata_id, \
-                                    get_collection_wikidata_id
-
+from images.wikitext.wikidata_helpers import get_creator_nane_by_wikidata_id, \
+                                      get_institution_name_by_wikidata_id
 from images.pywikibot_helpers import get_copyright_template_name
-
 
 
 def lang_template(lang, text):
@@ -37,7 +32,7 @@ def create_photographer_template(r):
     template.add('medium', '')
     template.add('dimensions', str(r['measurements']))
     template.add('institution', r['institution_template'])
-    template.add('department', lang_template('fi', "; ".join(r['collections'])))
+    template.add('department', lang_template('fi', "; ".join(r['collections'])))  # noqa
     template.add('references', '')
     template.add('object history', '')
     template.add('exhibition history', '')
@@ -84,30 +79,34 @@ def clean_depicted_places(location_string):
 
     return ret
 
+
 def get_creator_templates(finna_image):
     creator_templates = []
     for creator in finna_image.non_presenter_authors.all():
         if (creator.is_photographer()):
             wikidata_id = creator.get_wikidata_id()
             creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
-            if (creatorName != None):
-                template =  '{{Creator:' + creatorName + '}}'
+            if (creatorName is not None):
+                template = '{{Creator:' + creatorName + '}}'
                 creator_templates.append(template)
     return "".join(creator_templates)
+
 
 def get_institution_templates(finna_image):
     institution_templates = []
     for institution in finna_image.institutions.all():
         wikidata_id = institution.get_wikidata_id()
         institutionName = get_institution_name_by_wikidata_id(wikidata_id)
-        if (institutionName != None):
+        if (institutionName is not None):
             template = '{{Institution:' + institutionName + '}}'
             institution_templates.append(template)
     return "".join(institution_templates)
 
+
 def get_copyright_template_with_review(finna_image):
     template_name = get_copyright_template_name(finna_image)
     return "{{" + template_name + "}}\n{{FinnaReview}}"
+
 
 def get_permission_string(finna_image):
     link = finna_image.image_right.get_link()
@@ -119,13 +118,14 @@ def get_permission_string(finna_image):
         ret = f'{copyright}; {description}'
     return ret
 
+
 def get_photographer_template(finna_image):
 
     r = {}
 
     # depicted
-    depicted_people = list(finna_image.subject_actors.values_list('name', flat=True))
-    depicted_places = list(finna_image.subject_places.values_list('name', flat=True))
+    depicted_people = list(finna_image.subject_actors.values_list('name', flat=True))  # noqa
+    depicted_places = list(finna_image.subject_places.values_list('name', flat=True))  # noqa
 
     # misc
     collections = list(finna_image.collections.values_list('name', flat=True))
@@ -152,6 +152,9 @@ def get_photographer_template(finna_image):
             description = lang_template(lang, text)
             descriptions.append(description)
 
+    for s in finna_image.summaries.all():
+        print(s)
+
     r['creator_template'] = get_creator_templates(finna_image)
     r['template_titles'] = titles
     r['template_descriptions'] = descriptions
@@ -170,7 +173,7 @@ def get_photographer_template(finna_image):
 
 def get_wikitext_for_new_image(finna_image):
     creator = get_photographer_template(finna_image)
-    
+
     wikitext_parts = []
     wikitext_parts.append("== {{int:filedesc}} ==")
     wikitext_parts.append(creator + '\n')

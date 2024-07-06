@@ -1,8 +1,10 @@
 # for updates to commons structured data context
 
+from datetime import datetime
 import pywikibot
 import json
-
+from images.wikitext.photographer import clean_depicted_places
+from images.wikitext.timestamps import parse_timestamp
 
 wikidata_site = pywikibot.Site("wikidata", "wikidata")  # Connect to Wikidata
 
@@ -70,9 +72,11 @@ def create_P275_licence(value, url):
     claim.setTarget(claim_target)
 
     if url:
-        qualifier_url = pywikibot.Claim(wikidata_site, 'P854')  # property ID for source URL (reference url)
+        # property ID for source URL (reference url)
+        qualifier_url = pywikibot.Claim(wikidata_site, 'P854')
         qualifier_url.setTarget(url)
-        claim.addSource(qualifier_url, summary='Adding reference URL qualifier')
+        summary = 'Adding reference URL qualifier'
+        claim.addSource(qualifier_url, summary=summary)
 
     return claim
 
@@ -197,25 +201,29 @@ def wbEditEntity(site, page, data):
     ret = request.submit()
     return ret
 
+
 def get_source_of_file_claim(finna_image):
     # TODO: when using beyond JOKA-archive, fetch correct values per image
-    publisher = 'Q3029524'  # Finnish Heritage Agency
+    # publisher = 'Q3029524'  # Finnish Heritage Agency
     operator = 'Q420747'    # National library
     url = finna_image.url
-    
+
     instlist = list()
     for institution in finna_image.institutions.all():
         wikidata_id = institution.get_wikidata_id()
         instlist.append(wikidata_id)
 
     if (len(instlist) != 1):
-        # TODO: check that create_P7482_source_of_file() can handle multiple institutions
-        print(f'excpected one institution, found:', str(instlist))
+        # TODO: check that create_P7482_source_of_file()
+        # can handle multiple institutions
+        print(('excpected one institution, found:', str(instlist)))
         exit(1)
-        
-    # TODO: fix handling so that potentially multiple institutions can be supported
+
+    # TODO: fix handling so that potentially multiple
+    # institutions can be supported
     # (do we have a real case for that though?)
     return create_P7482_source_of_file(url, operator, instlist[0])
+
 
 def get_inception_claim(finna_image):
     try:
@@ -228,7 +236,8 @@ def get_inception_claim(finna_image):
         print("failed to create inception")
         return None
 
-## this context is for sdc data in commons,
+
+# this context is for sdc data in commons,
 # used by views.py
 def get_structured_data_for_new_image(finna_image):
     labels = finna_image.get_sdc_labels()
@@ -245,15 +254,17 @@ def get_structured_data_for_new_image(finna_image):
 
     # Handle image rights
 
-    claim = create_P275_licence(finna_image.image_right.get_copyright(), finna_image.url)
+    copyright_data = finna_image.image_right.get_copyright()
+    claim = create_P275_licence(copyright_data, finna_image.url)
     claims.append(claim)
 
-    claim = create_P6216_copyright_state(finna_image.image_right.get_copyright())
+    claim = create_P6216_copyright_state(copyright_data)
     claims.append(claim)
 
     # Handle non presenter authors (photographers)
     # note: SLS uses "pht"
-    known_roles = ['kuvaaja', 'reprokuvaaja', 'valokuvaaja', 'Valokuvaaja', 'pht']
+    known_roles = ['kuvaaja', 'reprokuvaaja', 'valokuvaaja',
+                   'Valokuvaaja', 'pht']
     non_presenter_authors = finna_image.non_presenter_authors.all()
 
     for author in non_presenter_authors:
@@ -291,6 +302,10 @@ def get_structured_data_for_new_image(finna_image):
         claim = create_P180_depict(wikidata_id)
         claims.append(claim)
 
+    p1771_location_claims = create_P1071_location(finna_image)
+    for p1771_location_claim in p1771_location_claims:
+        claims.append(p1771_location_claim)
+
     json_claims = []
     for claim in claims:
         if claim:
@@ -302,4 +317,59 @@ def get_structured_data_for_new_image(finna_image):
         'claims': json_claims
     }
 
+    return ret
+
+
+def create_P1071_location(finna_image):
+
+    ret = []
+    wikidata_ids = set()
+    for best_wikidata_location in finna_image.best_wikidata_location.all():
+        print(best_wikidata_location)
+        uri = best_wikidata_location.uri
+        uri = uri.replace('http://www.wikidata.org/entity/', '')
+        wikidata_ids.add(uri)
+
+    subject_places = finna_image.subject_places
+    depicted_places = list(subject_places.values_list('name', flat=True))
+    location_string = clean_depicted_places("; ".join(depicted_places))
+
+    print(location_string)
+
+    for wikidata_id in wikidata_ids:
+        # Create a new Claim
+        # P1071 is 'location'
+        claim = pywikibot.Claim(wikidata_site, 'P1071')
+        target = pywikibot.ItemPage(wikidata_site, wikidata_id)
+        claim.setTarget(target)
+
+        # Create source Claims
+        source_claims = []
+
+        # Location text
+        ref_claim = pywikibot.Claim(wikidata_site, 'P5997')
+        ref_claim.setTarget(location_string)
+        source_claims.append(ref_claim)
+
+        # Source url
+        source_url = finna_image.url
+        ref_claim = pywikibot.Claim(wikidata_site, 'P854')
+        ref_claim.setTarget(source_url)
+        source_claims.append(ref_claim)
+
+        # Date
+        current_date = datetime.now()
+        wbtime_date = pywikibot.WbTime(year=current_date.year,
+                                       month=current_date.month,
+                                       day=current_date.day)
+
+        ref_claim = pywikibot.Claim(wikidata_site, 'P813')
+        ref_claim.setTarget(wbtime_date)
+        source_claims.append(ref_claim)
+
+        P1071_value = str(wikidata_ids)
+        summary = f'Adding referenses to P1071 (location) = {P1071_value}'
+        claim.addSources(source_claims, summary=summary)
+
+        ret.append(claim)
     return ret

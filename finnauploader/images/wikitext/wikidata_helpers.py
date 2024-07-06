@@ -15,6 +15,7 @@ from images.exceptions import MissingNonPresenterAuthorError, \
                               MultipleNonPresenterAuthorError, \
                               MissingSubjectActorError
 
+import time
 import pywikibot
 
 # reduce repeated queries a bit
@@ -89,11 +90,15 @@ def get_subject_place_wikidata_id(location_string):
 
 # use mapping from Finna-string to qcode
 def get_collection_wikidata_id(name):
-    obj = CollectionsCache.objects.get(name=name)
+
+    # Remove extra whitespaces from name
+    name = name.strip()
+
+    obj = CollectionsCache.objects.filter(name=name).first()
     if obj:
         return obj.wikidata_id
 
-    print("Unknown collection: " + str(name))
+    print(f'Unknown collection: "{name}"')
     exit(1)
 
 
@@ -188,12 +193,15 @@ def get_author_name(nonPresenterAuthors):
 
 # use mapping from Finna-string to qcode
 def get_author_wikidata_id(name):
-    obj = NonPresenterAuthorsCache.objects.get(name=name)
-    if obj:
+    try:
+        obj = NonPresenterAuthorsCache.objects.get(name=name)
         return obj.wikidata_id
-    else:
+    except NonPresenterAuthorsCache.DoesNotExist:
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors' # noqa
         print(f'Unknown author: "{name}". Add author to {url}')
+
+        # Exit may throw a error so little sleep so user can read the message
+        time.sleep(10)
         exit(1)
 
 
@@ -283,8 +291,8 @@ def isSubjectCategory(wikidata_id):
 def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
 
     # reduce repeated queries a bit
-    if (isSubjectCategory(wikidata_id) is True):
-        return getSubjectCategory(wikidata_id)
+    # if (isSubjectCategory(wikidata_id) is True):
+    #    return getSubjectCategory(wikidata_id)
 
     # Connect to Wikidata
     site = pywikibot.Site("wikidata", "wikidata")
@@ -311,6 +319,7 @@ def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
     if 'P373' in claims:
         commons_category_claim = claims['P373'][0]
         category_name = commons_category_claim.getTarget()
+        print(category_name)
 
         # reduce repeated queries a bit
         setSubjectCategory(wikidata_id, category_name)

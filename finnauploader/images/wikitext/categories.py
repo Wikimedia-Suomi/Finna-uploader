@@ -3,6 +3,7 @@ import mwparserfromhell
 from images.wikitext.wikidata_helpers import get_subject_image_category_from_wikidata_id, \
                                     get_creator_nane_by_wikidata_id
 
+
 def get_category_by_wikidata_id(wikidata_id):
     if not wikidata_id:
         return None
@@ -14,6 +15,7 @@ def get_category_by_wikidata_id(wikidata_id):
             category = category.replace('Category:', '')
         return category
     return None
+
 
 def get_photography_category_by_photographer_id(wikidata_id):
     if not wikidata_id:
@@ -35,6 +37,7 @@ def get_photography_category_by_photographer_id(wikidata_id):
         return category
         
     return None
+
 
 # if picture is categorized under architecture
 # and authors includes person with role "arkkitehti"
@@ -61,6 +64,7 @@ def get_building_category_by_architect_id(wikidata_id):
 
     return None
 
+
 def get_subject_category(finna_subject):
     value = finna_subject.value.replace('category:', 'Category:')
 
@@ -75,6 +79,7 @@ def get_subject_category(finna_subject):
 
     wikidata_id = finna_subject.get_wikidata_id()
     return get_category_by_wikidata_id(wikidata_id)
+
 
 def get_category_for_building(subject_name, depicted_places):
     
@@ -100,6 +105,7 @@ def get_category_for_building(subject_name, depicted_places):
 
     return categories
 
+
 # for place names, we want full exact match, not partial:
 # "Kotkaniemi" is not same as "Kotka"
 def is_entry_in_list(name : str, subject_places : list):
@@ -109,6 +115,7 @@ def is_entry_in_list(name : str, subject_places : list):
         #elif (name == "Suomi, " + p):
             #return True
     return False
+
 
 def get_category_place(subject_places):
     print("DEBUG: get_category_place, subject places: ", str(subject_places) )
@@ -155,6 +162,7 @@ def get_category_place(subject_places):
             #return p
     return ""
 
+
 # filter some possible errors in names:
 # extra spaces, commas etc.
 def places_cleaner(finna_image):
@@ -200,10 +208,14 @@ def places_cleaner(finna_image):
     print("DEBUG: output places: ", str(places) )
     return places
 
+
 def create_categories_new(finna_image):
     subject_names = finna_image.subjects.values_list('name', flat=True)
     subject_places = places_cleaner(finna_image) # clean some issues in data
     depicted_places = str(list(subject_places))
+
+    # pre-parsed wikidata ids from subject_place string
+    best_wikidata_locations = finna_image.best_wikidata_location
 
     # may start with comma and space -> clean it
     if (depicted_places.startswith(",")):
@@ -276,7 +288,7 @@ def create_categories_new(finna_image):
         'panssarivaunut' : 'Tanks'
     }
     
-    ## categories by type of photograph (portrait, nature..)
+    # categories by type of photograph (portrait, nature..)
     # luontokuvat
     
     # must have place 'Suomi' to generate ' in Finland'
@@ -485,10 +497,17 @@ def create_categories_new(finna_image):
     # metal industry
     # Metalworkers
 
+    # categories from 
+    for best_wikidata_location in best_wikidata_locations.all():
+        wikidata_id = best_wikidata_location.uri.replace('http://www.wikidata.org/entity/', '')
+        print(f'FOOBAR {wikidata_id}')
+        category_name = get_category_by_wikidata_id(wikidata_id)
+        if category_name:
+            categories.add(category_name)
+
     # lentokentät ja satamat ?
     # aircraft at ...
     # Sailing ships in port of ...
-
 
     isInFinland = False
     cat_place = get_category_place(subject_places)
@@ -646,8 +665,9 @@ def create_categories_new(finna_image):
     else:
         # if we can't determine year, use only location name
         # and only if it something other than country (at least a city)
-        if (len(cat_place) > 0 and (cat_place != 'Suomi' and cat_place != 'Finland') and isInFinland == True):
-            categories.add(cat_place)
+#        if (len(cat_place) > 0 and (cat_place != 'Suomi' and cat_place != 'Finland') and isInFinland == True):
+#            categories.add(cat_place)
+       pass
 
     # TODO: to categorize under "Black and white photographs of Finland",
     # see models about parsing the full record xml from Finna for more terms

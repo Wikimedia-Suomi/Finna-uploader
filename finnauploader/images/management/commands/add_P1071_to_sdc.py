@@ -3,7 +3,9 @@ from images.models import FinnaImage
 from images.imagehash_helpers import is_correct_finna_record
 import pywikibot
 import time
+import json
 from pywikibot.data.sparql import SparqlQuery
+from openai import OpenAI
 
 wdsite = pywikibot.Site("wikidata", "wikidata")
 wdrepo = wdsite.data_repository()
@@ -14,19 +16,116 @@ csite.login()
 qid_cache = {}
 
 
+# Point to the local server
+client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
+
+phi_cache = {}
+skip_cache = []
+
+
+def get_phi_sorted(location_string):
+    if location_string in phi_cache:
+        return phi_cache[location_string]
+
+    filtered_location_string = get_filtered_location_string(location_string)
+    if filtered_location_string == 'Suomi':
+        print(filtered_location_string)
+        print("----")
+        return
+    else:
+        time.sleep(1)
+
+    msg = "Sort these by hierarcy to be largest to smallest.\n\n"
+#    msg = "Sort these by hierarcy to be smallest to largest.\n\n"
+    orig_places = filtered_location_string.split(', ')
+    for place in orig_places:
+        place = place.strip()
+        if place == '':
+            continue
+        msg += f'{place}\n'
+
+    print(msg)
+    system = "Return only input words. Answer as python list. No explanation."
+    completion = client.chat.completions.create(
+        # model="Nabokov/Phi-3-mini-4k-instruct-Q8_0-GGUF",
+        model="bartowski/Phi-3-medium-4k-instruct-GGUF",
+        messages=[
+            {
+                "role": "system",
+                "content": system
+            },
+            {"role": "user", "content": msg}
+        ],
+        temperature=0.1,
+    )
+    message = completion.choices[0].message
+    content_str = message.content.strip().replace("'", '"')
+
+    print(content_str)
+    try:
+        phi_locations = json.loads(content_str)
+    except:
+        return location_string
+
+    for phi_location in phi_locations:
+        print(phi_location)
+        if phi_location.strip() == '':
+            continue
+
+        if phi_location not in orig_places:
+
+            print(orig_places)
+            print("ERROR: phi location missing")
+            return location_string
+
+    for orig_place in orig_places:
+        orig_place = orig_place.strip()
+        if orig_place == '':
+            continue
+
+        if orig_place not in phi_locations:
+            print(orig_place)
+            print(phi_locations)
+            print("ERROR: orig location missing")
+            return location_string
+
+    phi_cache[location_string] = ", ".join(phi_locations)
+    print(phi_cache[location_string])
+    return phi_cache[location_string]
+
+
+def get_filtered_location_string(location_string):
+    filtered_parts = []
+    parts = location_string.replace(';', ',').split(',')
+
+    for part in parts:
+        part = part.strip()
+        if part == '':
+            continue
+        if part not in filtered_parts:
+            filtered_parts.append(part)
+
+    if len(filtered_parts) < 4:
+        return None
+
+    filtered_location_string = ", ".join(filtered_parts)
+    return filtered_location_string
+
+
 def set_sdc_data(page, data):
 
     # Add the claim to the file
-    filtered_parts = []
-    parts = data['P5997'].replace(';', ',').split(',')
-    for part in parts:
-        part = part.strip()
-        if part not in filtered_parts:
-            filtered_parts.append(part)
-    filtered_location_string = ", ".join(filtered_parts)
 
     if not page.exists():
         print(f"The file {page} does not exist on Wikimedia Commons.")
+        return
+
+    filtered_location_string = get_filtered_location_string(data['P5997'])
+    if not filtered_location_string:
+        return
+
+    filtered_location_string = get_phi_sorted(filtered_location_string)
+    if not filtered_location_string:
         return
 
     # Check if the file already has a P1071 value
@@ -69,6 +168,11 @@ def set_sdc_data(page, data):
 
     print(f'{filtered_location_string}')
     print(data['P5997'])
+
+    if csite.userinfo['messages']:
+        print("Warning: You have received a talk page message. Exiting.")
+        exit()
+
     item.addClaim(claim, summary=summary)
     print("OK")
 
@@ -170,13 +274,18 @@ class Command(BaseCommand):
                 continue
 
             finna_data = finna_ids[row['finna_id']]
+            if not get_filtered_location_string(finna_data['P5997']):
+                continue
+
             entity_prefix = 'https://commons.wikimedia.org/entity/M'
             page_id = row['media'].replace(entity_prefix, '')
             page_id = int(page_id)
             finna_id = row['finna_id']
             image = list(csite.load_pages_from_pageids([page_id]))[0]
             fp = get_confirmed_filename(image, finna_id)
+            if not fp:
+                continue
             print(fp)
             print(row)
+#            get_phi_sorted(finna_data['P5997'])
             set_sdc_data(fp, finna_data)
-            time.sleep(5)
