@@ -206,7 +206,7 @@ class Command(BaseCommand):
 
         identifier = ''
         # some images don't have identifier to be used
-        if finna_image.identifier_string is not None:
+        if file_name and finna_image.identifier_string is not None:
             identifier = finna_image.identifier_string.strip()
             identifier = identifier.replace(":", "-")
             identifier = identifier.replace("/", "_")
