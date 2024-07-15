@@ -200,8 +200,9 @@ def get_author_wikidata_id(name):
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors' # noqa
         print(f'Unknown author: "{name}". Add author to {url}')
 
-        # Exit may throw a error so little sleep so user can read the message
-        time.sleep(10)
+        # don't sleep here: this is called thousands of times during do_finna_search()
+        # and adds a lot of useless waiting
+        #time.sleep(10)
         exit(1)
 
 
