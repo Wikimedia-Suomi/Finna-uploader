@@ -60,7 +60,7 @@ def isItemHuman(item):
         
         # family name
         if (claim.getTarget().id == 'Q5'):
-            print("instance ok", claim.getTarget().id)
+            print("instance human ok", claim.getTarget().id)
             isHuman = True
     return isHuman
 
@@ -76,7 +76,7 @@ def isItemLastName(item):
 
         # family name
         if (claim.getTarget().id == 'Q101352'):
-            print("instance ok", claim.getTarget().id)
+            print("instance family name", claim.getTarget().id)
             isLastName = True
 
         # "von something"
@@ -118,17 +118,17 @@ def isItemFirstName(item):
 
         # given name
         if (claim.getTarget().id == 'Q202444'):
-            print("instance ok", claim.getTarget().id)
+            print("instance given name", claim.getTarget().id)
             isFirstName = True
 
         # male first name
         if (claim.getTarget().id == 'Q12308941'):
-            print("instance ok", claim.getTarget().id)
+            print("instance male first name", claim.getTarget().id)
             isFirstName = True
 
         # female first name
         if (claim.getTarget().id == 'Q11879590'):
-            print("instance ok", claim.getTarget().id)
+            print("instance female first name", claim.getTarget().id)
             isFirstName = True
 
     return isFirstName
@@ -321,7 +321,6 @@ def getqcodesfromresponse(record):
 
 # https://github.com/mpeel/wikicode/blob/master/wir_newpages.py#L706
 def searchbyname(repo, wtitle, lang='fi'):
-    print(" ---------")
     print("searching for ", wtitle)
 
     qcodes = list()
@@ -466,6 +465,8 @@ if __name__ == "__main__":
         wdsite.login()
         repo = wdsite.data_repository()
 
+        print(" ---- searching -----")
+
         qcodes = searchbyname(repo, complete_name)
         if (checkqcodesforhuman(repo, complete_name, first_name, last_name, qcodes) == True):
             print(f"Human already exists by same name: {complete_name}")
@@ -480,10 +481,14 @@ if __name__ == "__main__":
             print(f"Items for names missing")
             exit(1)
 
+        print(" ---------")
+
         # ask verification before modifying 
         if (confirmsaving(complete_name) == True):
             addhuman(repo, complete_name, qcodeFirstName, qcodeLastName)
             #print("Properties checked for ", itemqcode)
+            print(f"Human added: {last_name}, {first_name}")
+        print(" ------- done ------- ")
 
     else:
         print("Script creates wikidata item for human by name.")  # noqa
