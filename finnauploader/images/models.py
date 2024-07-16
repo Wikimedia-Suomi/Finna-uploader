@@ -189,7 +189,7 @@ class FinnaSummary(models.Model):
 
 
 class FinnaSubject(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.TextField()
 
     def __str__(self):
         return self.name
