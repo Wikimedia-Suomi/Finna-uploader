@@ -203,7 +203,7 @@ class FinnaSubjectWikidataPlace(models.Model):
 
 
 class FinnaSubjectExtented(models.Model):
-    heading = models.CharField(max_length=255)
+    heading = models.TextField()
     type = models.CharField(max_length=50)
     record_id = models.CharField(max_length=255, null=True, blank=True)
     ids = models.JSONField(null=True, blank=True)
