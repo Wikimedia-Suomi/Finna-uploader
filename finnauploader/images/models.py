@@ -214,7 +214,7 @@ class FinnaSubjectExtented(models.Model):
 
 
 class FinnaSubjectPlace(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.TextField()
     wikidata_id = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
@@ -222,7 +222,7 @@ class FinnaSubjectPlace(models.Model):
 
 
 class FinnaSubjectActor(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.TextField()
     wikidata_id = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
@@ -234,14 +234,14 @@ class FinnaSubjectActor(models.Model):
 
 
 class FinnaSubjectDetail(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.TextField()
 
     def __str__(self):
         return self.name
 
 
 class FinnaCollection(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.TextField()
 
     def __str__(self):
         return self.name
@@ -252,8 +252,8 @@ class FinnaCollection(models.Model):
 
 
 class FinnaInstitution(models.Model):
-    value = models.CharField(max_length=200)
-    translated = models.CharField(max_length=200)
+    value = models.TextField()
+    translated = models.TextField()
 
     def __str__(self):
         return self.value
@@ -265,7 +265,7 @@ class FinnaInstitution(models.Model):
 
 # Dynamic subjects based on wiki categories / wikidata items
 class FinnaLocalSubject(models.Model):
-    value = models.CharField(max_length=400)
+    value = models.TextField()
     normalized_name = models.CharField(max_length=200)
 
     def __str__(self):
