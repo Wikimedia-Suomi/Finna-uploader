@@ -355,6 +355,11 @@ class FinnaRecordManager(models.Manager):
         subject_extented = []
         for se in subject_extented_data:
             heading = se['heading'][0].strip()
+            if 'type' not in se:
+                # skip if not included?
+                #continue
+                se['type'] = ''
+            
             if 'id' not in se:
                 se['id'] = ''
 
