@@ -640,10 +640,14 @@ class FinnaImage(models.Model):
         format_to_extension = {
             'tif': 'tif',
             'tiff': 'tif',
+            'image/tiff': 'tif',
             'png': 'png',
+            'image/png': 'png',
             'jpg': 'jpg',
             'jpeg': 'jpg',
-            'image/jpeg': 'jpg'
+            'image/jpeg': 'jpg',
+            'gif': 'gif',
+            'image/gif': 'gif'
         }
 
         try:
