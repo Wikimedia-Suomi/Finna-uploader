@@ -756,34 +756,6 @@ class FinnaImage(models.Model):
     def __str__(self):
         return self.finna_id
 
-    def get_sdc_labels(self):
-
-        labels = {}
-        labels['fi'] = {'language': 'fi', 'value': self.title}
-
-        for title in self.alternative_titles.all():
-            labels[title.lang] = {'language': title.lang, 'value': title.text}
-            
-            # if text exceeds 250 characters just truncate: 
-            # Commons label does not allow larger while wikitext does
-            if (len(labels[title.lang]) > 250):
-                print("WARN: length of comment exceeds 250 characters")
-                lbl = labels[title.lang]
-                labels[title.lang] = lbl[:250]
-
-
-        # TODO if label exceeds max length use title or short title instead,
-        # use long description only if known to fit in 250 character limit
-        # for summary in self.summaries.all():
-            # text = str(summary.text)
-            # text = text.replace('sisällön kuvaus: ', '')
-            # text = text.replace('innehållsbeskrivning: ', '')
-            # text = text.replace('content description: ', '')
-
-            # labels[summary.lang] = {'language': summary.lang, 'value': text}
-
-        return labels
-
     # this is still in class FinnaImage, many others have member "finna_id" as well..
     def get_finna_id(self):
         return self.finna_id

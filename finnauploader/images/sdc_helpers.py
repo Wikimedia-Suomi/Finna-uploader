@@ -306,6 +306,33 @@ def get_claims_for_image_upload(finna_image):
 
     return claims
 
+def get_sdc_labels(finna_image):
+
+    labels = {}
+    labels['fi'] = {'language': 'fi', 'value': finna_image.title}
+
+    for title in finna_image.alternative_titles.all():
+        labels[title.lang] = {'language': title.lang, 'value': title.text}
+        
+        # if text exceeds 250 characters just truncate: 
+        # Commons label does not allow larger while wikitext does
+        if (len(labels[title.lang]) > 250):
+            print("WARN: length of comment exceeds 250 characters")
+            lbl = labels[title.lang]
+            labels[title.lang] = lbl[:250]
+
+
+    # TODO if label exceeds max length use title or short title instead,
+    # use long description only if known to fit in 250 character limit
+    # for summary in self.summaries.all():
+        # text = str(summary.text)
+        # text = text.replace('sisällön kuvaus: ', '')
+        # text = text.replace('innehållsbeskrivning: ', '')
+        # text = text.replace('content description: ', '')
+
+        # labels[summary.lang] = {'language': summary.lang, 'value': text}
+
+    return labels
 
 # this context is for sdc data in commons,
 # used by views.py
@@ -319,7 +346,7 @@ def get_structured_data_for_new_image(finna_image):
             json_claims.append(claim)
 
     # labels in commons
-    labels = finna_image.get_sdc_labels()
+    labels = get_sdc_labels(finna_image)
 
     ret = {
         'labels': labels,
