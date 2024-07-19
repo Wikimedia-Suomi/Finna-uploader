@@ -237,13 +237,9 @@ def get_inception_claim(finna_image):
         return None
 
 
-# this context is for sdc data in commons,
-# used by views.py
-def get_structured_data_for_new_image(finna_image):
+# this context is for sdc data in commons
+def get_claims_for_image_upload(finna_image):
     claims = []
-
-    # labels in commons
-    labels = finna_image.get_sdc_labels()
 
     claim = get_source_of_file_claim(finna_image)
     claims.append(claim)
@@ -308,11 +304,22 @@ def get_structured_data_for_new_image(finna_image):
     for p1771_location_claim in p1771_location_claims:
         claims.append(p1771_location_claim)
 
+    return claims
+
+
+# this context is for sdc data in commons,
+# used by views.py
+def get_structured_data_for_new_image(finna_image):
+    claims = get_claims_for_image_upload(finna_image)
+
     json_claims = []
     for claim in claims:
         if claim:
             claim = claim.toJSON()
             json_claims.append(claim)
+
+    # labels in commons
+    labels = finna_image.get_sdc_labels()
 
     ret = {
         'labels': labels,
