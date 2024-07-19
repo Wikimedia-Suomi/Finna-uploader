@@ -309,18 +309,37 @@ def get_claims_for_image_upload(finna_image):
 def get_sdc_labels(finna_image):
 
     labels = {}
-    labels['fi'] = {'language': 'fi', 'value': finna_image.title}
+    
+    labelname = None
+    if (len(finna_image.title) < 250):
+        print("using title as label")
+        labelname = finna_image.title
+    elif (finna_image.short_title is not None and len(finna_image.short_title) < 250):
+        print("using short title as label")
+        labelname = finna_image.short_title
+    
+    if (labelname != None):
+        labels['fi'] = {'language': 'fi', 'value': labelname}
 
     for title in finna_image.alternative_titles.all():
-        labels[title.lang] = {'language': title.lang, 'value': title.text}
-        
-        # if text exceeds 250 characters just truncate: 
-        # Commons label does not allow larger while wikitext does
-        if (len(labels[title.lang]) > 250):
-            print("WARN: length of comment exceeds 250 characters")
-            lbl = labels[title.lang]
-            labels[title.lang] = lbl[:250]
 
+        # if text exceeds 250 characters: 
+        # Commons label does not allow larger while wikitext does
+        # -> full text can be in wikitext instead
+        if (len(title.text) < 250):
+            #label_text = title.text
+            labels[title.lang] = {'language': title.lang, 'value': title.text}
+        else:
+            print("WARN: title text choice exceeds 250 characters")
+            
+    for summary in finna_image.summaries.all():
+        if (summary.lang not in labels):
+            if (len(summary.text) < 250):
+                print("adding summary as label")
+                labels[summary.lang] = {'language': summary.lang, 'value': summary.text}
+            else:
+                print("WARN: summary text choice exceeds 250 characters")
+        
 
     # TODO if label exceeds max length use title or short title instead,
     # use long description only if known to fit in 250 character limit
