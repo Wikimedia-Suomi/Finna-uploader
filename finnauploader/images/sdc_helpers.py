@@ -240,8 +240,10 @@ def get_inception_claim(finna_image):
 # this context is for sdc data in commons,
 # used by views.py
 def get_structured_data_for_new_image(finna_image):
-    labels = finna_image.get_sdc_labels()
     claims = []
+
+    # labels in commons
+    labels = finna_image.get_sdc_labels()
 
     claim = get_source_of_file_claim(finna_image)
     claims.append(claim)
