@@ -322,20 +322,20 @@ def get_sdc_labels(finna_image):
         labels['fi'] = {'language': 'fi', 'value': labelname}
 
     for title in finna_image.alternative_titles.all():
-
-        # if text exceeds 250 characters: 
-        # Commons label does not allow larger while wikitext does
-        # -> full text can be in wikitext instead
-        if (len(title.text) < 250):
-            #label_text = title.text
-            labels[title.lang] = {'language': title.lang, 'value': title.text}
-        else:
-            print("WARN: title text choice exceeds 250 characters")
+        if (title.lang not in labels):
+            # if text exceeds 250 characters: 
+            # Commons label does not allow larger while wikitext does
+            # -> full text can be in wikitext instead
+            if (len(title.text) < 250):
+                print("adding title as label for: ", title.lang)
+                labels[title.lang] = {'language': title.lang, 'value': title.text}
+            else:
+                print("WARN: title text choice exceeds 250 characters")
             
     for summary in finna_image.summaries.all():
         if (summary.lang not in labels):
             if (len(summary.text) < 250):
-                print("adding summary as label")
+                print("adding summary as label for: ", summary.lang)
                 labels[summary.lang] = {'language': summary.lang, 'value': summary.text}
             else:
                 print("WARN: summary text choice exceeds 250 characters")
