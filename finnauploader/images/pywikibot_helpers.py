@@ -34,16 +34,7 @@ def edit_commons_mediaitem(page, data):
     return ret
 
 
-def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
-    commons_file_name = "File:" + file_name
-    file_page = pywikibot.FilePage(commonssite, commons_file_name)
-    file_page.text = wikitext
-
-    # Check if the page exists
-    if file_page.exists():
-        print(f"The file {commons_file_name} exists.")
-        exit()
-
+def are_there_messages_for_bot_in_commons():
     # Check if the page exists
     if commonssite.userinfo['messages']:
         # talk_page = commonssite.user.getUserTalkPage()
@@ -54,7 +45,28 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
             page_name = talk_page.title()
             msg = f'Warning: You have received a {page_name} message. Exiting.'
             print(msg)
+            
+            # abort upload
             exit()
+            return True
+    return False
+
+def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
+    if (are_there_messages_for_bot_in_commons() == True):
+        exit()
+
+    commons_file_name = "File:" + file_name
+    file_page = pywikibot.FilePage(commonssite, commons_file_name)
+    file_page.text = wikitext
+
+    # Check if the page exists
+    if file_page.exists():
+        print(f"The file {commons_file_name} exists.")
+        exit()
+
+    if (len(comment) > 250):
+        print("WARN: length of comment exceeds 250 characters")
+        comment = comment[:250]
 
     try:
         # Load file from url
@@ -98,6 +110,10 @@ def get_comment_text(finna_image):
 
     ret = f'{ret} with licence {copyrighttemplate}'
     ret = f'{ret} from {finna_image.url}'
+
+    if (len(ret) > 250):
+        print("WARN: length of comment exceeds 250 characters")
+    
     return ret
 
 
