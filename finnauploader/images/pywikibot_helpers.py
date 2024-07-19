@@ -67,7 +67,7 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
 
     if (len(comment) > 250):
         print("WARN: length of comment exceeds 250 characters")
-        comment = comment[:250]
+        #comment = comment[:250]
 
     try:
         # Load file from url
@@ -112,9 +112,6 @@ def get_comment_text(finna_image):
     ret = f'{ret} with licence {copyrighttemplate}'
     ret = f'{ret} from {finna_image.url}'
 
-    if (len(ret) > 250):
-        print("WARN: length of comment exceeds 250 characters")
-    
     return ret
 
 
