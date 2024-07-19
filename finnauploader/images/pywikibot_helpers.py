@@ -53,8 +53,6 @@ def edit_commons_mediaitem(page, data):
 
 
 def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
-    if (are_there_messages_for_bot_in_commons() == True):
-        exit()
 
     commons_file_name = "File:" + file_name
     file_page = pywikibot.FilePage(commonssite, commons_file_name)

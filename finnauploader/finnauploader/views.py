@@ -6,13 +6,14 @@ from rest_framework.decorators import action
 from rest_framework import status, viewsets
 from django.shortcuts import get_object_or_404
 from watson import search as watson
-from images.finna import get_finna_record
 
+from images.finna import get_finna_record_by_id
 from images.wikitext.photographer import get_wikitext_for_new_image
 from images.sdc_helpers import get_structured_data_for_new_image
-from images.pywikibot_helpers import edit_commons_mediaitem, \
-                                     upload_file_to_commons, \
-                                     get_comment_text
+from images.pywikibot_helpers import are_there_messages_for_bot_in_commons, \
+                                    edit_commons_mediaitem, \
+                                    upload_file_to_commons, \
+                                    get_comment_text
 
 
 class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
@@ -26,14 +27,15 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
     # http://127.0.0.1:8000/finna/14526/upload
     @action(detail=True, methods=['get'])
     def upload(self, request, pk=None):
+        if (are_there_messages_for_bot_in_commons() == True):
+            exit(1)
 
         # Fetch the instance with the given primary key (pk)
-        finna_image = get_object_or_404(FinnaImage, pk=pk)
+        old_finna_image = get_object_or_404(FinnaImage, pk=pk)
 
         # Update to latest finna_record
-        record = get_finna_record(finna_image.finna_id, True)
-        record = record['records'][0]
-        finna_image = FinnaImage.objects.create_from_data(record)
+        new_record = get_finna_record_by_id(old_finna_image.finna_id)
+        finna_image = FinnaImage.objects.create_from_data(new_record)
 
         filename = finna_image.pseudo_filename
         image_url = finna_image.master_url
