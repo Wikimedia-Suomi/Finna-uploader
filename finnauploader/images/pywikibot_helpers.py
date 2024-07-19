@@ -12,6 +12,24 @@ commonssite.login()
 dtstart = datetime.now()
 
 
+def are_there_messages_for_bot_in_commons():
+    # Check if the page exists
+    if commonssite.userinfo['messages']:
+        # talk_page = commonssite.user.getUserTalkPage()
+        user = pywikibot.User(commonssite, commonssite.username())
+        talk_page = user.getUserTalkPage()
+        latestdt = talk_page.latest_revision.timestamp
+        if (latestdt > dtstart):
+            page_name = talk_page.title()
+            msg = f'Warning: You have received a {page_name} message. Exiting.'
+            print(msg)
+            
+            # abort upload
+            exit()
+            return True
+    return False
+
+
 # Edit Wikimedia Commons mediaitem using wbeditentity
 def edit_commons_mediaitem(page, data):
     # Reload file_page to be sure that we have updated page_id
@@ -33,23 +51,6 @@ def edit_commons_mediaitem(page, data):
     ret = request.submit()
     return ret
 
-
-def are_there_messages_for_bot_in_commons():
-    # Check if the page exists
-    if commonssite.userinfo['messages']:
-        # talk_page = commonssite.user.getUserTalkPage()
-        user = pywikibot.User(commonssite, commonssite.username())
-        talk_page = user.getUserTalkPage()
-        latestdt = talk_page.latest_revision.timestamp
-        if (latestdt > dtstart):
-            page_name = talk_page.title()
-            msg = f'Warning: You have received a {page_name} message. Exiting.'
-            print(msg)
-            
-            # abort upload
-            exit()
-            return True
-    return False
 
 def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
     if (are_there_messages_for_bot_in_commons() == True):
