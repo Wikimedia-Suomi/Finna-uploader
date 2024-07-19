@@ -264,7 +264,7 @@ def get_structured_data_for_new_image(finna_image):
     # Handle non presenter authors (photographers)
     # note: SLS uses "pht"
     known_roles = ['kuvaaja', 'reprokuvaaja', 'valokuvaaja',
-                   'Valokuvaaja', 'pht']
+                   'Valokuvaaja', 'pht', 'valokuvaamo']
     non_presenter_authors = finna_image.non_presenter_authors.all()
 
     for author in non_presenter_authors:

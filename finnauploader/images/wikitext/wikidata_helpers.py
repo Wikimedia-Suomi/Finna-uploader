@@ -15,7 +15,6 @@ from images.exceptions import MissingNonPresenterAuthorError, \
                               MultipleNonPresenterAuthorError, \
                               MissingSubjectActorError
 
-import time
 import pywikibot
 
 # reduce repeated queries a bit
@@ -199,10 +198,6 @@ def get_author_wikidata_id(name):
     except NonPresenterAuthorsCache.DoesNotExist:
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors' # noqa
         print(f'Unknown author: "{name}". Add author to {url}')
-
-        # don't sleep here: this is called thousands of times during do_finna_search()
-        # and adds a lot of useless waiting
-        #time.sleep(10)
         exit(1)
 
 
@@ -420,13 +415,13 @@ def get_subject_actors_wikidata_ids(subjectActors):
 
 
 def get_subject_actors_wikidata_id(name):
-    obj = SubjectActorsCache.objects.get(name=name)
-    if obj:
-        return obj.wikidata_id
-    else:
+    try:
+        obj = SubjectActorsCache.objects.get(name=name)
+    except SubjectActorsCache.DoesNotExist:
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/subjectActors' # noqa
         print(f'Error: Unknown actor "{name}". Add actor to {url}')
         raise MissingSubjectActorError
+    return obj.wikidata_id
 
 
 pywikibot.config.socket_timeout = 120
