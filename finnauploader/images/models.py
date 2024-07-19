@@ -763,6 +763,14 @@ class FinnaImage(models.Model):
 
         for title in self.alternative_titles.all():
             labels[title.lang] = {'language': title.lang, 'value': title.text}
+            
+            # if text exceeds 250 characters just truncate: 
+            # Commons label does not allow larger while wikitext does
+            if (len(labels[title.lang]) > 250):
+                print("WARN: length of comment exceeds 250 characters")
+                lbl = labels[title.lang]
+                labels[title.lang] = lbl[:250]
+
 
         # TODO if label exceeds max length use title or short title instead,
         # use long description only if known to fit in 250 character limit
