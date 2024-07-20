@@ -283,9 +283,10 @@ def get_category_for_subject_in_country(subject_name):
         'sohvat' : 'Couches in',
         'tuolit' : 'Chairs in',
         'jääkaapit' : 'Refrigerators in‎',
-        #'asunnot'
         'sisustus' : 'Interior decoration in',
+        'interiöörit' : 'Building interiors in',
         'sisätilat' : 'Building interiors in',
+        #'asunnot'
         #'muusikot' : 'Musicians from', # who is playing?
         #'orkesterit' : 'Orchestras from', # who is playing?
         #'yhtyeet' : 'Musical groups from', # who is playing?
