@@ -367,6 +367,9 @@ def get_category_for_subject_in_country(subject_name):
         'paloautot' : 'Fire engines of',
         'takka' : 'Fireplaces in',
         'takat' : 'Fireplaces in',
+        'häät' : 'Marriage in',
+        'hääkuvat' : 'Marriage in',
+        'hääpuvut' : 'Wedding clothes in',
         'hautajaiset' : 'Funerals in'
         #'maaottelut' : ''
         #'turkikset'
