@@ -163,133 +163,7 @@ def get_category_place(subject_places):
     return ""
 
 
-# filter some possible errors in names:
-# extra spaces, commas etc.
-def places_cleaner(finna_image):
-    places = list()
-    subject_places = finna_image.subject_places.values_list('name', flat=True)
-    print("DEBUG: input places: ", str(subject_places) )
-
-    for p in subject_places:
-        
-        # if it is plain comma -> skip
-        if (p == ","):
-            continue
-        
-        # if it only begins with a comma -> strip it
-        if (p.startswith(",")):
-            p = p[1:]
-        
-        # remove leading/trailing whitespaces if any
-        p = p.lstrip()
-        p = p.rstrip()
-
-        # if it is comma-separate location -> split into components
-        if (p.find(",") > 0):
-            tmp = p.split(",")
-            for t in tmp:
-                #print("DEBUG: t in places: ", str(t) )
-                
-                # if it only begins with a comma -> strip it
-                if (t.startswith(",")):
-                    t = t[1:]
-                    
-                # remove leading/trailing whitespaces if any
-                t = t.lstrip()
-                t = t.rstrip()
-
-                # avoid duplicates
-                if (t not in places):
-                    places.append(t)
-        else:
-            if (p not in places):
-                places.append(p)
-
-    print("DEBUG: output places: ", str(places) )
-    return places
-
-
-def create_categories_new(finna_image):
-    subject_names = finna_image.subjects.values_list('name', flat=True)
-    subject_places = places_cleaner(finna_image) # clean some issues in data
-    depicted_places = str(list(subject_places))
-
-    # pre-parsed wikidata ids from subject_place string
-    best_wikidata_locations = finna_image.best_wikidata_location
-
-    # may start with comma and space -> clean it
-    if (depicted_places.startswith(",")):
-        depicted_places = depicted_places[1:]
-    depicted_places = depicted_places.lstrip()
-
-    # Create a new WikiCode object
-    wikicode = mwparserfromhell.parse("")
-
-    # Create the categories
-    categories = set()
-
-    for subject_actor in finna_image.subject_actors.all():
-        wikidata_id = subject_actor.get_wikidata_id()
-        category = get_category_by_wikidata_id(wikidata_id)
-        if category:
-            categories.add(category)
-
-    authors = finna_image.non_presenter_authors.all()
-    for author in authors:
-        if (author.is_photographer()):
-            # "photographs by" category under photographer
-            wikidata_id = author.get_wikidata_id()
-            category = get_photography_category_by_photographer_id(wikidata_id)
-            if (category != None):
-                categories.add(category)
-
-        if (author.is_architect()):
-            # is image about a building?
-            if (finna_image.is_entry_in_subjects("rakennukset") or finna_image.is_entry_in_subjects("kirkkorakennukset")):
-                # "buildings by" category under architect
-                wikidata_id = author.get_wikidata_id()
-                category = get_building_category_by_architect_id(wikidata_id)
-                if (category != None):
-                    categories.add(category)
-            
-
-    # Ssteamboats: non ocean-going
-    # Steamships of Finland
-    # Naval ships of Finland
-    # Sailing ships of Finland
-    subject_categories = {
-        'muotokuvat': 'Portrait photographs',
-        'henkilökuvat': 'Portrait photographs',
-        'henkilövalokuvaus': 'Portrait photographs',
-        'ryhmäkuvat' : 'Group photographs',
-        'saamenpuvut' : 'Sami clothing',
-        'Osuusliike Elanto': 'Elanto',
-        'Valmet Oy': 'Valmet',
-        'Salora Oy': 'Salora',
-        'Veljekset Åström Oy': 'Veljekset Åström',
-        'Yntyneet Paperitehtaat': 'Yntyneet Paperitehtaat',
-        'Turun linna' : 'Turku Castle',
-        'Hämeen linna' : 'Häme Castle',
-        'Olavinlinna' : 'Olavinlinna',
-        'Raaseporin linna' : 'Raseborg castle',
-        'Hvitträsk': 'Hvitträsk',
-        'Lamminahon talo' : 'Lamminaho House',
-        'taksinkuljettajat' : 'Taxi drivers',
-        'kronometrit' : 'Chronometers',
-        'kahvimyllyt' : 'Coffee grinders',
-        'keinuhevoset' : 'Rocking horses',
-        #'mikroskoopit' : 'Microscopes'
-        #'aseet' : 'weapons'
-        #'ampuma-aseet' : 'Firearms',
-        #'käsiaseet' : 'Handguns'
-        #'kiväärit' : 'Rifles'
-        'pistoolit' : 'Pistols',
-        #'revolverit' : 'Revolvers'
-        'panssarivaunut' : 'Tanks'
-    }
-    
-    # categories by type of photograph (portrait, nature..)
-    # luontokuvat
+def get_category_for_subject_in_country(subject_name):
     
     # must have place 'Suomi' to generate ' in Finland'
     #
@@ -350,6 +224,7 @@ def create_categories_new(finna_image):
         'autourheilu' : 'Automobile racing in',
         'autokilpailut' : 'Automobile races in',
         'auto-onnettomuudet' : 'Automobile accidents in',
+        'liikenneonnettomuudet' : 'Road accidents in',
         'taksit' : 'Taxis in',
         'taksiasemat' : 'Taxi stands in',
         'hotellit' : 'Hotels in',
@@ -492,6 +367,144 @@ def create_categories_new(finna_image):
         #'maaottelut' : ''
         #'turkikset'
     }
+
+    # in some cases they are in upper case..
+    subject_name = subject_name.lower()
+
+    if (subject_name in subject_categories_with_country):
+        category = subject_categories_with_country[subject_name] + " " + "Finland"
+        return category
+    return None
+
+
+# filter some possible errors in names:
+# extra spaces, commas etc.
+def places_cleaner(finna_image):
+    places = list()
+    subject_places = finna_image.subject_places.values_list('name', flat=True)
+    print("DEBUG: input places: ", str(subject_places) )
+
+    for p in subject_places:
+        
+        # if it is plain comma -> skip
+        if (p == ","):
+            continue
+        
+        # if it only begins with a comma -> strip it
+        if (p.startswith(",")):
+            p = p[1:]
+        
+        # remove leading/trailing whitespaces if any
+        p = p.lstrip()
+        p = p.rstrip()
+
+        # if it is comma-separate location -> split into components
+        if (p.find(",") > 0):
+            tmp = p.split(",")
+            for t in tmp:
+                #print("DEBUG: t in places: ", str(t) )
+                
+                # if it only begins with a comma -> strip it
+                if (t.startswith(",")):
+                    t = t[1:]
+                    
+                # remove leading/trailing whitespaces if any
+                t = t.lstrip()
+                t = t.rstrip()
+
+                # avoid duplicates
+                if (t not in places):
+                    places.append(t)
+        else:
+            if (p not in places):
+                places.append(p)
+
+    print("DEBUG: output places: ", str(places) )
+    return places
+
+
+def create_categories_new(finna_image):
+    subject_names = finna_image.subjects.values_list('name', flat=True)
+    subject_places = places_cleaner(finna_image) # clean some issues in data
+    depicted_places = str(list(subject_places))
+
+    # pre-parsed wikidata ids from subject_place string
+    best_wikidata_locations = finna_image.best_wikidata_location
+
+    # may start with comma and space -> clean it
+    if (depicted_places.startswith(",")):
+        depicted_places = depicted_places[1:]
+    depicted_places = depicted_places.lstrip()
+
+    # Create a new WikiCode object
+    wikicode = mwparserfromhell.parse("")
+
+    # Create the categories
+    categories = set()
+
+    for subject_actor in finna_image.subject_actors.all():
+        wikidata_id = subject_actor.get_wikidata_id()
+        category = get_category_by_wikidata_id(wikidata_id)
+        if category:
+            categories.add(category)
+
+    authors = finna_image.non_presenter_authors.all()
+    for author in authors:
+        if (author.is_photographer()):
+            # "photographs by" category under photographer
+            wikidata_id = author.get_wikidata_id()
+            category = get_photography_category_by_photographer_id(wikidata_id)
+            if (category != None):
+                categories.add(category)
+
+        if (author.is_architect()):
+            # is image about a building?
+            if (finna_image.is_entry_in_subjects("rakennukset") or finna_image.is_entry_in_subjects("kirkkorakennukset")):
+                # "buildings by" category under architect
+                wikidata_id = author.get_wikidata_id()
+                category = get_building_category_by_architect_id(wikidata_id)
+                if (category != None):
+                    categories.add(category)
+            
+
+    # Ssteamboats: non ocean-going
+    # Steamships of Finland
+    # Naval ships of Finland
+    # Sailing ships of Finland
+    subject_categories = {
+        'muotokuvat': 'Portrait photographs',
+        'henkilökuvat': 'Portrait photographs',
+        'henkilövalokuvaus': 'Portrait photographs',
+        'ryhmäkuvat' : 'Group photographs',
+        'saamenpuvut' : 'Sami clothing',
+        'Osuusliike Elanto': 'Elanto',
+        'Valmet Oy': 'Valmet',
+        'Salora Oy': 'Salora',
+        'Veljekset Åström Oy': 'Veljekset Åström',
+        'Yntyneet Paperitehtaat': 'Yntyneet Paperitehtaat',
+        'Turun linna' : 'Turku Castle',
+        'Hämeen linna' : 'Häme Castle',
+        'Olavinlinna' : 'Olavinlinna',
+        'Raaseporin linna' : 'Raseborg castle',
+        'Hvitträsk': 'Hvitträsk',
+        'Lamminahon talo' : 'Lamminaho House',
+        'taksinkuljettajat' : 'Taxi drivers',
+        'kronometrit' : 'Chronometers',
+        'kahvimyllyt' : 'Coffee grinders',
+        'keinuhevoset' : 'Rocking horses',
+        #'mikroskoopit' : 'Microscopes'
+        #'aseet' : 'weapons'
+        #'ampuma-aseet' : 'Firearms',
+        #'käsiaseet' : 'Handguns'
+        #'kiväärit' : 'Rifles'
+        'pistoolit' : 'Pistols',
+        #'revolverit' : 'Revolvers'
+        'panssarivaunut' : 'Tanks'
+    }
+    
+    # categories by type of photograph (portrait, nature..)
+    # luontokuvat
+    
     
     # iron works
     # metal industry
@@ -578,9 +591,10 @@ def create_categories_new(finna_image):
                 # working in finland but no tag for gender
                 categories.add("People at work in Finland")
 
-        if (subject.name in subject_categories_with_country and isInFinland == True):
-            category = subject_categories_with_country[subject.name] + " " + "Finland"
-            categories.add(category)
+        if (isInFinland == True):
+            category = get_category_for_subject_in_country(subject.name)
+            if (category != None):
+                categories.add(category)
             
         # or Askainen
         if (subject.name == 'kartanot' and 'Louhisaari' in subject_places):
