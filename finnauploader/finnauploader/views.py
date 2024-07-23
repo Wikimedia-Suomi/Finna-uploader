@@ -45,6 +45,12 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
             print("URL is not complete:", image_url)
             exit(1)
 
+        # can't upload from redirector with copy-upload:
+        # must handle differently
+        if (image_url.find("siiri.urn") > 0 or image_url.find("profium.com") > 0):
+            print("Cannot use copy-upload from URL:", image_url)
+            exit(1)
+
         structured_data = get_structured_data_for_new_image(finna_image)
         wikitext = get_wikitext_for_new_image(finna_image)
         comment = get_comment_text(finna_image)
