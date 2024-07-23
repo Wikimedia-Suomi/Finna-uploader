@@ -98,7 +98,7 @@ class Image(models.Model):
 
 class WikimediaCommonsImage(models.Model):
     page_id = models.PositiveIntegerField(unique=True)
-    page_title = models.CharField(max_length=200)
+    page_title = models.CharField(max_length=250)
     match_type = models.CharField(max_length=16, db_index=True)
 
 
@@ -589,8 +589,8 @@ class FinnaImage(models.Model):
     date_string = models.TextField()
     number_of_images = models.PositiveIntegerField(unique=False, null=True, blank=True)
     master_url = models.URLField(max_length=500)
-    master_format = models.CharField(max_length=200)
-    measurements = models.CharField(max_length=200)
+    master_format = models.TextField()
+    measurements = models.TextField()
     non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor)
     summaries = models.ManyToManyField(FinnaSummary)
     subjects = models.ManyToManyField(FinnaSubject)
