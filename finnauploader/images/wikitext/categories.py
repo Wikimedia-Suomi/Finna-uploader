@@ -219,10 +219,13 @@ def get_category_for_subject_in_country(subject_name):
         'moottoriurheilu' : 'Motorsports in',
         'linja-autot': 'Buses in',
         'kuorma-autot' : 'Trucks in',
+        'paloautot' : 'Fire engines of',
+        'tankkiautot' : 'Tank trucks in',
         'autot' : 'Automobiles in',
         'henkilöautot' : 'Automobiles in',
         'autourheilu' : 'Automobile racing in',
         'autokilpailut' : 'Automobile races in',
+        #'kilpa-autot' : '',
         'auto-onnettomuudet' : 'Automobile accidents in',
         'liikenneonnettomuudet' : 'Road accidents in',
         'taksit' : 'Taxis in',
@@ -230,6 +233,7 @@ def get_category_for_subject_in_country(subject_name):
         'hotellit' : 'Hotels in',
         'kodit' : 'Accommodation buildings in',
         'asuinrakennukset' : 'Houses in',
+        'mökit (asuinrakennukset)' : 'Cabins in',
         'liikerakennukset' : 'Buildings in',
         'kioskit' : 'Kiosks in',
         'virastotalot' : 'Government buildings in',
@@ -245,6 +249,8 @@ def get_category_for_subject_in_country(subject_name):
         'konepajateollisuus' : 'Machinery industry in',
         'paperiteollisuus' : 'Pulp and paper industry in',
         'sahateollisuus' : 'Sawmills in',
+        'sahalaitokset' : 'Sawmills in',
+        'sahat (teollisuusrakennukset)' : 'Sawmills in',
         'metsänhoito' : 'Forestry in',
         'aitta' : 'Granaries in',
         'aitat' : 'Granaries in',
@@ -261,6 +267,7 @@ def get_category_for_subject_in_country(subject_name):
         'lääkärit' : 'Physicians from',
         'museot' : 'Museums in',
         'kirjat' : 'Books of',
+        'kirjastot' : 'Libraries in',
         'kirjapainot' : 'Printing in',
         'kirjapainotekniikka' : 'Printing equipment in',
         #'kirjapainotyöntekijät'
@@ -271,6 +278,7 @@ def get_category_for_subject_in_country(subject_name):
         'rakennustarvikkeet' : 'Construction equipment in',
         #'työvälineet'
         'sepät' : 'Blacksmiths from',
+        'postinkantajat' : 'Mail carriers of',
         'puutyöt' : 'Woodworking in',
         'puusepänteollisuus' : 'Carpentry in',
         'ompelukone' : 'Sewing machines in',
@@ -291,7 +299,10 @@ def get_category_for_subject_in_country(subject_name):
         #'muusikot' : 'Musicians from', # who is playing?
         #'orkesterit' : 'Orchestras from', # who is playing?
         #'yhtyeet' : 'Musical groups from', # who is playing?
-        #'piano'
+        #'soittimet'
+        'piano' : 'Pianos in',
+        'viulu' : 'Violins in',
+        #'urut' : 'Organs in',
         'laulujuhlat' : 'Music festivals in',
         'festivaalit' : 'Music festivals in',
         'neulonta' : 'Knitting in',
@@ -299,7 +310,13 @@ def get_category_for_subject_in_country(subject_name):
         'työvaatteet' : 'Work clothing in',
         'työkalut' : 'Tools in',
         'kirveet' : 'Axes of',
+        'vasarat' : 'Hammers of',
         'alasimet' : 'Anvils in',
+        #astiat 
+        #dreijaus
+        #'keramiikka'
+        #savitavara 
+        #ruukut
         'rukit' : 'Spinning wheels in',
         'kehruu' : 'Spinning in',
         'kutojat' : 'Weavers in',
@@ -325,6 +342,8 @@ def get_category_for_subject_in_country(subject_name):
         'musiikkiliikkeet' : 'Music stores in',
         #'laulajat' : 'Vocalists from',
         'vaateliikkeet' : 'Clothing shops in',
+        'julisteet' : 'Posters of',
+        #'mainosgrafiikka'
         'mainoskuvat' : 'Advertisements in',
         'näyteikkunat' : 'Shop windows in',
         'koira' : 'Dogs of',
@@ -336,6 +355,9 @@ def get_category_for_subject_in_country(subject_name):
         'aikakauslehdet' : 'Magazines of',
         # sanomalehtipaperi
         'sanomalehdet' : 'Newspapers of',
+        #'dokumenttielokuvaus' : 'Filming in',
+        'elokuvaus' : 'Filming in',
+        'elokuvat' : 'Cinema of',
         'ammattikoulutus' : 'Vocational schools in',
         'salmet' : 'Straits of',
         'uimarannat' : 'Beaches of',
@@ -361,14 +383,17 @@ def get_category_for_subject_in_country(subject_name):
         'näyttelyt' : 'Exhibitions in',
         'messut' : 'Trade fairs in',
         'messut (tapahtumat)' : 'Trade fairs in',
+        'liikuntatilat' : 'Sports venues in',
+        'uimahallit' : 'Indoor swimming pools in',
         'pikaluistelu' : 'Speed skating in',
         'talviurheilulajit' : 'Winter sports in',
         'talviurheilu' : 'Winter sports in',
         'kilpaurheilu' : 'Sports competitions in',
+        'urheilukilpailut' : 'Sports competitions in',
         'autokorjaamot' : 'Automobile repair shops in',
         'huoltamot' : 'Petrol stations in',
         'huoltoasemat' : 'Petrol stations in',
-        'paloautot' : 'Fire engines of',
+        'tynnyrit' : 'Barrels in',
         'takka' : 'Fireplaces in',
         'takat' : 'Fireplaces in',
         'kattaukset' : 'Table settings in',
@@ -377,6 +402,7 @@ def get_category_for_subject_in_country(subject_name):
         'häät' : 'Marriage in',
         'hääkuvat' : 'Marriage in',
         'hääpuvut' : 'Wedding clothes in',
+        'hautausmaat' : 'Cemeteries in',
         'hautajaiset' : 'Funerals in'
         #'maaottelut' : ''
         #'turkikset'
@@ -544,14 +570,16 @@ def create_categories_new(finna_image):
         #for place in reversed(subject_places):
             #location_id = get_location_by_name(place)
             #if (location_id != None):
-        
+
         # fallback, if all else fails, at least try to detect counry
         if (depicted_places.find('Suomi') >= 0):
             cat_place = "Finland"
             isInFinland = True
             print("Place recognized as Finland, no further")
-        #if 'Suomen entinen kunta/pitäjä' in depicted_places:
+        #elif 'Suomen entinen kunta/pitäjä' in depicted_places:
             #cat_place = "Finland"
+            #isInFinland = True
+            #print("Place formerly in Finland")
     else:
         # for now, we recognize mostly places in finland..
         # these places that we recognize are no longer part of finland, if not one of them -> assume in finland
