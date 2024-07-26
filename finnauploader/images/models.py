@@ -708,8 +708,6 @@ class FinnaImage(models.Model):
                 if (year != str(timestamp.year)):
                     print("year " + year + " does not match date string " + str(timestamp.year) + ", ignoring it")
                     year = ''
-        if (len(year) > 0):
-            year = year + '_'
 
         # some images don't have identifier to be used
         if (self.identifier_string is not None):
@@ -745,11 +743,16 @@ class FinnaImage(models.Model):
         quoted_name = quoted_name.replace("%C2%AD", "")
         name = urllib.parse.unquote(quoted_name)
 
+        if (len(year) > 0):
+            year = year + '_'
         if (len(identifier) > 0):
             file_name = f'{name}_{year}({identifier}).{filename_extension}'
         else:
             # in some odd cases there is no identifier (accession number) for the file
             file_name = f'{name}_{year}.{filename_extension}'
+
+        # replace non-breakable spaces with normal spaces
+        file_name = file_name.replace(u"\u00A0", " ")
 
         return file_name
 
