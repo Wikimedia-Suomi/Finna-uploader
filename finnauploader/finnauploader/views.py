@@ -7,7 +7,7 @@ from rest_framework import status, viewsets
 from django.shortcuts import get_object_or_404
 from watson import search as watson
 
-from images.finna import get_finna_record_by_id
+from images.finna_record_api import get_finna_record_by_id
 from images.wikitext.photographer import get_wikitext_for_new_image
 from images.sdc_helpers import get_structured_data_for_new_image
 from images.pywikibot_helpers import are_there_messages_for_bot_in_commons, \
@@ -32,6 +32,8 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Fetch the instance with the given primary key (pk)
         old_finna_image = get_object_or_404(FinnaImage, pk=pk)
+
+        print("Fetching image record:", old_finna_image.finna_id)
 
         # Update to latest finna_record
         new_record = get_finna_record_by_id(old_finna_image.finna_id)

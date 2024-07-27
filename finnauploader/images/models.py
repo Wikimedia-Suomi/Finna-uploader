@@ -9,7 +9,7 @@ import json
 import urllib
 from datetime import datetime
 # from images.locations import parse_subject_place_string
-from images.finna import get_finna_record_url, parse_full_record
+from images.finna_record_api import get_finna_record_url, parse_full_record
 from images.pywikibot_helpers import get_wikidata_id_from_url
 from images.wikitext.timestamps import parse_timestamp
 from images.duplicatedetection import is_already_in_commons
