@@ -198,7 +198,8 @@ def get_author_wikidata_id(name):
     except NonPresenterAuthorsCache.DoesNotExist:
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors' # noqa
         print(f'Unknown author: "{name}". Add author to {url}')
-        exit(1)
+        raise MissingNonPresenterAuthorError
+    return obj.wikidata_id
 
 
 def setCreatorName(wikidata_id, name):
@@ -401,7 +402,7 @@ def get_place_by_wikidata_id(wikidata_id):
     return wdp
 
 
-def get_subject_actors_wikidata_ids(subjectActors):
+def get_subject_actors_wikidata_id_list(subjectActors):
     ret = []
     for subjects_actor_name in subjectActors:
         obj = SubjectActorsCache.objects.get(name=subjects_actor_name)
