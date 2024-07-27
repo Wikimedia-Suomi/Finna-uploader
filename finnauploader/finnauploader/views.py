@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from watson import search as watson
 
 from images.finna_record_api import get_finna_record_by_id
-from images.wikitext.photographer import get_wikitext_for_new_image
+from images.wikitext.commons_wikitext import get_wikitext_for_new_image
 from images.sdc_helpers import get_structured_data_for_new_image
 from images.pywikibot_helpers import are_there_messages_for_bot_in_commons, \
                                     edit_commons_mediaitem, \
