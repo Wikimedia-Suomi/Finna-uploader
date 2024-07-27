@@ -3,7 +3,7 @@
 from datetime import datetime
 import pywikibot
 import json
-from images.wikitext.photographer import clean_depicted_places
+from images.wikitext.commons_wikitext import clean_depicted_places
 from images.wikitext.timestamps import parse_timestamp
 
 wikidata_site = pywikibot.Site("wikidata", "wikidata")  # Connect to Wikidata
