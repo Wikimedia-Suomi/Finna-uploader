@@ -207,30 +207,53 @@ def get_finna_id_from_url(url):
                 return id
 
 
+# TODO: for categories, parse additional categories from the full record xml:
+# classificationWrap><classification><term lang="fi" label="luokitus">
+#
+# TODO: parse original publication (newspaper, date, page):
+# <relatedWorkSet><relatedWork><displayObject>Hufvudstadsbladet 16.6.1940, s. 4</displayObject>
+#
+# TODO: parse inscriptions:
+# <inscriptionsWrap><inscriptions><inscriptionDescription><descriptiveNoteValue>Kirjoitus..
+#
 def parse_full_record(xml_data):
     # Parse the XML data
     root = ET.fromstring(xml_data)
 
-    # Find all 'descriptiveNoteValue' elements
-    # and extract their text and attributes
-    descriptive_notes = root.findall(".//descriptiveNoteValue")
-    descriptive_note_values = [
-        {
-            'text': html.unescape(note.text) if note.text else '',
-            'attributes': note.attrib
-        }
-        for note in descriptive_notes
-    ]
+    #descriptive_note_values = []
+    #appellation_values = []
+    try:
+        # Find all 'descriptiveNoteValue' elements
+        # and extract their text and attributes
+        descriptive_notes = root.findall(".//descriptiveNoteValue")
+        descriptive_note_values = [
+            {
+                'text': html.unescape(note.text) if note.text else '',
+                'attributes': note.attrib
+            }
+            for note in descriptive_notes
+        ]
 
-    # Find all 'appellationValue' elements
-    # and extract their text and attributes
-    appellations = root.findall(".//appellationValue")
-    appellation_values = [
-        {
-          'text': html.unescape(appellation.text) if appellation.text else '',
-          'attributes': appellation.attrib
-        }
-        for appellation in appellations
-    ]
+        # Find all 'appellationValue' elements
+        # and extract their text and attributes
+        appellations = root.findall(".//appellationValue")
+        appellation_values = [
+            {
+            'text': html.unescape(appellation.text) if appellation.text else '',
+            'attributes': appellation.attrib
+            }
+            for appellation in appellations
+        ]
 
-    return {'summary': descriptive_note_values, 'title': appellation_values}
+        # <relatedWorkSet><relatedWork><displayObject>Hufvudstadsbladet 16.6.1940, s. 4</displayObject>
+        #related_works = root.findall(".//displayObject")
+        # classificationWrap><classification><term lang="fi" label="luokitus">
+        #classifications = root.findall(".//term")
+
+        return {'summary': descriptive_note_values, 'title': appellation_values}
+
+    except:
+        # give information where problem occurred
+        print('Failed parsing full record XML')
+        print(xml_data)
+        pass
