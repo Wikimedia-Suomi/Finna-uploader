@@ -163,6 +163,59 @@ def get_category_place(subject_places):
     return ""
 
 
+
+def get_category_for_subject(subject_name):
+
+    # categories by type of photograph (portrait, nature..)
+    # luontokuvat
+    # iron works
+    # metal industry
+    # Metalworkers
+
+    
+    # Ssteamboats: non ocean-going
+    # Steamships of Finland
+    # Naval ships of Finland
+    # Sailing ships of Finland
+    subject_categories = {
+        'muotokuvat': 'Portrait photographs',
+        'henkilökuvat': 'Portrait photographs',
+        'henkilövalokuvaus': 'Portrait photographs',
+        'ryhmäkuvat' : 'Group photographs',
+        'saamenpuvut' : 'Sami clothing',
+        'Osuusliike Elanto': 'Elanto',
+        'Valmet Oy': 'Valmet',
+        'Salora Oy': 'Salora',
+        'Veljekset Åström Oy': 'Veljekset Åström',
+        'Yntyneet Paperitehtaat': 'Yntyneet Paperitehtaat',
+        'Turun linna' : 'Turku Castle',
+        'Hämeen linna' : 'Häme Castle',
+        'Olavinlinna' : 'Olavinlinna',
+        'Raaseporin linna' : 'Raseborg castle',
+        'Hvitträsk': 'Hvitträsk',
+        'Lamminahon talo' : 'Lamminaho House',
+        'taksinkuljettajat' : 'Taxi drivers',
+        'kronometrit' : 'Chronometers',
+        'kahvimyllyt' : 'Coffee grinders',
+        'antikvariaatit' : 'Antiquarian bookstores',
+        'kantele' : 'Kantele',
+        'keinuhevoset' : 'Rocking horses',
+        #'mikroskoopit' : 'Microscopes'
+        #'aseet' : 'weapons'
+        #'ampuma-aseet' : 'Firearms',
+        #'käsiaseet' : 'Handguns'
+        #'kiväärit' : 'Rifles'
+        'pistoolit' : 'Pistols',
+        #'revolverit' : 'Revolvers'
+        'panssarivaunut' : 'Tanks'
+    }
+    
+    if (subject_name in subject_categories):
+        category = subject_categories[subject_name]
+        return category
+    return None
+
+
 def get_category_for_subject_in_country(subject_name):
     
     # must have place 'Suomi' to generate ' in Finland'
@@ -417,6 +470,31 @@ def get_category_for_subject_in_country(subject_name):
     return None
 
 
+def get_category_for_building_by_place(subject_name, subject_places):
+    
+    # or Askainen
+    if (subject_name == 'kartanot' and 'Louhisaari' in subject_places):
+        return 'Louhisaari Manor'
+
+    if (subject_name == 'kartanot' and 'Piikkiö' in subject_places):
+        return 'Pukkila Manor'
+
+    # Kuusisto, Kaarina
+    if (subject_name == 'kartanot' and 'Kuusisto' in subject_places):
+        return 'Kuusisto Manor'
+
+    # Knuutila, Nokia
+    if (subject_name == 'kartanot' and 'Knuutila' in subject_places):
+        return 'Knuutila Manor'
+
+    if (subject_name == 'kartanot' and 'Halikko' in subject_places):
+        return 'Vuorentaan kartano'
+
+    if (subject_name == 'kartanot' and 'Sääksmäki' in subject_places):
+        return 'Vuorentaan kartano (Sääksmäki)'
+
+    return None
+
 # filter some possible errors in names:
 # extra spaces, commas etc.
 def places_cleaner(finna_image):
@@ -505,50 +583,6 @@ def create_categories_new(finna_image):
                 category = get_building_category_by_architect_id(wikidata_id)
                 if (category != None):
                     categories.add(category)
-            
-
-    # Ssteamboats: non ocean-going
-    # Steamships of Finland
-    # Naval ships of Finland
-    # Sailing ships of Finland
-    subject_categories = {
-        'muotokuvat': 'Portrait photographs',
-        'henkilökuvat': 'Portrait photographs',
-        'henkilövalokuvaus': 'Portrait photographs',
-        'ryhmäkuvat' : 'Group photographs',
-        'saamenpuvut' : 'Sami clothing',
-        'Osuusliike Elanto': 'Elanto',
-        'Valmet Oy': 'Valmet',
-        'Salora Oy': 'Salora',
-        'Veljekset Åström Oy': 'Veljekset Åström',
-        'Yntyneet Paperitehtaat': 'Yntyneet Paperitehtaat',
-        'Turun linna' : 'Turku Castle',
-        'Hämeen linna' : 'Häme Castle',
-        'Olavinlinna' : 'Olavinlinna',
-        'Raaseporin linna' : 'Raseborg castle',
-        'Hvitträsk': 'Hvitträsk',
-        'Lamminahon talo' : 'Lamminaho House',
-        'taksinkuljettajat' : 'Taxi drivers',
-        'kronometrit' : 'Chronometers',
-        'kahvimyllyt' : 'Coffee grinders',
-        'keinuhevoset' : 'Rocking horses',
-        #'mikroskoopit' : 'Microscopes'
-        #'aseet' : 'weapons'
-        #'ampuma-aseet' : 'Firearms',
-        #'käsiaseet' : 'Handguns'
-        #'kiväärit' : 'Rifles'
-        'pistoolit' : 'Pistols',
-        #'revolverit' : 'Revolvers'
-        'panssarivaunut' : 'Tanks'
-    }
-    
-    # categories by type of photograph (portrait, nature..)
-    # luontokuvat
-    
-    
-    # iron works
-    # metal industry
-    # Metalworkers
 
     # categories from 
     for best_wikidata_location in best_wikidata_locations.all():
@@ -602,8 +636,8 @@ def create_categories_new(finna_image):
 
     isInPortraits = False
     for subject in finna_image.subjects.all():
-        if subject.name in subject_categories:
-            category = subject_categories[subject.name]
+        category = get_category_for_subject(subject.name)
+        if (category != None):
             if (category == "Portrait photographs" and isInFinland == True):
                 if 'miehet' in subject_names:
                     categories.add("Portrait photographs of men of Finland")
@@ -638,25 +672,14 @@ def create_categories_new(finna_image):
             if (category != None):
                 categories.add(category)
             
-        # or Askainen
-        if (subject.name == 'kartanot' and 'Louhisaari' in subject_places):
-            categories.add('Louhisaari Manor')
-
-        if (subject.name == 'kartanot' and 'Piikkiö' in subject_places):
-            categories.add('Pukkila Manor')
-
         #if (subject.name == 'kartanot' and 'Vesilahti' in subject_places):
             #categories.add('Laukko Manor')
         if (subject.name == "Laukon kartano"):
             categories.add('Laukko Manor')
 
-        # Kuusisto, Kaarina
-        if (subject.name == 'kartanot' and 'Kuusisto' in subject_places):
-            categories.add('Kuusisto Manor')
-
-        # Knuutila, Nokia
-        if (subject.name == 'kartanot' and 'Knuutila' in subject_places):
-            categories.add('Knuutila Manor')
+        cat_manor_by_place = get_category_for_building_by_place(subject.name, subject_places)
+        if (cat_manor_by_place != None):
+            categories.add(cat_manor_by_place)
 
 
         if (subject.name == 'parlamentit' and 'Helsinki' in subject_places):
