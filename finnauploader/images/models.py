@@ -723,6 +723,7 @@ class FinnaImage(models.Model):
         name = name.replace("\r", " ")  # don't allow carriage return in names
 
         # try to remove soft-hyphens from name while we can
+        # note: 0xC2 0xAD in utf-8, 0x00AD in utf-16, which one is used?
         name = name.replace(u"\u00A0", "")
         name = name.replace("\xc2\xa0", "")
 
@@ -752,6 +753,7 @@ class FinnaImage(models.Model):
             file_name = f'{name}_{year}.{filename_extension}'
 
         # replace non-breakable spaces with normal spaces
+        # 0xC2 0xA0 in utf-8, 0x00A0 in utf-16
         file_name = file_name.replace(u"\u00A0", " ")
 
         return file_name
