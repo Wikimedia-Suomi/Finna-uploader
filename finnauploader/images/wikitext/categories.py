@@ -676,6 +676,9 @@ def create_categories_new(finna_image):
             #categories.add('Laukko Manor')
         if (subject.name == "Laukon kartano"):
             categories.add('Laukko Manor')
+            
+        if (subject.name == "Vääksyn kartano"):
+            categories.add('Vääksyn kartano')
 
         cat_manor_by_place = get_category_for_building_by_place(subject.name, subject_places)
         if (cat_manor_by_place != None):
