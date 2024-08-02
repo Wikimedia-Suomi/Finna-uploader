@@ -1,6 +1,6 @@
 import pywikibot
 from images.models import FinnaImage, FinnaSubjectWikidataPlace
-from images.finna import get_finna_id_from_url, get_finna_record_by_id
+from images.finna_record_api import get_finna_id_from_url, get_finna_record_by_id
 from images.pywikibot_helpers import test_if_finna_id_exists_in_commons
 from django.core.management.base import BaseCommand
 from images.wikitext.photographer import get_wikitext_for_new_image

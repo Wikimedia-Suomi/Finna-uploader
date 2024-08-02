@@ -4,7 +4,7 @@ import urllib
 from urllib.parse import urlparse, parse_qs
 import hashlib
 import imagehash
-from images.finna import get_finna_record
+from images.finna_record_api import get_finna_record
 from PIL import Image
 
 

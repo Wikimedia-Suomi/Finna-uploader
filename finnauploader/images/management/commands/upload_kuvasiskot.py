@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from images.models import FinnaImage
 import pywikibot
 import time
-from images.finna import do_finna_search, get_collection_names
+from images.finna_record_api import do_finna_search, get_collection_names
 from images.wikitext.photographer import get_wikitext_for_new_image
 from images.duplicatedetection import is_already_in_commons
 from images.finna_image_sdc_helpers import get_structured_data_for_new_image

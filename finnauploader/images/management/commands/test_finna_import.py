@@ -3,7 +3,7 @@ from images.models import FinnaImage, CacheSparqlBool, FintoYsoLabel, \
                           FinnaSubjectWikidataPlace
 import pywikibot
 import time
-from images.finna import do_finna_search, get_collection_names
+from images.finna_record_api import do_finna_search, get_collection_names
 from images.locations import is_location_within_administrative_entity, \
                              parse_subject_place_string, \
                              update_yso_places, test_property_value, \
