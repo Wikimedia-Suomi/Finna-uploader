@@ -294,6 +294,8 @@ def get_category_for_subject_in_country(subject_name):
         'kerrostalot' : 'Apartment buildings in',
         'osuusliikkeet' : 'Consumers\' cooperatives in',
         'saunat' : 'Sauna buildings in',
+        #'kaivot' : 'Wells in',
+        'suihkukaivot' : 'Fountains in',
         'alastomuus' : 'Nudity in',
         'nosturit' : 'Cranes in',
         'kaivinkoneet' : 'Excavators in',
@@ -318,6 +320,7 @@ def get_category_for_subject_in_country(subject_name):
         'sairaalat' : 'Hospitals in',
         'sairaanhoitajat' : 'Nurses from',
         'lääkärit' : 'Physicians from',
+        'apteekit' : 'Pharmacies in',
         'museot' : 'Museums in',
         'kirjat' : 'Books of',
         'kirjastot' : 'Libraries in',
@@ -443,6 +446,7 @@ def get_category_for_subject_in_country(subject_name):
         'talviurheilu' : 'Winter sports in',
         'kilpaurheilu' : 'Sports competitions in',
         'urheilukilpailut' : 'Sports competitions in',
+        'urheilu' : 'Sports in',
         'autokorjaamot' : 'Automobile repair shops in',
         'huoltamot' : 'Petrol stations in',
         'huoltoasemat' : 'Petrol stations in',
@@ -492,6 +496,9 @@ def get_category_for_building_by_place(subject_name, subject_places):
 
     if (subject_name == 'kartanot' and 'Sääksmäki' in subject_places):
         return 'Vuorentaan kartano (Sääksmäki)'
+
+    if (subject_name == 'kartanot' and 'Lempäälä' in subject_places):
+        return 'Laikan kartano'
 
     return None
 
@@ -759,7 +766,7 @@ def create_categories_new(finna_image):
     for category in categories:
         # is it possible to get this somehow?
         if '^Category:' in category:
-            print("Should strip category")
+            print("Should strip category", category)
             exit(1)
         # is it possible to get this somehow?
         if 'http' in category:
