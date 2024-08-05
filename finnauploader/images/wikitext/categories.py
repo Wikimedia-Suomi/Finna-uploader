@@ -338,6 +338,10 @@ def get_category_for_subject_in_country(subject_name):
         'puutyöt' : 'Woodworking in',
         'puusepänteollisuus' : 'Carpentry in',
         'ompelukone' : 'Sewing machines in',
+        'ompelukoneet' : 'Sewing machines in',
+        'ompelu' : 'Sewing in',
+        'neulonta' : 'Knitting in',
+        'virkkaus' : 'Crochet in',
         'sängyt' : 'Beds in',
         'parisängyt' : 'Beds in',
         'pyykinpesu' : 'Laundry in‎',
@@ -361,8 +365,6 @@ def get_category_for_subject_in_country(subject_name):
         #'urut' : 'Organs in',
         'laulujuhlat' : 'Music festivals in',
         'festivaalit' : 'Music festivals in',
-        'neulonta' : 'Knitting in',
-        'virkkaus' : 'Crochet in',
         'työvaatteet' : 'Work clothing in',
         'työkalut' : 'Tools in',
         'kirveet' : 'Axes of',
@@ -373,6 +375,7 @@ def get_category_for_subject_in_country(subject_name):
         #'keramiikka'
         #savitavara 
         #ruukut
+        'kirjoituskoneet' : 'Typewriters in',
         'rukit' : 'Spinning wheels in',
         'kehruu' : 'Spinning in',
         'kutojat' : 'Weavers in',
@@ -501,6 +504,23 @@ def get_category_for_building_by_place(subject_name, subject_places):
         return 'Laikan kartano'
 
     return None
+
+def get_category_for_collection(collection_name):
+
+    # there may be preceding or trailing space -> remove it
+    collection_name = collection_name.lstrip()
+    collection_name = collection_name.rstrip()
+    
+    collection_names = {
+        'FÅA - SILJA LINE' : 'Effoa',
+        'FÅA - SILJA LINE' : 'Effoa',
+        'Suomen merimuseon kuvakokoelma': 'Media by The Maritime Museum of Finland'
+    }
+    if (collection_name in collection_names):
+        category = collection_names[collection_name]
+        return category
+    return None
+
 
 # filter some possible errors in names:
 # extra spaces, commas etc.
@@ -736,7 +756,11 @@ def create_categories_new(finna_image):
                 cattext = 'Churches in ' + cat_place
                 categories.add(cattext)
 
-    
+    for collection in finna_image.collections.all():
+        category = get_category_for_collection(collection.name)
+        if (category is not None):
+            categories.add(category)
+
     for add_category in finna_image.add_categories.all():
         wikidata_id = finna_subject.get_wikidata_id()
         category_name = get_category_by_wikidata_id(wikidata_id)
