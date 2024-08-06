@@ -33,7 +33,7 @@ def toolforge_finnasearch(finna_id):
     data = response.json()
 
     if len(data):
-        setToolforgeFinnaId(finna_id)
+        setToolforgeFinnaId(finna_id, True)
         return True
 
     return False
@@ -93,8 +93,7 @@ def is_already_in_commons(finna_id, fast=False):
     #if (sparql_finna_ids == None):
         #return False
 
-    print("DEBUG: searching for existing finna id: ", finna_id)
-
+    #print("DEBUG: searching for existing finna id: ", finna_id)
     
     # Check if image is already uploaded
     #if finna_id in sparql_finna_ids:

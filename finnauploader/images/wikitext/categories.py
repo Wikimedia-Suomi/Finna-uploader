@@ -196,6 +196,7 @@ def get_category_for_subject(subject_name):
         'Lamminahon talo' : 'Lamminaho House',
         'taksinkuljettajat' : 'Taxi drivers',
         'kronometrit' : 'Chronometers',
+        #'patenttikorkit' : 'Swing-top closures',
         'kahvimyllyt' : 'Coffee grinders',
         'antikvariaatit' : 'Antiquarian bookstores',
         'kantele' : 'Kantele',
@@ -296,6 +297,10 @@ def get_category_for_subject_in_country(subject_name):
         'saunat' : 'Sauna buildings in',
         #'kaivot' : 'Wells in',
         'suihkukaivot' : 'Fountains in',
+        #'puutarha-arkkitehtuuri' : 'Landscape architecture in',
+        'maisema-arkkitehtuuri' : 'Landscape architecture in',
+        'puutarhat' : 'Gardens in',
+        #'Gardens and parks in'
         'alastomuus' : 'Nudity in',
         'nosturit' : 'Cranes in',
         'kaivinkoneet' : 'Excavators in',
@@ -306,6 +311,7 @@ def get_category_for_subject_in_country(subject_name):
         'sahateollisuus' : 'Sawmills in',
         'sahalaitokset' : 'Sawmills in',
         'sahat (teollisuusrakennukset)' : 'Sawmills in',
+        'sahat' : 'Saws in',
         'metsänhoito' : 'Forestry in',
         'aitta' : 'Granaries in',
         'aitat' : 'Granaries in',
@@ -334,6 +340,9 @@ def get_category_for_subject_in_country(subject_name):
         'rakennustarvikkeet' : 'Construction equipment in',
         #'työvälineet'
         'sepät' : 'Blacksmiths from',
+        'kaappikellot' : 'Longcase clocks from',
+        'arkut' : 'Chests in',
+        'kirstut' : 'Chests in',
         'postinkantajat' : 'Mail carriers of',
         'puutyöt' : 'Woodworking in',
         'puusepänteollisuus' : 'Carpentry in',
@@ -502,6 +511,10 @@ def get_category_for_building_by_place(subject_name, subject_places):
 
     if (subject_name == 'kartanot' and 'Lempäälä' in subject_places):
         return 'Laikan kartano'
+
+    # Haapaniemi, Sahalahti
+    if (subject_name == 'kartanot' and 'Sahalahti' in subject_places):
+        return 'Haapaniemi Manor'
 
     return None
 

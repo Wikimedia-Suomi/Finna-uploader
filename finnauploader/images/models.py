@@ -756,6 +756,11 @@ class FinnaImage(models.Model):
         # 0xC2 0xA0 in utf-8, 0x00A0 in utf-16
         file_name = file_name.replace(u"\u00A0", " ")
 
+        # wiki doesn't allow non-breakable spaces
+        quoted_name = urllib.parse.quote_plus(file_name)
+        quoted_name = quoted_name.replace("%C2%A0", " ")
+        file_name = urllib.parse.unquote(quoted_name)
+
         return file_name
 
     def __str__(self):
