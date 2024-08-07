@@ -142,18 +142,27 @@ def get_photographer_template(finna_image):
             titles.append(str(title))
 
     descriptions = []
-    for lang in langs:
-        text = finna_image.summaries.filter(lang=lang).first()
-        if text:
-            text = str(text)
+    # there can be multiple separate entries in summary for each language:
+    # the strings are in arrays -> combine them all since we can't know order of importance
+    for summary in finna_image.summaries.all():
+        if (summary):
+            print("DEBUG: summary lang", summary.lang)
+            print("DEBUG: summary text", summary.text)
+            text = str(summary.text)
+            
+            # strip some unnecessary heading (if any)
             text = text.replace('sisällön kuvaus: ', '')
             text = text.replace('innehållsbeskrivning: ', '')
             text = text.replace('content description: ', '')
-            description = lang_template(lang, text)
-            descriptions.append(description)
 
-    for s in finna_image.summaries.all():
-        print(s)
+            # in some images, the summary does not have related language?
+            if (summary.lang):
+                description = lang_template(summary.lang, text)
+            else:
+                description = text
+            descriptions.append(description)
+            
+        #print(summary)
 
     r['creator_template'] = get_creator_templates(finna_image)
     r['template_titles'] = titles
@@ -161,6 +170,7 @@ def get_photographer_template(finna_image):
     r['subjectActors'] = "; ".join(depicted_people)
     r['subjectPlaces'] = clean_depicted_places("; ".join(depicted_places))
     r['date'] = finna_image.date_string
+    #medium : physical description (colored, vertical/horizontal, paper, film negative..)
     r['measurements'] = finna_image.measurements
     r['institution_template'] = get_institution_templates(finna_image)
     r['collections'] = collections
