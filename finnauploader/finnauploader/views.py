@@ -21,6 +21,7 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
     
     queryset = FinnaImage.objects.filter(
                                          identifier_string__contains='JOKA',
+                                         #identifier_string__contains='SMK',
                                          )
     serializer_class = FinnaImageSerializer
 
@@ -37,6 +38,10 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Update to latest finna_record
         new_record = get_finna_record_by_id(old_finna_image.finna_id)
+
+        print("DEBUG: new record from finna for id:", old_finna_image.finna_id)
+        print(str(new_record))
+        
         finna_image = FinnaImage.objects.create_from_data(new_record)
 
         filename = finna_image.pseudo_filename
@@ -67,15 +72,15 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
         print('uploading from:', image_url)
 
         page = upload_file_to_commons(image_url, filename,
-                                      wikitext, comment)
+                                    wikitext, comment)
         ret = edit_commons_mediaitem(page, structured_data)
         print(ret)
         finna_image.already_in_commons = True
         finna_image.save()
 
         return Response({"status": "OK",
-                         "filename": filename,
-                         "message": f'{pk} uploaded to commons'},
+                        "filename": filename,
+                        "message": f'{pk} uploaded to commons'},
                         status=status.HTTP_200_OK)
 
     # TODO: add action to call the helper script for creating subject if it is missing..
