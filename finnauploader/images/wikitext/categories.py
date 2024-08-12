@@ -201,6 +201,7 @@ def get_category_for_subject(subject_name):
         'antikvariaatit' : 'Antiquarian bookstores',
         'kantele' : 'Kantele',
         'keinuhevoset' : 'Rocking horses',
+        'kengitys' : 'Horseshoeing',
         #'mikroskoopit' : 'Microscopes'
         #'aseet' : 'weapons'
         #'ampuma-aseet' : 'Firearms',
@@ -396,6 +397,7 @@ def get_category_for_subject_in_country(subject_name):
         'nuket' : 'Dolls in',
         'leikkikalut' : 'Toys in',
         'meijerit' : 'Dairies in',
+        'maitolaiturit' : 'Milk churn stands in',
         'elintarvikeliikkeet' : 'Grocery stores in',
         'elokuvateatterit' : 'Cinemas in',
         'myymälät' : 'Shops in',
@@ -512,7 +514,7 @@ def get_category_for_building_by_place(subject_name, subject_places):
     if (subject_name == 'kartanot' and 'Lempäälä' in subject_places):
         return 'Laikan kartano'
 
-    # Haapaniemi, Sahalahti
+    # Haapaniemi, Sahalahti (Kangasala, Nokia?)
     if (subject_name == 'kartanot' and 'Sahalahti' in subject_places):
         return 'Haapaniemi Manor'
 
