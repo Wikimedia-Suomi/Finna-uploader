@@ -451,6 +451,8 @@ class FinnaRecordManager(models.Manager):
             if not s['text']:
                 continue
 
+            # note: if there is no language specified, we should have a placeholder?
+            # currently following handling does not support it
             if 'lang' not in s['attributes']:
                 continue
 
@@ -492,7 +494,7 @@ class FinnaRecordManager(models.Manager):
             alternative_titles.append(alt_title)
 
         # classification
-
+        
         # Extract local add_categories data
         add_categories_data = local_data.pop('add_categories', [])
         add_categories = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_categories_data]
@@ -510,6 +512,7 @@ class FinnaRecordManager(models.Manager):
         record.master_url = master_url
         record.master_format = master_format
         record.measurements = "\n".join(data['measurements'])
+        #record.physical_descriptions = "\n".join(data['physicalDescriptions'])
 
         try:
             record.date_string = data['events']['valmistus'][0]['date']
@@ -591,6 +594,7 @@ class FinnaImage(models.Model):
     master_url = models.URLField(max_length=500)
     master_format = models.TextField()
     measurements = models.TextField()
+    #physical_descriptions = models.TextField() # mostly empty anyway
     non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor)
     summaries = models.ManyToManyField(FinnaSummary)
     subjects = models.ManyToManyField(FinnaSubject)
