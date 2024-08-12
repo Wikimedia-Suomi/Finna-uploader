@@ -9,6 +9,9 @@ class WikitextCache(models.Model):
     rev_id = models.PositiveIntegerField(unique=True)
 
 
+# so this instance is shared between different caches
+# and it doesn't work correctly to save members
+# and they are given via the model instead
 class FinnaMappingsCacheManager(models.Manager):
 
     def clear(self):
@@ -18,7 +21,7 @@ class FinnaMappingsCacheManager(models.Manager):
 
     def update(self):
         page_title = self.model.page_title
-        print("Saving cache for:", page_title)
+        print("Updating cache for:", page_title)
 
         site = pywikibot.Site("commons")
 
@@ -44,38 +47,36 @@ class FinnaMappingsCacheManager(models.Manager):
         rev_id = 0
         for n in range(1, 5):
             if n == 1:
-                new_page_title = self.page_title
+                new_page_title = page_title
             else:
-                new_page_title = f'{self.page_title}_{n}'
+                new_page_title = f'{page_title}_{n}'
             page = pywikibot.Page(site, new_page_title)
             if page.exists() and page.latest_revision_id > rev_id:
                 rev_id = page.latest_revision_id
+        print("Page:", page_title, "revision:", rev_id)
         return rev_id
 
     def _update_cache(self, site, page_title, rev_id, obj):
         print("Saving cache for:", page_title)
-        cache = MappingCache()
-        rows = cache.parse_cache_page(site, page_title)
-        
-        # TODO: see below, you should clear entire cache every time
-        self.clear()
+        mapping = MappingCache()
+        rows = mapping.parse_cache_page(site, page_title)
 
+        # TODO: you shouldn't clear entire cache every time
+        self.clear()
         for name in rows:
             wikidata_id = rows[name]
             self.get_or_create(name=name, wikidata_id=wikidata_id)
-            
-            # TODO: this needs testing so we don't need to rewrite everything each time:
-            # just update changes
-            #o, created = self.get_or_create(name=name, wikidata_id=wikidata_id)
-            #if (created == True):
-                #print("DEBUG: added to cache:", name, ":", wikidata_id)
         obj.rev_id = rev_id
         obj.save()
         print("Saved cache for:", page_title)
 
-
+# this is bizarre way to use abstract classes
 class FinnaMappingsCache(models.Model):
+    # this is used directly during starting since actual app isn't loaded yet
+    # and this is actually shared static instance instead of inherited member
+    # -> see the bizarre handling in apps.py
     objects = FinnaMappingsCacheManager()
+    #cache = WikitextCache()
 
     page_title = ''
     name = models.CharField(max_length=255)
@@ -103,3 +104,4 @@ class SubjectActorsCache(FinnaMappingsCache):
 
 class SubjectPlacesCache(FinnaMappingsCache):
     page_title = 'User:FinnaUploadBot/data/subjectPlaces'
+
