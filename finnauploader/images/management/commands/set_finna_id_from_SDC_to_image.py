@@ -33,7 +33,11 @@ class Command(BaseCommand):
             elif image.sdc_finna_ids.count() > 1:
                 for sdc_finna_id in image.sdc_finna_ids.all():
                     file_page = pywikibot.FilePage(site, image.page_title)
-                    commons_thumbnail_url=file_page.get_file_url(url_width=500)            
+                    commons_thumbnail_url=file_page.get_file_url(url_width=500)
+
+                    if (finna_id == None):
+                        # was not found somewhere above -> skip rest
+                        continue
                     confirmed_finna_id=is_correct_finna_record(finna_id, commons_thumbnail_url)
                     if confirmed_finna_id:
                         image.finna_id = confirmed_finna_id
