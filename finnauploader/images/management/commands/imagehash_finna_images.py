@@ -43,25 +43,28 @@ class Command(BaseCommand):
 
                 i = get_imagehashes(url, thumbnail=True, filecache=filecache)
 
-                imagehash, created = FinnaImageHash.objects.get_or_create(
-                       finna_image=photo,
-                       phash=unsigned_to_signed(i['phash']),
-                       dhash=unsigned_to_signed(i['dhash']),
-                       dhash_vertical=unsigned_to_signed(i['dhash_vertical'])
-                       )
-                if created:
-                    imagehash.save()
+                try:
+                    imagehash, created = FinnaImageHash.objects.get_or_create(
+                        finna_image=photo,
+                        phash=unsigned_to_signed(i['phash']),
+                        dhash=unsigned_to_signed(i['dhash']),
+                        dhash_vertical=unsigned_to_signed(i['dhash_vertical'])
+                        )
+                    if created:
+                        imagehash.save()
 
-                obj = FinnaImageHashURL.objects
-                imagehash_url, created = obj.get_or_create(
-                                       imagehash=imagehash,
-                                       url=url,
-                                       width=i['width'],
-                                       height=i['height'],
-                                       index=index,
-                                       thumbnail=True
-                                   )
-                if created:
-                    imagehash_url.save()
+                    obj = FinnaImageHashURL.objects
+                    imagehash_url, created = obj.get_or_create(
+                                        imagehash=imagehash,
+                                        url=url,
+                                        width=i['width'],
+                                        height=i['height'],
+                                        index=index,
+                                        thumbnail=True
+                                    )
+                    if created:
+                        imagehash_url.save()
+                except:
+                    print("failed saving from url:", url)
 
         self.stdout.write(self.style.SUCCESS('Images hashed succesfully!'))
