@@ -409,6 +409,8 @@ def get_subject_actors_wikidata_id_list(subjectActors):
         if obj:
             ret.append(obj.wikidata_id)
         else:
+            if 'Vanha ylioppilastalo' == subjects_actor_name:
+                return ret
             url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/subjectActors' # noqa
             print('Error: Unknown actor "{subjectActor}". Add actor to {url}')
             raise MissingSubjectActorError
@@ -419,6 +421,9 @@ def get_subject_actors_wikidata_id(name):
     try:
         obj = SubjectActorsCache.objects.get(name=name)
     except SubjectActorsCache.DoesNotExist:
+        if 'Vanha ylioppilastalo' == name:
+            return None
+
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/subjectActors' # noqa
         print(f'Error: Unknown actor "{name}". Add actor to {url}')
         raise MissingSubjectActorError

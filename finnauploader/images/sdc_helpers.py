@@ -56,6 +56,7 @@ def create_P275_licence(value, url):
         exit(1)
 
     licences = {
+        'PDM': 'Q7257361',
         'CC0': 'Q6938433',
         'CC BY 4.0': 'Q20007257',
         'CC BY-SA 4.0': 'Q18199165'
@@ -88,6 +89,7 @@ def create_P6216_copyright_state(value):
     # CC0: public domain? (Q19652)
     # -> no, copyright still exists
     copyright_states = {
+        'PDM': 'Q19652',
         'CC0': 'Q50423863',
         'CC BY 4.0': 'Q50423863',
         'CC BY-SA 4.0': 'Q50423863'
@@ -210,7 +212,11 @@ def get_source_of_file_claim(finna_image):
 
     instlist = list()
     for institution in finna_image.institutions.all():
-        wikidata_id = institution.get_wikidata_id()
+        try:
+            wikidata_id = institution.get_wikidata_id()
+        except:
+            print(institution)
+            exit(1)
         instlist.append(wikidata_id)
 
     if (len(instlist) != 1):
@@ -290,8 +296,9 @@ def get_claims_for_image_upload(finna_image):
     subject_actors = finna_image.subject_actors.all()
     for subject_actor in subject_actors:
         wikidata_id = subject_actor.get_wikidata_id()
-        claim = create_P180_depict(wikidata_id)
-        claims.append(claim)
+        if wikidata_id:
+            claim = create_P180_depict(wikidata_id)
+            claims.append(claim)
 
     # Handle local subjects
 

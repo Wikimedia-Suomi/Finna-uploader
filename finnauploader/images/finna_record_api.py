@@ -160,7 +160,12 @@ def get_finna_record_by_id(id, full=False, lang=None):
 
     # Update to latest finna_record
     record = get_finna_record(id, True)
-    record = record['records'][0]
+    try:
+        record = record['records'][0]
+    except:
+        print(id)
+        print(record)
+        exit(1)
     return record
 
 

@@ -86,6 +86,8 @@ def get_copyright_template_name(finna_image):
         return "CC-BY-4.0"
     elif "CC BY-SA 4.0" in copyright:
         return "CC BY-SA 4.0"
+    elif "PDM" in copyright:
+        return "PDM"
     else:
         print("Copyright error")
         print(finna_image.image_right.copyright)
