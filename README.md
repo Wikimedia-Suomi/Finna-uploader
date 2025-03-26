@@ -13,6 +13,8 @@ Install packages
 ```bash
 pip install --upgrade pip setuptools wheel
 pip install pywikibot imagehash django django-extensions djangorestframework flake8 beautifulsoup4 django-watson
+pip install pycurl certifi
+```
 
 Setup the user-config.py
 ```bash
@@ -71,12 +73,12 @@ python manage.py set_finna_id_from_SDC_to_image
 python manage.py set_finna_id_from_externallinks_to_image
 
 # Update Image.finna_id to id from Finna.fi record
-python manage.py set_finna_id_to_latest_from_finna.py
+python manage.py set_finna_id_to_latest_from_finna
 
 # ** Finna records ( THESE DOESNT NEED Commons image info to work ) **
 
 # Import JOKA journalistic photo archive records to Finna
-python manage.py finna_search --collection JOKA
+python manage.py finna_search --collection "JOKA Journalistinen kuva-arkisto"
 
 # Imagehash images linked from Finna records
 python manage.py imagehash_finna_images
