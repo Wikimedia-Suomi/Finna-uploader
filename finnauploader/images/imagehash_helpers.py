@@ -61,6 +61,7 @@ def download_image(url):
     if (buffer.readable() == False or buffer.closed == True):
         #print("ERROR: can't read image from stream")
         return None
+    # server is sending empty image instead?
     if (buffer.getbuffer().nbytes < 100):
         #print("ERROR: less than 100 bytes in buffer")
         return None
