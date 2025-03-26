@@ -1,7 +1,10 @@
 import os
+import io
 import re
 import urllib
 from urllib.parse import urlparse, parse_qs
+import pycurl
+import certifi
 import hashlib
 import imagehash
 from images.finna_record_api import get_finna_record
@@ -39,8 +42,40 @@ def is_valid_path_and_filename(parts):
             return False
     return True
 
+# let's try pycurl for download:
+# it should be faster, better support for protocols
+# and possibly avoid some bugs
+def download_image(url):
+    #print("DEBUG: downloading image from url:", url)
+    
+    buffer = io.BytesIO()
+    c = pycurl.Curl()
+    c.setopt(c.URL, url)
+    c.setopt(c.WRITEDATA, buffer)
+    c.setopt(c.CAINFO, certifi.where())
+    c.setopt(c.USERAGENT, 'pywikibot')
+    #c.setopt(pycurl.TIMEOUT, 120)
+    c.perform()
+    c.close()
+
+    if (buffer.readable() == False or buffer.closed == True):
+        #print("ERROR: can't read image from stream")
+        return None
+    if (buffer.getbuffer().nbytes < 100):
+        #print("ERROR: less than 100 bytes in buffer")
+        return None
+
+    #print("DEBUG: image downloaded, nbytes:", str(buffer.getbuffer().nbytes))
+    
+    # pillow might not be able to open the file:
+    # just give a buffer and call some helper to maybe convert image
+    #body = buffer.getvalue()
+    return buffer
+
 
 def get_imagehashes(url, thumbnail=False, filecache=False):
+    im = None
+    
     if filecache:
         print("filecache")
         # Extract the domain from the URL
@@ -108,24 +143,44 @@ def get_imagehashes(url, thumbnail=False, filecache=False):
         # The path where the image will be saved
         file_path = os.path.join(directory, filename)
         print(file_path)
+        
+        exists = False
 
         # Check if the file already exists
         if not os.path.exists(file_path):
             print("creating file")
-            with urllib.request.urlopen(url) as response, \
-                 open(file_path, 'wb') as out_file:
-                data = response.read()
+
+            # use pycurl
+            data = download_image(url)
+            if (data != None):
+                out_file = open(file_path, 'wb')
                 out_file.write(data)
+                
+                exists = True
+            else:
+                print("could not download image from url:", url)
         else:
             print("cached")
-        # Open the image1 with Pillow
-        im = Image.open(file_path)
+            exists = True
+
+        if (exists == True):
+            # Open the image1 with Pillow
+            im = Image.open(file_path)
 
     else:
         print("no filecache")
 
         # If no filecaching then open image from url
-        im = Image.open(urllib.request.urlopen(url))
+        data = download_image(url)
+        if (data != None):
+            im = Image.open(data)
+        else:
+            print("could not download image from url:", url)
+    
+    # image failed to be downloaded?
+    # obsolete url?
+    if (im == None):
+        return None
 
     # Get width and height
     width, height = im.size
@@ -141,11 +196,14 @@ def get_imagehashes(url, thumbnail=False, filecache=False):
     }
     return ret
 
-
-def is_same_image(url1, url2):
-    img1 = get_imagehashes(url1)
-    img2 = get_imagehashes(url2)
-    return compare_image_hashes_strict(img1, img2)
+# this potentially downloads image(s) but ignores error handling
+# -> not in use, see if anything else still calls this
+#def is_same_image(url1, url2):
+#    img1 = get_imagehashes(url1)
+#    img2 = get_imagehashes(url2)
+#    if (img1 != None and img2 != None):
+#        return compare_image_hashes_strict(img1, img2)
+#    return None
 
 
 def compare_image_hashes_strict(img1, img2):
@@ -225,5 +283,10 @@ def is_correct_finna_record(finna_id, image_url, allow_multiple_images=True):
         file_path = imageExtended['urls']['large']
         finna_thumbnail_url = f'https://finna.fi{file_path}'
         print(finna_thumbnail_url)
-        if is_same_image(finna_thumbnail_url, image_url):
-            return record_finna_id
+
+        # if image fails to be downloaded (obsolete url? removed?) don't crash on it
+        finna_hash = get_imagehashes(finna_thumbnail_url)
+        img2_hash = get_imagehashes(image_url)
+        if (finna_hash != None and img2_hash != None):
+            if compare_image_hashes_strict(finna_hash, img2_hash):
+                return record_finna_id
