@@ -166,6 +166,13 @@ def refreshCache():
     subjectActorsCache.opencachedb()
     subjectActorsCache.updatemapping(subjectActorsMap)
     subjectActorsCache.closecachedb()
+
+    # may have very long strings
+    #subjectPlacesMap = parse_mapping_page('User:FinnaUploadBot/data/subjectPlaces')
+    #subjectPlacesCache = CachedMappingDb("cache_subjectplaces")
+    #subjectPlacesCache.opencachedb()
+    #subjectPlacesCache.updatemapping(subjectPlacesMap)
+    #subjectPlacesCache.closecachedb()
     
     print("cache refreshed")
 

@@ -12,15 +12,29 @@ from django.db import transaction
 class Command(BaseCommand):
     help = 'Import Finna imagehashes from https://github.com/Wikimedia-Suomi/Finna-uploader/raw/main/finna_imagehashes.json.gz  to database'
 
-    def handle(self, *args, **kwargs):
-        url = 'https://github.com/Wikimedia-Suomi/Finna-uploader/raw/main/finna_imagehashes.json.gz'
+    def fromurl(self, url):
 
         # Fetch the data
         response = requests.get(url)
         response.raise_for_status()  # Raise an exception for HTTP errors
 
-        # Decode the gzipped content
-        decompressed_data = gzip.decompress(response.content)
+        # Decompress the gzipped content
+        return gzip.decompress(response.content)
+
+
+    def fromfile(self):
+        name = 'finna_imagehashes.json.gz'
+        
+        f = gzip.open(name, 'rb')
+        return f.read()
+
+    def handle(self, *args, **kwargs):
+        url = 'https://github.com/Wikimedia-Suomi/Finna-uploader/raw/main/finna_imagehashes.json.gz'
+
+        # Decompress the gzipped content
+        decompressed_data = self.fromurl(url)
+
+        #decompressed_data = self.fromfile()
 
         # Load JSON data
         rows = json.loads(decompressed_data)

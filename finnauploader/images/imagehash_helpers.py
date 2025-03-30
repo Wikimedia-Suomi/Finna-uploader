@@ -291,3 +291,6 @@ def is_correct_finna_record(finna_id, image_url, allow_multiple_images=True):
         if (finna_hash != None and img2_hash != None):
             if compare_image_hashes_strict(finna_hash, img2_hash):
                 return record_finna_id
+
+    # no match
+    #return None

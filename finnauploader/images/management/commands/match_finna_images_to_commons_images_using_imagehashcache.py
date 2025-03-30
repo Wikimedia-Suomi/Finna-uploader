@@ -1,3 +1,6 @@
+# Purpose: add Finna ID to property P9478 in Commons where it is missing
+#
+
 from django.db.models import Q
 from django.core.management.base import BaseCommand
 from images.models import Image, FinnaImage, FinnaImageHash, ToolforgeImageHashCache, SdcFinnaID
