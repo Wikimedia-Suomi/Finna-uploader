@@ -8,9 +8,119 @@ from django.db.models import Count
 from images.conversion import unsigned_to_signed
 import gzip
 from django.db import transaction
+import hashlib
+import imagehash
 
 class Command(BaseCommand):
     help = 'Import Finna imagehashes from https://github.com/Wikimedia-Suomi/Finna-uploader/raw/main/finna_imagehashes.json.gz  to database'
+
+    # convert string to base 16 integer for calculating difference
+    #def converthashtoint(h, base=16):
+    #    return int(h, base)
+
+    def converthashstringtoint(self, h_in):
+        hstr = str(h_in).lstrip().rstrip()
+        #htmp = hash(hstr)
+        return int(hstr, 16)
+
+
+    def get_sparql_query(self, query):
+
+        # Set up the SPARQL endpoint and entity URL
+        # Note: https://commons-query.wikimedia.org requires
+        # user to be logged in
+
+        entity_url = 'https://commons.wikimedia.org/entity/'
+        endpoint = 'https://commons-query.wikimedia.org/sparql'
+
+        # Create a SparqlQuery object
+        query_object = sparql.SparqlQuery(endpoint=endpoint,
+                                          entity_url=entity_url)
+
+        # Execute the SPARQL query and retrieve the data
+        data = query_object.select(query, full_data=True)
+        if data is None:
+            print("SPARQL Failed. login BUG?")
+            exit(1)
+
+        return data
+
+    def get_existing_finna_ids_and_imagehashes_from_sparql(self):
+        print("Loading existing photo Finna ids and imagehashes using SPARQL")
+
+        # Define the SPARQL query
+        query = "SELECT * WHERE {"
+        query += " ?media wdt:P9478 ?finna_id ."
+        query += " ?media schema:url ?image."
+        query += " OPTIONAL { ?media wdt:P9310 ?phash }"
+        query += " OPTIONAL { ?media wdt:P12563 ?dhash }"
+        query += "}"
+
+        return self.get_sparql_query(query)
+
+    def add_imagehash(self, finna_id_in, phash_in, dhash_in):
+
+        photo = FinnaImage.objects.filter(finna_id=finna_id_in).first()
+
+        # finna image url
+        #url = 'https://finna.fi/Cover/Show?source=Solr&size=large'
+        #url += f'&id={photo.finna_id}'
+        #url += f'&index={index}'
+        # should use record?
+        #url = 'https://finna.fi/Record/'
+        #url += f'{photo.finna_id}'
+
+
+        #Skip if there is no relevant photo in db
+        if not photo:
+            print("image with finna_id:", finna_id_in, " does not exist, skipping")
+            return
+        
+        if (phash_in == None or dhash_in == None):
+            print("No hashes given for image with finna_id:", finna_id_in, ", skipping")
+            return 
+
+        #phash_str = str(phash_in)
+        #dhash_str = str(dhash_in)
+
+        #if type(phash_str) is not str:
+            #print("hashes not strings:", finna_id_in, ", type: ", type(phash_str).__name__ ,", skipping")
+            #return 
+        #if type(dhash_str) is not str:
+            #print("hashes not strings:", finna_id_in, ", type: ", type(dhash_str).__name__ ,", skipping")
+            #return 
+           
+        phash_int = self.converthashstringtoint(phash_in)
+        dhash_int = self.converthashstringtoint(dhash_in)
+
+        imagehash, created=FinnaImageHash.objects.get_or_create(
+                            finna_image=photo,
+                            phash=unsigned_to_signed(phash_int),
+                            dhash=unsigned_to_signed(dhash_int)
+                            #dhash_vertical=unsigned_to_signed(row['dhash_vertical'])
+                        )
+        if created:
+            imagehash.save()
+            print("saved hashes to image with finna_id:", finna_id_in)
+
+
+    def fetch_finna_ids_and_imagehashes(self):
+        site = pywikibot.Site("commons", "commons")
+        site.login()
+
+        # fetch hashes too
+        rows = self.get_existing_finna_ids_and_imagehashes_from_sparql()
+        for row in rows:
+            print(row)
+            finna_id = str(row['finna_id'])
+            phash = row['phash'] # may be None
+            dhash = row['dhash'] # may be None
+
+            print("found image with finna_id:'",finna_id,"' phash:'",phash,"' dhash:'",dhash,"'")
+
+            #with transaction.atomic():
+            self.add_imagehash(finna_id, phash, dhash)
+
 
     def fromurl(self, url):
 
@@ -28,7 +138,8 @@ class Command(BaseCommand):
         f = gzip.open(name, 'rb')
         return f.read()
 
-    def handle(self, *args, **kwargs):
+
+    def fetch_file_with_finna_ids_and_imagehashes(self):
         url = 'https://github.com/Wikimedia-Suomi/Finna-uploader/raw/main/finna_imagehashes.json.gz'
 
         # Decompress the gzipped content
@@ -67,6 +178,15 @@ class Command(BaseCommand):
                                    )
                 if created:
                     imagehash_url.save()
+
+
+    def handle(self, *args, **kwargs):
+        
+        # download file and import
+        self.fetch_file_with_finna_ids_and_imagehashes()
+
+        # use sparql query and import
+        #self.fetch_finna_ids_and_imagehashes()
 
         photos=FinnaImage.objects.all()
         imagehashes=FinnaImageHash.objects.all()
