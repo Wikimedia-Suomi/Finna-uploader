@@ -29,6 +29,20 @@ def is_human(item):
     human_qid = 'Q5'  # QID for human
     return any(claim.getTarget().id == human_qid for claim in instance_of)
 
+def is_photographer(item):
+    profession = item.claims.get('P106', [])
+    qid = 'Q33231'  # QID for photographer
+    return any(claim.getTarget().id == qid for claim in instance_of)
+
+def is_architect(item):
+    profession = item.claims.get('P106', [])
+    qid = 'Q42973'  # QID for architect
+    return any(claim.getTarget().id == qid for claim in instance_of)
+
+def is_designer(item):
+    profession = item.claims.get('P106', [])
+    qid = 'Q5322166'  # QID for designer
+    return any(claim.getTarget().id == qid for claim in instance_of)
 
 # Function to create a creator template in Wikimedia Commons
 def create_creator_template(name, wikidata_id):
@@ -55,7 +69,7 @@ def create_commons_category(name):
     return category_name
 
 
-# Function to create a commons category and a subcategory for photographs
+# Function to create a commons category and a subcategory for photographs by photographer
 def create_photographs_commons_category(name):
     # Subcategory for photographs
     photographs_category = "Category:Photographs by %s" % name
@@ -67,6 +81,35 @@ def create_photographs_commons_category(name):
 
     return photographs_category
 
+# Function to create a commons category and a subcategory for buildings by architect
+def create_buildings_commons_category(name):
+    # Subcategory for photographs
+    buildings_category = "Category:Buildings by %s" % name
+    buildings_cat_page = pywikibot.Page(commons_site, buildings_category)
+    if not buildings_cat_page.exists():
+        buildings_cat_page.text = "[[Category:%s]]\n\n" % name
+        # Buildings by architect (flat list)
+        # Works by <architect>
+        #photo_cat_page.text += "[[Category: <>]]" # noqa
+        buildings_cat_page.save("Creating Buildings subcategory for %s" % name)
+
+    return buildings_category
+
+# Function to create a commons category and a subcategory for works by designer
+# note: artist/designer works might not be free to upload..
+# check date of death?
+def create_works_commons_category(name):
+    # Subcategory for photographs
+    works_category = "Category:Works by %s" % name
+    works_cat_page = pywikibot.Page(commons_site, works_category)
+    if not works_cat_page.exists():
+        works_cat_page.text = "[[Category:%s]]\n\n" % name
+        # works by designer
+        # Works by <architect>
+        #photo_cat_page.text += "[[Category: <>]]" # noqa
+        works_cat_page.save("Creating Works subcategory for %s" % name)
+
+    return works_category
 
 # Main execution
 def main(wikidata_id, expected_name):
@@ -123,8 +166,25 @@ def main(wikidata_id, expected_name):
         wikidata_item.setSitelink(sitelink=sitelink, summary=summary)
 
     name = wikidata_item.labels['fi']
+    
+    # TODO: if creator is not photographer, don't create photography category:
+    # if creator is architect, use create_buildings_commons_category()
+    # check property P106 for appropriate category?
+    #
+    #if is_photographer(wikidata_item):
     photo_category_name = create_photographs_commons_category(name)
     print(photo_category_name)
+    
+    #if is_architect(wikidata_item):
+        #building_category_name = create_buildings_commons_category(name)
+        #print(building_category_name)
+    
+    # note: artist/designer works might not be free to upload..
+    # check date of death?
+    #if is_designer(wikidata_item):
+        #works_category_name = create_works_commons_category(name)
+        #print(works_category_name)
+    
     update_commons_list(expected_name, wikidata_id)
 
 
