@@ -12,11 +12,8 @@ class Command(BaseCommand):
         for page in pages:
             return page
 
-    def get_existing_finna_ids_from_sparql(self):
-        print("Loading existing photo Finna ids using SPARQL")
-        # Define the SPARQL query
-        query = "SELECT DISTINCT ?item ?finna_id"
-        query += " WHERE { ?item wdt:P9478 ?finna_id }"
+
+    def get_sparql_query(self, query):
 
         # Set up the SPARQL endpoint and entity URL
         # Note: https://commons-query.wikimedia.org requires
@@ -37,7 +34,16 @@ class Command(BaseCommand):
 
         return data
 
-    def handle(self, *args, **kwargs):
+    def get_existing_finna_ids_from_sparql(self):
+        print("Loading existing photo Finna ids using SPARQL")
+        # Define the SPARQL query
+        query = "SELECT DISTINCT ?item ?finna_id"
+        query += " WHERE { ?item wdt:P9478 ?finna_id }"
+
+        return self.get_sparql_query(query)
+
+
+    def fetch_finna_ids(self):
         site = pywikibot.Site("commons", "commons")
         site.login()
 
@@ -61,7 +67,13 @@ class Command(BaseCommand):
             obj = SdcFinnaID.objects
             sdc_finna_id, created = obj.get_or_create(image=image,
                                                       finna_id=row['finna_id'])
-            print(created)
+            print("created:", created)
+
+
+    def handle(self, *args, **kwargs):
+        
+        # fetch list of ids with sparql
+        self.fetch_finna_ids()
 
         msg = 'SDC Finna_ids added successfully!'
         self.stdout.write(self.style.SUCCESS(msg))
