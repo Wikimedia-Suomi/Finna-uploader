@@ -120,6 +120,7 @@ class SdcFinnaID(models.Model):
         unique_together = [['image', 'finna_id']]
 
 
+# description of physical structure where collection/item/object may be placed in
 class FinnaBuilding(models.Model):
     value = models.CharField(max_length=64)
     translated = models.CharField(max_length=64)
@@ -128,6 +129,7 @@ class FinnaBuilding(models.Model):
         return self.translated
 
 
+# description of copyright, permissions, licensing information
 class FinnaImageRight(models.Model):
     copyright = models.CharField(max_length=32)
     link = models.URLField(max_length=500)
@@ -146,6 +148,8 @@ class FinnaImageRight(models.Model):
         return self.description
 
 
+# non-presenter may be creator of is_photograph
+# or creator of object in image
 class FinnaNonPresenterAuthor(models.Model):
     name = models.CharField(max_length=64)
     role = models.CharField(max_length=64)
@@ -170,6 +174,7 @@ class FinnaNonPresenterAuthor(models.Model):
         return False
 
 
+# another title for the item
 class FinnaAlternativeTitle(models.Model):
     text = models.TextField()
     lang = models.CharField(max_length=6)
@@ -179,6 +184,7 @@ class FinnaAlternativeTitle(models.Model):
         return self.text
 
 
+# description of the item
 class FinnaSummary(models.Model):
     text = models.TextField()
     lang = models.CharField(max_length=6)
