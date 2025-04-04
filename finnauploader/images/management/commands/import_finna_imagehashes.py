@@ -95,6 +95,17 @@ class Command(BaseCommand):
             imageobj = FinnaImageHash.objects.get(phash=unsigned_to_signed(phash_int))
             if (imageobj):
                 exists = True
+        except FinnaImageHash.MultipleObjectsReturned:
+            # key checks for pair: might have same duplicates
+            print("Exception: multiple objects found -> skip")
+            return
+        except FinnaImageHash.DoesNotExist:
+            # should not get exception in this case?
+            # -> ignore as we will add this next
+            print("Exception: hash does not exist?")
+
+        # might have phash but not dhash or vice versa -> check separately
+        try:
             imageobj = FinnaImageHash.objects.get(dhash=unsigned_to_signed(dhash_int))
             if (imageobj):
                 exists = True
