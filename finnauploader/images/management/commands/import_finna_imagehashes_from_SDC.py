@@ -1,3 +1,6 @@
+# Purpose: import imagehashes of uploaded images to local database for filtering
+#
+
 import json
 from django.core.management.base import BaseCommand
 from images.models import FinnaImage, FinnaImageHash, FinnaImageHashURL
@@ -12,7 +15,7 @@ import hashlib
 import imagehash
 
 class Command(BaseCommand):
-    help = 'Import existing Finna imagehashes from toolforge to database'
+    help = 'Import existing Finna imagehashes from SDC to database'
 
 
     def converthashstringtoint(self, h_in):
@@ -69,7 +72,7 @@ class Command(BaseCommand):
         # assume we have unique identifier of image,
         # should use record?
         url = 'https://finna.fi/Record/'
-        url += f'{photo.finna_id}'
+        url += f'{photo.finna_id_in}'
         #url = 'https://finna.fi/Cover/Show?source=Solr&size=large'
         #url += f'&id={photo.finna_id}'
         #url += f'&index={index}'
@@ -156,6 +159,11 @@ class Command(BaseCommand):
         rows = self.get_existing_finna_ids_and_imagehashes_from_sparql()
         for row in rows:
             print(row)
+            
+            # get plain media identifier of commons image
+            # (might in format like sdc:M66760581 ?)
+            #media_id = str(row['media'])
+            
             finna_id = str(row['finna_id'])
             phash = row['phash'] # may be None
             dhash = row['dhash'] # may be None
