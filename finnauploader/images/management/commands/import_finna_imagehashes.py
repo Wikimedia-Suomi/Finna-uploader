@@ -48,6 +48,8 @@ class Command(BaseCommand):
     def get_existing_finna_ids_and_imagehashes_from_sparql(self):
         print("Loading existing photo Finna ids and imagehashes using SPARQL")
 
+        # media id for commons image id?
+
         # Define the SPARQL query
         query = "SELECT * WHERE {"
         query += " ?media wdt:P9478 ?finna_id ."
@@ -60,6 +62,9 @@ class Command(BaseCommand):
 
     def add_imagehash(self, finna_id_in, phash_in, dhash_in):
 
+        # should check for Image for Commons-image?
+        # also link to WikimediaCommonsImage?
+        # commons might have images that we haven't yet loaded from finna?
         photo = FinnaImage.objects.filter(finna_id=finna_id_in).first()
 
         # finna image url
@@ -80,18 +85,43 @@ class Command(BaseCommand):
             print("No hashes given for image with finna_id:", finna_id_in, ", skipping")
             return 
 
-        #phash_str = str(phash_in)
-        #dhash_str = str(dhash_in)
-
-        #if type(phash_str) is not str:
-            #print("hashes not strings:", finna_id_in, ", type: ", type(phash_str).__name__ ,", skipping")
-            #return 
-        #if type(dhash_str) is not str:
-            #print("hashes not strings:", finna_id_in, ", type: ", type(dhash_str).__name__ ,", skipping")
-            #return 
-           
         phash_int = self.converthashstringtoint(phash_in)
         dhash_int = self.converthashstringtoint(dhash_in)
+
+        # we can't add duplicates to database even if duplicates may exist
+        # -> check and skip
+        exists = False
+        try:
+            # key checks for pair
+            imageobj = FinnaImageHash.objects.get(phash=unsigned_to_signed(phash_int))
+            if (imageobj):
+                exists = True
+            imageobj = FinnaImageHash.objects.get(dhash=unsigned_to_signed(dhash_int))
+            if (imageobj):
+                exists = True
+        except FinnaImageHash.DoesNotExist:
+            # should not get exception in this case?
+            # -> ignore as we will add this next
+            print("Exception: hash does not exist?")
+            #return
+
+        # also, there may be different image with same hash or same image id with different hash
+        # in case of cropped/modified images: hash may be saved before cropping or contrast changes
+        # or there may be another version of same image where the modifications are made
+        try:
+            # key checks for pair
+            imageobj = FinnaImageHash.objects.get(finna_image=photo)
+            if (imageobj):
+                exists = True
+        except FinnaImageHash.DoesNotExist:
+            # should not get exception in this case?
+            # -> ignore as we will add this next
+            print("Exception: image does not exist?")
+            #return
+
+        if (exists):
+            print("Hash or already exists, skipping")
+            return 
 
         imagehash, created=FinnaImageHash.objects.get_or_create(
                             finna_image=photo,
@@ -183,10 +213,10 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         
         # download file and import
-        self.fetch_file_with_finna_ids_and_imagehashes()
+        #self.fetch_file_with_finna_ids_and_imagehashes()
 
         # use sparql query and import
-        #self.fetch_finna_ids_and_imagehashes()
+        self.fetch_finna_ids_and_imagehashes()
 
         photos=FinnaImage.objects.all()
         imagehashes=FinnaImageHash.objects.all()
