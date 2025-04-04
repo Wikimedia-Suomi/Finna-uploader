@@ -92,18 +92,20 @@ class Command(BaseCommand):
         # -> check and skip
         exists = False
         try:
-            # key checks for pair
             imageobj = FinnaImageHash.objects.get(phash=unsigned_to_signed(phash_int))
             if (imageobj):
                 exists = True
             imageobj = FinnaImageHash.objects.get(dhash=unsigned_to_signed(dhash_int))
             if (imageobj):
                 exists = True
+        except FinnaImageHash.MultipleObjectsReturned:
+            # key checks for pair: might have same duplicates
+            print("Exception: multiple objects found -> skip")
+            return
         except FinnaImageHash.DoesNotExist:
             # should not get exception in this case?
             # -> ignore as we will add this next
             print("Exception: hash does not exist?")
-            #return
 
         # also, there may be different image with same hash or same image id with different hash
         # in case of cropped/modified images: hash may be saved before cropping or contrast changes
@@ -113,11 +115,13 @@ class Command(BaseCommand):
             imageobj = FinnaImageHash.objects.get(finna_image=photo)
             if (imageobj):
                 exists = True
+        except FinnaImageHash.MultipleObjectsReturned:
+            print("Exception: multiple objects found -> skip")
+            return
         except FinnaImageHash.DoesNotExist:
             # should not get exception in this case?
             # -> ignore as we will add this next
             print("Exception: image does not exist?")
-            #return
 
         if (exists):
             print("Hash or already exists, skipping")
