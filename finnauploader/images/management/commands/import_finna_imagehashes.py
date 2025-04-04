@@ -124,7 +124,7 @@ class Command(BaseCommand):
             print("Exception: image does not exist?")
 
         if (exists):
-            print("Hash or already exists, skipping")
+            print("Hash or iamge already exists, skipping")
             return 
 
         imagehash, created=FinnaImageHash.objects.get_or_create(
