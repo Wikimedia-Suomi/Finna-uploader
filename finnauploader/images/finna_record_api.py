@@ -1,16 +1,14 @@
 import requests
 import urllib
 import re
-import json
 import xml.etree.ElementTree as ET
 import html
 
 from images.wikitext.wikidata_helpers import get_collection_names, \
                                     get_collection_name_from_alias
 
-
 s = requests.Session()
-s.headers.update({'User-Agent': 'FinnaUploader 0.1'})
+s.headers.update({'User-Agent': 'FinnaUploader 0.2 (https://commons.wikimedia.org/wiki/User:FinnaUploadBot)'}) # noqa
 
 
 # used by finna_search.py
@@ -95,7 +93,6 @@ def add_finna_api_default_field_parameters():
 
 def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, full=True): # noqa
 
-    data = None
     url = "https://api.finna.fi/v1/search?"
     url += add_finna_api_free_images_only_parameters()
     if full:
@@ -121,13 +118,13 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
     # Where lookfor is targeted. Known values 'AllFields', 'Subjects'
     if type:
         url += finna_api_parameter('type', f'{type}')
-    with urllib.request.urlopen(url) as file:
-        try:
-            data = json.loads(file.read().decode())
-        except Exception as e:
-            print(e)
-            data = None
-    return data
+
+    response = s.get(url)
+    try:
+        return response.json()
+    except ValueError as e:
+        print("Failed parsing JSON:", e)
+        return None
 
 
 # Get finna API record with most of the information
