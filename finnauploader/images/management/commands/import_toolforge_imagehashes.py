@@ -22,8 +22,12 @@ class Command(BaseCommand):
     def fromurl(self):
         url = 'https://imagehash.toolforge.org/static/commons_finna_imagehashes.json.gz'
 
+        S = requests.Session()
+        S.headers.update({'User-Agent': 'FinnaUploader 0.2 (https://commons.wikimedia.org/wiki/User:FinnaUploadBot)'}) # noqa
+
         # Fetch the data
-        response = requests.get(url)
+        #response = requests.get(url)
+        response = S.get(url)
         response.raise_for_status()  # Raise an exception for HTTP errors
 
         # Decode the gzipped content
