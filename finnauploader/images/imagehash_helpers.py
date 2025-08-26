@@ -286,11 +286,14 @@ def is_correct_finna_record(finna_id, image_url, allow_multiple_images=True):
         print(finna_thumbnail_url)
 
         # if image fails to be downloaded (obsolete url? removed?) don't crash on it
-        finna_hash = get_imagehashes(finna_thumbnail_url)
-        img2_hash = get_imagehashes(image_url)
-        if (finna_hash != None and img2_hash != None):
-            if compare_image_hashes_strict(finna_hash, img2_hash):
-                return record_finna_id
+        try:
+            finna_hash = get_imagehashes(finna_thumbnail_url)
+            img2_hash = get_imagehashes(image_url)
+            if (finna_hash != None and img2_hash != None):
+                if compare_image_hashes_strict(finna_hash, img2_hash):
+                    return record_finna_id
+        except Image.UnidentifiedImageError:
+            print('Pillow did not recognize image format, finna id:', finna_id)
 
     # no match
     #return None
