@@ -65,24 +65,29 @@ class Command(BaseCommand):
         # should check for Image for Commons-image?
         # also link to WikimediaCommonsImage?
         # commons might have images that we haven't yet loaded from finna?
-        photo = FinnaImage.objects.filter(finna_id=finna_id_in).first()
+        obj = FinnaImage.objects.filter(finna_id=finna_id_in)
+        if not obj:
+            print("No image object by finna_id:", finna_id_in, ", skipping")
+            return
+        
+        photo = obj.first()
+
+        #Skip if there is no relevant photo in db
+        if not photo:
+            print("image with finna_id:", finna_id_in, " does not exist, skipping")
+            return
 
         # finna image url
         # common has just finna id property, not index property:
         # assume we have unique identifier of image,
         # should use record?
         url = 'https://finna.fi/Record/'
-        url += f'{photo.finna_id_in}'
+        url += f'{photo.finna_id}'
         #url = 'https://finna.fi/Cover/Show?source=Solr&size=large'
         #url += f'&id={photo.finna_id}'
         #url += f'&index={index}'
 
 
-        #Skip if there is no relevant photo in db
-        if not photo:
-            print("image with finna_id:", finna_id_in, " does not exist, skipping")
-            return
-        
         if (phash_in == None or dhash_in == None):
             print("No hashes given for image with finna_id:", finna_id_in, ", skipping")
             return 
