@@ -53,7 +53,7 @@ def download_image(url):
     c.setopt(c.URL, url)
     c.setopt(c.WRITEDATA, buffer)
     c.setopt(c.CAINFO, certifi.where())
-    c.setopt(c.USERAGENT, 'pywikibot')
+    c.setopt(c.USERAGENT, 'FinnaUploader 0.2 (https://commons.wikimedia.org/wiki/User:FinnaUploadBot)')
     #c.setopt(pycurl.TIMEOUT, 120)
     c.perform()
     c.close()
@@ -73,6 +73,25 @@ def download_image(url):
     #body = buffer.getvalue()
     return buffer
 
+# get format from finna-record hires["format"]
+# only add formats supported by pillow here
+def isimageformatsupported(strformat):
+    # are there png files in finna?
+    if (strformat == "tif" 
+        or strformat == "jpg"):
+        return True
+    return False
+
+
+# format according to mime-type (commons file info):
+# only add formats supported by pillow here
+def isimageformatsupportedmime(strformat):
+    if (strformat == "image/tiff" 
+        or strformat == "image/jpeg" 
+        or strformat == "image/png"):
+        return True
+    return False
+    
 
 def get_imagehashes(url, thumbnail=False, filecache=False):
     im = None
@@ -285,6 +304,16 @@ def is_correct_finna_record(finna_id, image_url, allow_multiple_images=True):
         finna_thumbnail_url = f'https://finna.fi{file_path}'
         print(finna_thumbnail_url)
 
+        # try to catch unsupported format before pillow
+        # note! might have smaller resolution image in another format
+        if "highResolution" in imageExtended:
+            hires = imageExtended['highResolution']
+            if "original" in hires:
+                hires = imageExtended['highResolution']['original'][0]
+                if "format" in hires:
+                    if (isimageformatsupported(hires["format"]) == False):
+                        print("Unknown image format in Finna-data, might not be supported:", hires["format"])
+
         # if image fails to be downloaded (obsolete url? removed?) don't crash on it
         try:
             finna_hash = get_imagehashes(finna_thumbnail_url)
@@ -294,6 +323,9 @@ def is_correct_finna_record(finna_id, image_url, allow_multiple_images=True):
                     return record_finna_id
         except Image.UnidentifiedImageError:
             print('Pillow did not recognize image format, finna id:', finna_id)
+            
+            # one image not supported, are there other formats of same image?
+            #return False
 
     # no match
     #return None
