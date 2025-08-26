@@ -43,9 +43,7 @@ class Command(BaseCommand):
         return self.get_sparql_query(query)
 
 
-    def fetch_finna_ids(self):
-        site = pywikibot.Site("commons", "commons")
-        site.login()
+    def fetch_finna_ids(self, site):
 
         rows = self.get_existing_finna_ids_from_sparql()
         for row in rows:
@@ -71,9 +69,12 @@ class Command(BaseCommand):
 
 
     def handle(self, *args, **kwargs):
+
+        site = pywikibot.Site("commons", "commons")
+        site.login()
         
         # fetch list of ids with sparql
-        self.fetch_finna_ids()
+        self.fetch_finna_ids(site)
 
         msg = 'SDC Finna_ids added successfully!'
         self.stdout.write(self.style.SUCCESS(msg))

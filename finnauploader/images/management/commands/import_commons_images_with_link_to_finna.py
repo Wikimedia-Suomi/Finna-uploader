@@ -25,9 +25,13 @@ class Command(BaseCommand):
             "eulimit": 500,    # Maximum number of results per request
         }
 
+        S = requests.Session()
+        S.headers.update({'User-Agent': 'FinnaUploader 0.2 (https://commons.wikimedia.org/wiki/User:FinnaUploadBot)'}) # noqa
+ 
+
         # Load only 500 url per round and iterate until there is no new urls
         while True:
-            response = requests.get(base_url, params=params)
+            response = S.get(base_url, params=params)
             data = response.json()
 
             if "query" in data:
