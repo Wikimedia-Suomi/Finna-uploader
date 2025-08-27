@@ -19,7 +19,7 @@ class Command(BaseCommand):
         try:
             file_page = pywikibot.FilePage(site, page_title)
             commons_thumbnail_url = file_page.get_file_url(url_width=1000)
-        except NoPageError:
+        except pywikibot.NoPageError:
             print("page missing from commons: ", page_title)
             return None
             
