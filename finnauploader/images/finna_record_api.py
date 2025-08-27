@@ -10,6 +10,18 @@ from images.wikitext.wikidata_helpers import get_collection_names, \
 s = requests.Session()
 s.headers.update({'User-Agent': 'FinnaUploader 0.2 (https://commons.wikimedia.org/wiki/User:FinnaUploadBot)'}) # noqa
 
+# TODO: responses could be cached instead of possibly repeating
+def get_json_response(session, url):
+    
+    try:
+        response = session.get(url)
+        return response.json()
+    except ValueError as e:
+        print("Failed parsing JSON:", e)
+    except:
+        print("Finna API query failed: " + url)
+
+    return None
 
 # used by finna_search.py
 def get_supported_collections():
@@ -119,12 +131,7 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
     if type:
         url += finna_api_parameter('type', f'{type}')
 
-    response = s.get(url)
-    try:
-        return response.json()
-    except ValueError as e:
-        print("Failed parsing JSON:", e)
-        return None
+    return get_json_response(s, url)
 
 
 # Get finna API record with most of the information
@@ -142,28 +149,28 @@ def get_finna_record_url(id, full=False, lang=None):
     return url
 
 
+# only two users for this wrapper?
 def get_finna_record(id, full=False, lang=None):
     url = get_finna_record_url(id, full, lang)
 
-    try:
-        response = s.get(url)
-        return response.json()
-    except:
-        print("Finna API query failed: " + url)
-        exit(1)
+    return get_json_response(s, url)
 
 
-def get_finna_record_by_id(id, full=False, lang=None):
+# parameters are not really used in callers:
+# not many users
+def get_finna_record_by_id(id, full=True):
 
     # Update to latest finna_record
-    record = get_finna_record(id, True)
+    url = get_finna_record_url(id, full)
     try:
-        record = record['records'][0]
+        json = get_json_response(s, url)
+        
+        record = json['records'][0]
+        return record
     except:
         print(id)
         print(record)
-        exit(1)
-    return record
+    return None
 
 
 def get_summary_in_language(id, lang):
@@ -171,14 +178,13 @@ def get_summary_in_language(id, lang):
     url = f'https://api.finna.fi/v1/record?prettyPrint=1&id={urlencoded_id}'
     url += finna_api_parameter('field[]', 'summary')
     url += f'&lng={lang}'
-    try:
-        response = s.get(url)
-        json = response.json()
+    
+    json = get_json_response(s, url)
+    if json:
         return json['records'][0]['summary']
-    except:
-        print("Finna API query failed: " + url)
-        exit(1)
-
+    
+    print("Finna API query failed: " + url)
+    return None
 
 def get_finna_id_from_url(url):
     if "finna.fi" in url:

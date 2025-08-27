@@ -285,6 +285,10 @@ class Command(BaseCommand):
             if finna_id:
                 filename = finna_ids[finna_id]
                 finna_record = get_finna_record_by_id(finna_id)
+                if not finna_record:
+                    pywikibot.info('Failed to get finna record for id: ', finna_id)
+                    exit(1)
+
                 existing_files = test_if_finna_id_exists_in_commons(finna_id)
                 if existing_files:
                     msg = f'Finna ID {finna_id} already exists in Wikimedia Commons with files: {existing_files}'  # noqa
