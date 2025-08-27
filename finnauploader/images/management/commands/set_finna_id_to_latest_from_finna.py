@@ -25,14 +25,14 @@ class Command(BaseCommand):
             if 'hkm.' in image.page_title:
                 continue
             print(image.page_title)
-            response=get_finna_record(image.finna_id)
+            response = get_finna_record(image.finna_id)
             if 'records' in response:
-                record=response['records'][0]
-                new_finna_id=record['id']
-                if image.finna_id!=new_finna_id:
+                record = response['records'][0]
+                new_finna_id = record['id']
+                if image.finna_id != new_finna_id:
                     print(image.finna_id)
                     print(new_finna_id)
-                    image.finna_id=new_finna_id
+                    image.finna_id = new_finna_id
                     image.save()
             else:
                 print(f'Virhe! {image.finna_id}') 
