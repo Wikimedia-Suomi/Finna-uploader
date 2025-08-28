@@ -134,6 +134,24 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
     return get_json_response(s, url)
 
 
+def is_valid_finna_record(finna_record):
+    if not finna_record:
+        return False
+
+    if not 'status' in finna_record:
+        return False
+
+    if finna_record['status'] != 'OK':
+        return False
+
+    if not 'records' in finna_record:
+        return False
+
+    #if not 'resultCount' in finna_record:
+    #    return False
+
+    return True
+
 # Get finna API record with most of the information
 # Finna API documentation
 # * https://api.finna.fi
@@ -164,12 +182,15 @@ def get_finna_record_by_id(id, full=True):
     url = get_finna_record_url(id, full)
     try:
         json = get_json_response(s, url)
+
+        # should check status as well, separate helper?
+        if (is_valid_finna_record(json) == True):
+            return json['records'][0]
         
-        record = json['records'][0]
-        return record
+        return json
     except:
         print(id)
-        print(record)
+        print(json)
     return None
 
 
@@ -180,7 +201,7 @@ def get_summary_in_language(id, lang):
     url += f'&lng={lang}'
     
     json = get_json_response(s, url)
-    if json:
+    if (is_valid_finna_record(json) == True):
         return json['records'][0]['summary']
     
     print("Finna API query failed: " + url)

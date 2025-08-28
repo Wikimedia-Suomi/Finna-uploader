@@ -7,7 +7,7 @@ import pycurl
 import certifi
 import hashlib
 import imagehash
-from images.finna_record_api import get_finna_record
+from images.finna_record_api import get_finna_record, is_valid_finna_record
 from PIL import Image
 
 
@@ -271,10 +271,13 @@ def compare_image_hashes(img1, img2):
 
 
 def is_correct_finna_record(finna_id, image_url, allow_multiple_images=True):
+
     finna_record = get_finna_record(finna_id, True)
+    if (is_valid_finna_record(finna_record) == False):
+        return False
 
     if finna_record['status'] != 'OK':
-        print('Finna status not OK')
+        print('Finna status not OK, id:', finna_id)
         return False
 
     if finna_record['resultCount'] != 1:
