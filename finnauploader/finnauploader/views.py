@@ -7,7 +7,7 @@ from rest_framework import status, viewsets
 from django.shortcuts import get_object_or_404
 from watson import search as watson
 
-from images.finna_record_api import get_finna_record_by_id
+from images.finna_record_api import get_finna_record, is_valid_finna_record
 from images.wikitext.commons_wikitext import get_wikitext_for_new_image
 from images.sdc_helpers import get_structured_data_for_new_image
 from images.pywikibot_helpers import are_there_messages_for_bot_in_commons, \
@@ -20,7 +20,7 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
     # TODO: selection for collection would be nice
     
     queryset = FinnaImage.objects.filter(
-                                         identifier_string__contains='JOKA',
+                                         identifier_string__contains='JOKA'
                                          #identifier_string__contains='SMK',
                                          )
     serializer_class = FinnaImageSerializer
@@ -37,7 +37,11 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
         print("Fetching image record:", old_finna_image.finna_id)
 
         # Update to latest finna_record
-        new_record = get_finna_record_by_id(old_finna_image.finna_id)
+        response = get_finna_record(old_finna_image.finna_id, True)
+        if (is_valid_finna_record(response) == False):
+            print("could not get finna record by id:", old_finna_image.finna_id)
+            exit(1)
+        new_record = response['records'][0]
 
         print("DEBUG: new record from finna for id:", old_finna_image.finna_id)
         print(str(new_record))

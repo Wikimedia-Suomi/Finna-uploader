@@ -1,6 +1,6 @@
 import pywikibot
 from images.models import FinnaImage, FinnaSubjectWikidataPlace
-from images.finna_record_api import get_finna_id_from_url, get_finna_record_by_id
+from images.finna_record_api import get_finna_id_from_url, get_finna_record, is_valid_finna_record
 from images.pywikibot_helpers import test_if_finna_id_exists_in_commons
 from django.core.management.base import BaseCommand
 from images.wikitext.commons_wikitext import get_wikitext_for_new_image
@@ -284,10 +284,12 @@ class Command(BaseCommand):
         for finna_id in finna_ids:
             if finna_id:
                 filename = finna_ids[finna_id]
-                finna_record = get_finna_record_by_id(finna_id)
-                if not finna_record:
+                response = get_finna_record(finna_id, True)
+                if (is_valid_finna_record(response) == False):
                     pywikibot.info('Failed to get finna record for id: ', finna_id)
                     exit(1)
+
+                finna_record = response['records'][0]
 
                 existing_files = test_if_finna_id_exists_in_commons(finna_id)
                 if existing_files:

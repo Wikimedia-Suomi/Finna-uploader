@@ -174,26 +174,6 @@ def get_finna_record(id, full=False, lang=None):
     return get_json_response(s, url)
 
 
-# parameters are not really used in callers:
-# not many users
-def get_finna_record_by_id(id, full=True):
-
-    # Update to latest finna_record
-    url = get_finna_record_url(id, full)
-    try:
-        json = get_json_response(s, url)
-
-        # should check status as well, separate helper?
-        if (is_valid_finna_record(json) == True):
-            return json['records'][0]
-        
-        return json
-    except:
-        print(id)
-        print(json)
-    return None
-
-
 def get_summary_in_language(id, lang):
     urlencoded_id = urllib.parse.quote_plus(id)
     url = f'https://api.finna.fi/v1/record?prettyPrint=1&id={urlencoded_id}'
