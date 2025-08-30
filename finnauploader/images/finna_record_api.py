@@ -12,6 +12,9 @@ s.headers.update({'User-Agent': 'FinnaUploader 0.2 (https://commons.wikimedia.or
 
 # TODO: responses could be cached instead of possibly repeating
 def get_json_response(session, url):
+    if not url:
+        print("empty url, cannot request")
+        return None
     
     try:
         response = session.get(url)
@@ -152,11 +155,35 @@ def is_valid_finna_record(finna_record):
 
     return True
 
+def is_supported_copyright(imageExtended):
+    # Test copyright
+    allowed_copyrighs = ['CC BY 4.0', 'CC0']
+    if "rights" not in imageExtended:
+        # malformed?
+        return False
+
+    if "copyright" not in imageExtended['rights']:
+        # malformed?
+        return False
+    
+    if imageExtended['rights']['copyright'] in allowed_copyrighs:
+        # if is in known supported -> true
+        return True
+
+    # not in known supported -> False
+    copyright_msg = imageExtended['rights']['copyright']
+    print(f'Incorrect copyright: {copyright_msg}')
+    return False
+
+
 # Get finna API record with most of the information
 # Finna API documentation
 # * https://api.finna.fi
 # * https://www.kiwi.fi/pages/viewpage.action?pageId=53839221
 def get_finna_record_url(id, full=False, lang=None):
+    if not id:
+        return None
+    
     urlencoded_id = urllib.parse.quote_plus(id)
     url = f'https://api.finna.fi/v1/record?prettyPrint=1&id={urlencoded_id}'
     if full:
@@ -169,12 +196,18 @@ def get_finna_record_url(id, full=False, lang=None):
 
 # only two users for this wrapper?
 def get_finna_record(id, full=False, lang=None):
+    if not id:
+        return None
+
     url = get_finna_record_url(id, full, lang)
 
     return get_json_response(s, url)
 
 
 def get_summary_in_language(id, lang):
+    if not id:
+        return None
+
     urlencoded_id = urllib.parse.quote_plus(id)
     url = f'https://api.finna.fi/v1/record?prettyPrint=1&id={urlencoded_id}'
     url += finna_api_parameter('field[]', 'summary')
@@ -188,6 +221,8 @@ def get_summary_in_language(id, lang):
     return None
 
 def get_finna_id_from_url(url):
+    if not url:
+        return None
     if "finna.fi" in url:
         # Parse id from url
         patterns = [

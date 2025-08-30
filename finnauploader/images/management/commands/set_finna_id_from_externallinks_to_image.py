@@ -32,17 +32,21 @@ class Command(BaseCommand):
         number_of_images=images.count()
         print(f'Images to do {number_of_images}')
 
+        nro = 0
+        total = len(images)
+
         for image in images:
-            print(image.page_title)
-            finna_id=None
+            nro = nro +1
+            print("Nro:", nro, "/", total, "title:", image.page_title)
 
             for url in image.urls.all():
                 print(url.url)
-                finna_id=get_finna_id_from_url(url.url)
+                #finna_id=None
                 
+                finna_id=get_finna_id_from_url(url.url)
                 confirmed_finna_id = self.confirm_image(site, finna_id, image.page_title)
                 if confirmed_finna_id:
-                    print(confirmed_finna_id)
+                    print("confirmed id: ", confirmed_finna_id, " old id: ", finna_id)
                     image.finna_id = confirmed_finna_id
                     image.finna_id_confirmed = True
                     image.save()
