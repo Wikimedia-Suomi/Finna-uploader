@@ -35,14 +35,16 @@ class Command(BaseCommand):
         t =  FinnaImageHash.objects.all().count()
         print(t)
 
+        # this is not working in current model
         # Annotate each FinnaNonPresenterAuthor with the count of related FinnaImage instances
         # and order by the count in descending order
-        authors_with_image_count = FinnaNonPresenterAuthor.objects.annotate(
-            image_count=Count('non_presenter_authors')
-        ).order_by('-image_count')
+        #authors_with_image_count = FinnaNonPresenterAuthor.objects.annotate(
+        #    image_count=Count('non_presenter_authors')
+        #).order_by('-image_count')
 
+        # not working in current model
         # Iterate over the queryset and print each author's name and their image count
-        for author in authors_with_image_count:
-            print(f"{author.name}: {author.image_count} images")
+        #for author in authors_with_image_count:
+        #    print(f"{author.name}: {author.image_count} images")
 
         self.stdout.write(self.style.SUCCESS(f'Images counted succesfully!'))
