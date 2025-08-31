@@ -5,7 +5,7 @@ import pywikibot
 from pywikibot.data import sparql
 import requests
 from django.db.models import Count
-from images.imagehash_helpers import signed_to_unsigned
+#from images.imagehash_helpers import signed_to_unsigned
 
 class Command(BaseCommand):
     help = 'Print stats on images on database'
@@ -20,9 +20,9 @@ class Command(BaseCommand):
                 for imagehash_url in imagehash_urls:
                     row={}
                     row['finna_id'] = image.finna_id
-                    row['phash'] = signed_to_unsigned(imagehash.phash)
-                    row['dhash'] = signed_to_unsigned(imagehash.dhash)
-                    row['dhash_vertical'] = signed_to_unsigned(imagehash.dhash_vertical)
+                    row['phash'] = imagehash.phash # signed_to_unsigned(imagehash.phash)
+                    row['dhash'] = imagehash.dhash # signed_to_unsigned(imagehash.dhash)
+                    row['dhash_vertical'] = imagehash.dhash_vertical # signed_to_unsigned(imagehash.dhash_vertical)
                     row['width'] = imagehash_url.width
                     row['height'] = imagehash_url.height
                     row['index'] = imagehash_url.index
