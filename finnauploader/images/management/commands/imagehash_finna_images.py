@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from images.models import FinnaImage, FinnaImageHash, FinnaImageHashURL
-from images.imagehash_helpers import get_imagehashes
+from images.imagehash_helpers import get_finna_image_url, get_imagehashes
 from images.conversion import unsigned_to_signed
 
 # FinnaImageHashURL.objects.all().delete()
@@ -35,12 +35,14 @@ class Command(BaseCommand):
                     print(f'skipping: {photo.finna_id} {index}')
                     continue
 
-                url = 'https://finna.fi/Cover/Show?source=Solr&size=large'
-                url += f'&id={photo.finna_id}'
-                url += f'&index={index}'
-                print(photo.title)
-                print(url)
+                url = get_finna_image_url(photo.finna_id, index)
+                if not url:
+                    print("could not get valid url for image, id:", photo.finna_id)
+                    continue
 
+                print("Image:", photo.title, " url:", url)
+
+                # supposed to use cache here
                 i = get_imagehashes(url, thumbnail=True, filecache=filecache)
 
                 try:

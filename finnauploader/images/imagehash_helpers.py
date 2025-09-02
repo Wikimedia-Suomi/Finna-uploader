@@ -93,6 +93,17 @@ def isimageformatsupportedmime(strformat):
     return False
     
 
+def get_finna_image_url(finna_id, index):
+    if not finna_id:
+        return None
+
+    url = 'https://finna.fi/Cover/Show?source=Solr&size=large'
+    url += f'&id={finna_id}'
+    url += f'&index={index}'
+    
+    return url
+
+
 def get_imagehashes(url, thumbnail=False, filecache=False):
     im = None
     
