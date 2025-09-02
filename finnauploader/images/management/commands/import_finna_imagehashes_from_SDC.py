@@ -60,6 +60,18 @@ class Command(BaseCommand):
 
         return self.get_sparql_query(query)
 
+    # if image is found in SDC we can mark it as uploaded
+    def set_image_uploaded(self, image, uploaded=True):
+        if not image:
+            return
+
+        # mark as uploaded
+        if (image.already_in_commons != uploaded):
+            print("Marking image as uploaded, finna_id:", image.finna_id)
+            image.already_in_commons = uploaded
+            image.save()
+
+
     def add_imagehash(self, finna_id_in, phash_in, dhash_in):
 
         # should check for Image for Commons-image?
@@ -142,7 +154,10 @@ class Command(BaseCommand):
             print("Exception: image does not exist?")
 
         if (exists):
-            print("Hash or iamge already exists, skipping")
+            # image found in SDC: also mark as uploaded
+            self.set_image_uploaded(photo, True)
+            
+            print("Hash or image exists")
             return 
 
         imagehash, created=FinnaImageHash.objects.get_or_create(
@@ -154,6 +169,9 @@ class Command(BaseCommand):
         if created:
             imagehash.save()
             print("saved hashes to image with finna_id:", finna_id_in)
+
+        # image found in SDC: also mark as uploaded
+        self.set_image_uploaded(photo, True)
 
 
     def fetch_finna_ids_and_imagehashes(self):
