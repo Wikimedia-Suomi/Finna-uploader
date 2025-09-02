@@ -4,26 +4,32 @@ from pywikibot.data import sparql
 
 class UploadCache:
     def load_duplicates(self):
-        self.uploadsummary = self.get_upload_summary(5000)
+        self.uploadsummary = self.get_upload_summary(1000)
         self.sparql_finna_ids_data = self.get_existing_finna_ids_from_sparql()
-        #self.sparql_finna_ids = str(self.sparql_finna_ids_data)
+        self.sparql_finna_ids = str(self.sparql_finna_ids_data)
 
 
 s = requests.Session()
+s.headers.update({'User-Agent': 'FinnaUploader 0.2 (https://commons.wikimedia.org/wiki/User:FinnaUploadBot)'}) # noqa
+
 
 # finna id query results: reduce queries
 toolforgeFinnaId = {}
 
+# set into cache
 def setToolforgeFinnaId(finna_id, exists):
     toolforgeFinnaId[finna_id] = exists
 
-
+# lookup cache only
 def isToolforgeFinnaId(finna_id):
     if (finna_id in toolforgeFinnaId):
         return toolforgeFinnaId[finna_id]
     return False
 
+# try to search from server:
+# also use cache if possible
 def toolforge_finnasearch(finna_id):
+    # use cache if possible
     if (isToolforgeFinnaId(finna_id) == True):
         return True
     
@@ -31,8 +37,11 @@ def toolforge_finnasearch(finna_id):
     response = s.get(url)
     response.raise_for_status()  # Raise an exception for HTTP errors
     data = response.json()
+    
+    print("tf result:", data)
 
     if len(data):
+        print("tf result:", data)
         setToolforgeFinnaId(finna_id, True)
         return True
 
@@ -90,8 +99,8 @@ def get_upload_summary(limit=1000):
 
 
 def is_already_in_commons(finna_id, fast=False):
-    #if (sparql_finna_ids == None):
-        #return False
+    if (sparql_finna_ids == None):
+        return False
 
     #print("DEBUG: searching for existing finna id: ", finna_id)
     
@@ -105,6 +114,12 @@ def is_already_in_commons(finna_id, fast=False):
         print(f'Skipping 2: {finna_id} already uploaded based on summaries')
         return True
 
+    # use cache if possible
+    if (isToolforgeFinnaId(finna_id) == True):
+        return True
+
+    # non-fast will try to search from toolforce by id:
+    # we should use cached dump of data if possible
     if not fast:
         if toolforge_finnasearch(finna_id):
             msg = f'Skipping 3: {finna_id} already uploaded based on imagehash'
@@ -113,16 +128,16 @@ def is_already_in_commons(finna_id, fast=False):
     return False
 
 
-#def search_from_sparql_finna_ids(needle):
-    #if needle in sparql_finna_ids:
-        #return True
-    #return False
+def search_from_sparql_finna_ids(needle):
+    if needle in sparql_finna_ids:
+        return True
+    return False
 
-#def get_sparql_finna_id_list():
-    #return sparql_finna_ids
+def get_sparql_finna_id_list():
+    return sparql_finna_ids
 
 # main ()
-print("Loading 5000 most recent edit summaries for skipping uploaded files")
-uploadsummary = get_upload_summary(5000)
+print("Loading 1000 most recent edit summaries for skipping uploaded files")
+uploadsummary = get_upload_summary(1000)
 sparql_finna_ids_data = get_existing_finna_ids_from_sparql()
-#sparql_finna_ids = str(sparql_finna_ids_data)
+sparql_finna_ids = str(sparql_finna_ids_data)
