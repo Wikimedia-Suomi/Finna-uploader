@@ -45,7 +45,7 @@ class Command(BaseCommand):
 
             # images.finna.do_finna_search() will look again for a collection
             data = do_finna_search(page, lookfor, type, collection)
-            if 'records' in data:
+            if data and 'records' in data:
                 with transaction.atomic():
                     for record in data['records']:
                         # Import code is in images/models.py
