@@ -33,6 +33,20 @@ class Command(BaseCommand):
             help='Finna lookfor argument.',
         )
 
+    def parse_finna_records(self, data):
+        if not data:
+            return False
+        if not 'records' in data:
+            return False
+        
+        with transaction.atomic():
+            for record in data['records']:
+                # Import code is in images/models.py
+                r = FinnaImage.objects.create_from_data(record)
+                print(f'{r.id} {r.finna_id} {r.title} saved')
+        return True
+        
+
     def handle(self, *args, **options):
         lookfor = options['lookfor'] or None
         type = options['type'] or None
@@ -45,13 +59,7 @@ class Command(BaseCommand):
 
             # images.finna.do_finna_search() will look again for a collection
             data = do_finna_search(page, lookfor, type, collection)
-            if data and 'records' in data:
-                with transaction.atomic():
-                    for record in data['records']:
-                        # Import code is in images/models.py
-                        r = FinnaImage.objects.create_from_data(record)
-                        print(f'{r.id} {r.finna_id} {r.title} saved')
-            else:
+            if (self.parse_finna_records(data) == False):
                 break
 
         FinnaImage.objects.update_wikidata_ids()
