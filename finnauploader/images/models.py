@@ -45,7 +45,7 @@ def update_dates_in_filename(input_str):
 # Create your models here.
 
 class FintoYsoLabel(models.Model):
-    value = models.CharField(max_length=64)
+    value = models.CharField(max_length=128)
     lang = models.CharField(max_length=8)
 
 
@@ -83,7 +83,7 @@ class CacheSparqlBool(models.Model):
 
 
 class FintoYsoMissingCache(models.Model):
-    value = models.CharField(max_length=64)
+    value = models.CharField(max_length=128)
     finna_id = models.CharField(max_length=200, null=False, blank=False)
 
 
@@ -122,8 +122,8 @@ class SdcFinnaID(models.Model):
 
 # description of physical structure where collection/item/object may be placed in
 class FinnaBuilding(models.Model):
-    value = models.CharField(max_length=64)
-    translated = models.CharField(max_length=64)
+    value = models.CharField(max_length=128)
+    translated = models.CharField(max_length=128)
 
     def __str__(self):
         return self.translated
@@ -131,7 +131,7 @@ class FinnaBuilding(models.Model):
 
 # description of copyright, permissions, licensing information
 class FinnaImageRight(models.Model):
-    copyright = models.CharField(max_length=32)
+    copyright = models.CharField(max_length=64)
     link = models.URLField(max_length=500)
     description = models.TextField()
 
@@ -151,8 +151,8 @@ class FinnaImageRight(models.Model):
 # non-presenter may be creator of is_photograph
 # or creator of object in image
 class FinnaNonPresenterAuthor(models.Model):
-    name = models.CharField(max_length=64)
-    role = models.CharField(max_length=64)
+    name = models.CharField(max_length=128)
+    role = models.CharField(max_length=128)
     wikidata_id = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
