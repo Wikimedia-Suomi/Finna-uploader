@@ -621,7 +621,8 @@ class FinnaImage(models.Model):
     data = models.ForeignKey(FinnaRecordSearchIndex, on_delete=models.RESTRICT, null=True, blank=True)
 
     # Accession number or similar identifier
-    identifier_string = models.CharField(max_length=64, null=True, blank=True)
+    # note that this can be array of short identifiers in some collections
+    identifier_string = models.CharField(max_length=128, null=True, blank=True)
     short_title = models.TextField()
 
     # Pseudo properties
