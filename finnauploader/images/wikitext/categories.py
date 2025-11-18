@@ -196,6 +196,8 @@ def get_category_for_subject(subject_name):
         'Lamminahon talo' : 'Lamminaho House',
         'taksinkuljettajat' : 'Taxi drivers',
         'kronometrit' : 'Chronometers',
+        #'oppimateriaali' : 'Educational materials',
+        'opetusvälineet' : 'Educational tools',
         #'patenttikorkit' : 'Swing-top closures',
         'kahvimyllyt' : 'Coffee grinders',
         'antikvariaatit' : 'Antiquarian bookstores',
