@@ -408,7 +408,7 @@ class FinnaRecordManager(models.Manager):
         try:
             image_rights_copyright = image_rights_data['copyright']
         except:
-            print("ERROR ----")
+            print("ERROR saving copyright ----")
             print(json.dumps(data))
             print("ERROR ----")
             exit(1)
