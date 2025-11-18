@@ -33,6 +33,21 @@ class Command(BaseCommand):
             help='Finna lookfor argument.',
         )
 
+    # save one record from data
+    def save_record_data(self, record):
+        # Import code is in images/models.py
+        print(f' - - - -') # just separate where next record begins for clarity in log
+        try:
+            r = FinnaImage.objects.create_from_data(record)
+            print(f'{r.id} {r.finna_id} {r.title} saved')
+            return True
+        except:
+            print("ERROR saving record: ")
+            print(record)
+            exit(1)
+        return False
+
+    # parse record(s) from query
     def parse_finna_records(self, data):
         if not data:
             return False
@@ -42,8 +57,8 @@ class Command(BaseCommand):
         with transaction.atomic():
             for record in data['records']:
                 # Import code is in images/models.py
-                r = FinnaImage.objects.create_from_data(record)
-                print(f'{r.id} {r.finna_id} {r.title} saved')
+                if (self.save_record_data(record) == False):
+                    return False
         return True
         
 
@@ -60,7 +75,7 @@ class Command(BaseCommand):
             # images.finna.do_finna_search() will look again for a collection
             data = do_finna_search(page, lookfor, type, collection)
             if (self.parse_finna_records(data) == False):
-                break
+                return False
 
         FinnaImage.objects.update_wikidata_ids()
         self.stdout.write(self.style.SUCCESS('Images saved succesfully!'))
