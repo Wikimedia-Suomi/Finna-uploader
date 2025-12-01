@@ -255,18 +255,6 @@ def get_creator_nane_by_wikidata_id(wikidata_id):
         return None
 
 
-def isCategoryExistingInCommons(commons_site, category_name):
-    if (category_name.find("Category:") < 0):
-        category_name = "Category:" + category_name
-
-    photo_category = pywikibot.Category(commons_site, category_name)
-
-    # Check if the category exists
-    if photo_category.exists():
-        return True
-    return False
-
-
 def setSubjectCategory(wikidata_id, name):
     subjectCategories[wikidata_id] = name
 
@@ -429,7 +417,3 @@ def get_subject_actors_wikidata_id(name):
         raise MissingSubjectActorError
     return obj.wikidata_id
 
-
-pywikibot.config.socket_timeout = 120
-site = pywikibot.Site("commons", "commons")  # for Wikimedia Commons
-site.login()

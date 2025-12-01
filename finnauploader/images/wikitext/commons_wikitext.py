@@ -1,3 +1,6 @@
+# templates and descriptions for commons,
+# generated based on finna data for uploaded stuff
+
 import mwparserfromhell
 from images.wikitext.timestamps import parse_timestamp_string
 from images.wikitext.categories import create_categories_new

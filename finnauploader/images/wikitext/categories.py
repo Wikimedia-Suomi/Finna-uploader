@@ -1,3 +1,6 @@
+# used to generate list of categories for uploaded stuff
+# categories are based on finna data
+
 import mwparserfromhell
 
 from images.wikitext.wikidata_helpers import get_subject_image_category_from_wikidata_id, \
@@ -473,7 +476,7 @@ def get_category_for_subject_in_country(subject_name):
         'pöydät' : 'Tables in',
         'äitienpäivä' : 'Mother\'s Day in',
         'häät' : 'Marriage in',
-        'hääkuvat' : 'Marriage in',
+        #'hääkuvat' : 'Marriage in',
         'hääpuvut' : 'Wedding clothes in',
         'hautausmaat' : 'Cemeteries in',
         'hautajaiset' : 'Funerals in'
@@ -825,3 +828,16 @@ def create_categories_new(finna_image):
 
     # return the wikitext
     return flatten_wikicode
+
+
+# not actually used currently
+def isCategoryExistingInCommons(commons_site, category_name):
+    if (category_name.find("Category:") < 0):
+        category_name = "Category:" + category_name
+
+    photo_category = pywikibot.Category(commons_site, category_name)
+
+    # Check if the category exists
+    if photo_category.exists():
+        return True
+    return False
