@@ -5,6 +5,11 @@ import re
 from datetime import datetime
 from pywikibot.data.sparql import SparqlQuery
 
+from images.sdc_helpers import get_structured_data_for_new_image
+from images.wikitext.commons_wikitext import get_wikitext_for_new_image, \
+                                      get_comment_text
+
+
 
 # should do this here instead of in wikidata_helpers.py ?
 pywikibot.config.socket_timeout = 120
@@ -80,42 +85,53 @@ def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
     return file_page
 
 
-def get_copyright_template_name(finna_image):
-    copyright = finna_image.image_right.get_copyright()
+# bad name due to existing methods, rename later
+# called from views.py on upload
+#
+def upload_file_update_metadata(finna_image):
 
-    if "CC0" in copyright:
-        return "CC0"
-    elif "CC BY 4.0" in copyright:
-        return "CC-BY-4.0"
-    elif "CC BY-SA 4.0" in copyright:
-        return "CC BY-SA 4.0"
-    elif "PDM" in copyright:
-        return "PDM"
-    else:
-        print("Copyright error")
-        print(finna_image.image_right.copyright)
-        exit(1)
+    # generate name for the upload, show it to the user as well
+    filename = finna_image.pseudo_filename
+
+    image_url = finna_image.master_url
+
+    # if we store incomplete url -> needs fixing
+    if (image_url.find("http://") < 0 and image_url.find("https://") < 0):
+        print("URL is not complete:", image_url)
+        return ""
+
+    # can't upload from redirector with copy-upload:
+    # must handle differently
+    if (image_url.find("siiri.urn") > 0 or image_url.find("profium.com") > 0):
+        print("Cannot use copy-upload from URL:", image_url)
+        return ""
+
+    structured_data = get_structured_data_for_new_image(finna_image)
+    wikitext = get_wikitext_for_new_image(finna_image)
+    comment = get_comment_text(finna_image)
+
+    # Debug log
+    print('')
+    print(wikitext)
+    print('')
+    print(comment)
+    print(filename)
+
+    print('uploading from:', image_url)
 
 
-def get_comment_text(finna_image):
-    authorlist = list()
-    npauthors = finna_image.non_presenter_authors.all()
-    for author in npauthors:
-        if (author.is_photographer()):
-            authorlist.append(author.name)
+    page = upload_file_to_commons(image_url, filename,
+                                wikitext, comment)
+    ret = edit_commons_mediaitem(page, structured_data)
 
-    if not authorlist:
-        authorlist.append('unknown')
+    finna_image.already_in_commons = True
+    finna_image.save()
 
-    ret = "Uploading \'" + finna_image.short_title + "\'"
-    ret = ret + " by \'" + "; ".join(authorlist) + "\'"
-
-    copyrighttemplate = get_copyright_template_name(finna_image)
-
-    ret = f'{ret} with licence {copyrighttemplate}'
-    ret = f'{ret} from {finna_image.url}'
-
-    return ret
+    # saved
+    print(ret)
+    
+    # ok, this is just for user information now
+    return filename
 
 
 def is_qid(page_title):

@@ -7,10 +7,18 @@ from images.wikitext.categories import create_categories_new
 
 from images.wikitext.wikidata_helpers import get_creator_nane_by_wikidata_id, \
                                       get_institution_name_by_wikidata_id
-from images.pywikibot_helpers import get_copyright_template_name
 
 
-def lang_template(lang, text):
+#def lang_template(lang, text):
+def make_lang_template(text, lang='fi'):
+    
+    # invalid language code: no commons template for a language like this
+    # bug somewhere?
+    if (len(lang) < 2 or len(lang) > 2):
+        print("WARN: language code is not valid", lang) 
+        exit(1)
+        return ''
+
     text = str(text)
     if text:
         return '{{' + lang + '|' + text + '}}'
@@ -19,6 +27,8 @@ def lang_template(lang, text):
 
 
 def create_photographer_template(r):
+    lang = 'fi' # no need to repeat
+    
     # Create a new WikiCode object
     wikicode = mwparserfromhell.parse("")
 
@@ -29,13 +39,13 @@ def create_photographer_template(r):
     template.add('photographer', r['creator_template'])
     template.add('title', '\n'.join(r['template_titles']))
     template.add('description', '\n'.join(r['template_descriptions']))
-    template.add('depicted people', lang_template('fi', r['subjectActors']))
-    template.add('depicted place', lang_template('fi', r['subjectPlaces']))
+    template.add('depicted people', make_lang_template(r['subjectActors'], lang))
+    template.add('depicted place', make_lang_template(r['subjectPlaces'], lang))
     template.add('date', parse_timestamp_string(r['date']))
     template.add('medium', '')
     template.add('dimensions', str(r['measurements']))
     template.add('institution', r['institution_template'])
-    template.add('department', lang_template('fi', "; ".join(r['collections'])))  # noqa
+    template.add('department', make_lang_template("; ".join(r['collections']), lang))  # noqa
     template.add('references', '')
     template.add('object history', '')
     template.add('exhibition history', '')
@@ -44,7 +54,7 @@ def create_photographer_template(r):
     template.add('notes', '')
     template.add('accession number', r['identifierString'])
     template.add('source', r['source'])
-    template.add('permission',  lang_template('fi', r['permission']))
+    template.add('permission',  make_lang_template(r['permission'], lang))
     template.add('other_versions', '')
     template.add('wikidata', '')
     template.add('camera coord', '')
@@ -106,10 +116,48 @@ def get_institution_templates(finna_image):
     return "".join(institution_templates)
 
 
+def get_copyright_template_name(finna_image):
+    copyright = finna_image.image_right.get_copyright()
+
+    if "CC0" in copyright:
+        return "CC0"
+    elif "CC BY 4.0" in copyright:
+        return "CC-BY-4.0"
+    elif "CC BY-SA 4.0" in copyright:
+        return "CC BY-SA 4.0"
+    elif "PDM" in copyright:
+        return "PDM"
+    else:
+        print("Copyright error")
+        print(finna_image.image_right.copyright)
+        return ""
+
+
 def get_copyright_template_with_review(finna_image):
     template_name = get_copyright_template_name(finna_image)
     return "{{" + template_name + "}}\n{{FinnaReview}}"
 
+
+# generate comment to be shown in upload log?
+def get_comment_text(finna_image):
+    authorlist = list()
+    npauthors = finna_image.non_presenter_authors.all()
+    for author in npauthors:
+        if (author.is_photographer()):
+            authorlist.append(author.name)
+
+    if not authorlist:
+        authorlist.append('unknown')
+
+    ret = "Uploading \'" + finna_image.short_title + "\'"
+    ret = ret + " by \'" + "; ".join(authorlist) + "\'"
+
+    copyrighttemplate = get_copyright_template_name(finna_image)
+
+    ret = f'{ret} with licence {copyrighttemplate}'
+    ret = f'{ret} from {finna_image.url}'
+
+    return ret
 
 def get_permission_string(finna_image):
     link = finna_image.image_right.get_link()
@@ -141,7 +189,7 @@ def get_photographer_template(finna_image):
         else:
             text = finna_image.alternative_titles.filter(lang=lang).first()
         if text:
-            title = lang_template(lang, text)
+            title = make_lang_template(text, lang)
             titles.append(str(title))
 
     descriptions = []
@@ -160,7 +208,7 @@ def get_photographer_template(finna_image):
 
             # in some images, the summary does not have related language?
             if (summary.lang):
-                description = lang_template(summary.lang, text)
+                description = make_lang_template(text, summary.lang)
             else:
                 description = text
             descriptions.append(description)

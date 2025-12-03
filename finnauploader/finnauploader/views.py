@@ -8,12 +8,8 @@ from django.shortcuts import get_object_or_404
 from watson import search as watson
 
 from images.finna_record_api import get_finna_record, is_valid_finna_record
-from images.wikitext.commons_wikitext import get_wikitext_for_new_image
-from images.sdc_helpers import get_structured_data_for_new_image
 from images.pywikibot_helpers import are_there_messages_for_bot_in_commons, \
-                                    edit_commons_mediaitem, \
-                                    upload_file_to_commons, \
-                                    get_comment_text
+                                    upload_file_update_metadata
 
 
 class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
@@ -48,40 +44,12 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
         
         finna_image = FinnaImage.objects.create_from_data(new_record)
 
-        filename = finna_image.pseudo_filename
-        image_url = finna_image.master_url
-
-        # if we store incomplete url -> needs fixing
-        if (image_url.find("http://") < 0 and image_url.find("https://") < 0):
-            print("URL is not complete:", image_url)
+        filename = upload_file_update_metadata(finna_image)
+        if (filename == ""):
+            # cannot upload for some reason
             exit(1)
 
-        # can't upload from redirector with copy-upload:
-        # must handle differently
-        if (image_url.find("siiri.urn") > 0 or image_url.find("profium.com") > 0):
-            print("Cannot use copy-upload from URL:", image_url)
-            exit(1)
-
-        structured_data = get_structured_data_for_new_image(finna_image)
-        wikitext = get_wikitext_for_new_image(finna_image)
-        comment = get_comment_text(finna_image)
-
-        # Debug log
-        print('')
-        print(wikitext)
-        print('')
-        print(comment)
-        print(filename)
-
-        print('uploading from:', image_url)
-
-        page = upload_file_to_commons(image_url, filename,
-                                    wikitext, comment)
-        ret = edit_commons_mediaitem(page, structured_data)
-        print(ret)
-        finna_image.already_in_commons = True
-        finna_image.save()
-
+        # show result to user
         return Response({"status": "OK",
                         "filename": filename,
                         "message": f'{pk} uploaded to commons'},
