@@ -26,7 +26,7 @@ def make_lang_template(text, lang='fi'):
         return ''
 
 
-def create_photographer_template(r):
+def create_photograph_template(r, finna_image):
     lang = 'fi' # no need to repeat
     
     # Create a new WikiCode object
@@ -36,7 +36,10 @@ def create_photographer_template(r):
     template = mwparserfromhell.nodes.Template(name='Photograph')
 
     # Add the parameters to the template
-    template.add('photographer', r['creator_template'])
+    # TODO: if author is illustrator or architect, use "author" instead of "photographer"
+    # creator: photographer, architect, illustrator
+    template.add('photographer', get_creator_templates(finna_image))
+
     template.add('title', '\n'.join(r['template_titles']))
     template.add('description', '\n'.join(r['template_descriptions']))
     template.add('depicted people', make_lang_template(r['subjectActors'], lang))
@@ -44,7 +47,9 @@ def create_photographer_template(r):
     template.add('date', parse_timestamp_string(r['date']))
     template.add('medium', '')
     template.add('dimensions', str(r['measurements']))
-    template.add('institution', r['institution_template'])
+
+    template.add('institution', get_institution_templates(finna_image))
+
     template.add('department', make_lang_template("; ".join(r['collections']), lang))  # noqa
     template.add('references', '')
     template.add('object history', '')
@@ -54,7 +59,9 @@ def create_photographer_template(r):
     template.add('notes', '')
     template.add('accession number', r['identifierString'])
     template.add('source', r['source'])
-    template.add('permission',  make_lang_template(r['permission'], lang))
+
+    template.add('permission',  make_lang_template(get_permission_string(finna_image), lang))
+
     template.add('other_versions', '')
     template.add('wikidata', '')
     template.add('camera coord', '')
@@ -101,7 +108,29 @@ def get_creator_templates(finna_image):
             creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
             if (creatorName is not None):
                 template = '{{Creator:' + creatorName + '}}'
-                creator_templates.append(template)
+                # don't add duplicates (error in source)
+                if (template not in creator_templates):
+                    creator_templates.append(template)
+
+        if (creator.is_architect()):
+            wikidata_id = creator.get_wikidata_id()
+            creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
+            if (creatorName is not None):
+                template = '{{Creator:' + creatorName + '}}'
+                # don't add duplicates (error in source)
+                if (template not in creator_templates):
+                    creator_templates.append(template)
+
+        # piirtäjä, kuvittaja
+        if (creator.is_creator()):
+            wikidata_id = creator.get_wikidata_id()
+            creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
+            if (creatorName is not None):
+                template = '{{Creator:' + creatorName + '}}'
+                # don't add duplicates (error in source)
+                if (template not in creator_templates):
+                    creator_templates.append(template)
+
     return "".join(creator_templates)
 
 
@@ -130,7 +159,8 @@ def get_copyright_template_name(finna_image):
     else:
         print("Copyright error")
         print(finna_image.image_right.copyright)
-        return ""
+        exit(1)
+        return ''
 
 
 def get_copyright_template_with_review(finna_image):
@@ -215,7 +245,6 @@ def get_photographer_template(finna_image):
             
         #print(summary)
 
-    r['creator_template'] = get_creator_templates(finna_image)
     r['template_titles'] = titles
     r['template_descriptions'] = descriptions
     r['subjectActors'] = "; ".join(depicted_people)
@@ -223,13 +252,11 @@ def get_photographer_template(finna_image):
     r['date'] = finna_image.date_string
     #medium : physical description (colored, vertical/horizontal, paper, film negative..)
     r['measurements'] = finna_image.measurements
-    r['institution_template'] = get_institution_templates(finna_image)
     r['collections'] = collections
     r['identifierString'] = finna_image.identifier_string
     r['source'] = finna_image.url
-    r['permission'] = get_permission_string(finna_image)
 
-    return create_photographer_template(r)
+    return create_photograph_template(r, finna_image)
 
 
 def get_wikitext_for_new_image(finna_image):

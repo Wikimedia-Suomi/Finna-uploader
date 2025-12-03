@@ -62,7 +62,28 @@ def get_building_category_by_architect_id(wikidata_id):
 
         #if (isCategoryExistingInCommons(category)):
             #return category
-        print('DEBUG: using photography category', category)
+        print('DEBUG: using buildings category', category)
+        return category
+
+    return None
+
+def get_works_category_by_creator_id(wikidata_id):
+    if not wikidata_id:
+        print('DEBUG: no wikidata id, unable to find creator category')
+        return None
+
+    creatorName = get_subject_image_category_from_wikidata_id(wikidata_id)
+    if (creatorName != None):
+        print('DEBUG: creator name ', creatorName ,' for wikidata id: ', wikidata_id)
+
+        if 'Works by' in creatorName:
+            category = creatorName
+        else:
+            category = "Works by " + creatorName
+
+        #if (isCategoryExistingInCommons(category)):
+            #return category
+        print('DEBUG: using works category', category)
         return category
 
     return None
@@ -630,6 +651,15 @@ def create_categories_new(finna_image):
                 category = get_building_category_by_architect_id(wikidata_id)
                 if (category != None):
                     categories.add(category)
+
+        # other creator (such as illustrator)
+        if (author.is_creator()):
+            # Q644687 # illustrator, kuvittaja
+            # Q15296811 # piirtäjä
+            wikidata_id = author.get_wikidata_id()
+            category = get_works_category_by_creator_id(wikidata_id)
+            if (category != None):
+                categories.add(category)
 
     # categories from 
     for best_wikidata_location in best_wikidata_locations.all():

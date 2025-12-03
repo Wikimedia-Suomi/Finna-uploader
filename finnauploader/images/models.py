@@ -173,6 +173,12 @@ class FinnaNonPresenterAuthor(models.Model):
             return True
         return False
 
+    # author: illustrator or other creator
+    def is_creator(self):
+        if (self.role == 'tekijä' or self.role == 'Tekijä'):
+            return True
+        return False
+
 
 # another title for the item
 class FinnaAlternativeTitle(models.Model):

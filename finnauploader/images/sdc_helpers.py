@@ -119,11 +119,9 @@ def create_P9478_finna_id(value):
     return claim
 
 
+# TODO: this include photograper, by could include "illustrator" or other such role as well
 def create_P170_author(value, role):
     if not value:
-        return None
-
-    if not role:
         return None
 
     # P170 "Author"
@@ -131,13 +129,15 @@ def create_P170_author(value, role):
     claim_target = pywikibot.ItemPage(wikidata_site, value)
     claim.setTarget(claim_target)
 
-    # P3831 "role"
-    qualifier = pywikibot.Claim(wikidata_site, 'P3831')
+    # if there is specific role known for creator (photographer, architect..)
+    if role:
+        # P3831 "role"
+        qualifier = pywikibot.Claim(wikidata_site, 'P3831')
 
-    # Q33231 = "Kuvaaja"
-    qualifier_target = pywikibot.ItemPage(wikidata_site, 'Q33231')
-    qualifier.setTarget(qualifier_target)
-    claim.addQualifier(qualifier, summary='Adding role qualifier')
+        # Q33231 = "Kuvaaja"
+        qualifier_target = pywikibot.ItemPage(wikidata_site, role)
+        qualifier.setTarget(qualifier_target)
+        claim.addQualifier(qualifier, summary='Adding role qualifier')
 
     return claim
 
@@ -271,14 +271,32 @@ def get_claims_for_image_upload(finna_image):
                    'Valokuvaaja', 'pht', 'valokuvaamo']
     non_presenter_authors = finna_image.non_presenter_authors.all()
 
+    # "kuvan kohteen tekijä" ?
+
     for author in non_presenter_authors:
         if author.role not in known_roles:
             print(f'{author.role} is not known role')
 
+        # TODO: if the photographer is marked twice in source, skip another
         if (author.is_photographer()):
-            wikidata_id = author.get_wikidata_id()
             role = 'Q33231'  # valokuvaaja
+            wikidata_id = author.get_wikidata_id()
             claim = create_P170_author(wikidata_id, role)
+            claims.append(claim)
+
+        if (author.is_architect()):
+            role = 'Q42973'  # arkkitehti
+            wikidata_id = author.get_wikidata_id()
+            claim = create_P170_author(wikidata_id, role)
+            claims.append(claim)
+
+        # other creator (such as illustrator)
+        if (author.is_creator()):
+            # Q644687 # illustrator, kuvittaja
+            # Q15296811 # piirtäjä
+            # or other non-specific creator "tekijä"
+            wikidata_id = author.get_wikidata_id()
+            claim = create_P170_author(wikidata_id, None)
             claims.append(claim)
 
     # Handle collections
