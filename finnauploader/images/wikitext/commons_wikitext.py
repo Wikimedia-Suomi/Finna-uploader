@@ -26,65 +26,6 @@ def make_lang_template(text, lang='fi'):
         return ''
 
 
-def create_photograph_template(r, finna_image):
-    lang = 'fi' # no need to repeat
-    
-    # Create a new WikiCode object
-    wikicode = mwparserfromhell.parse("")
-
-    # Create the template
-    template = mwparserfromhell.nodes.Template(name='Photograph')
-
-    # Add the parameters to the template
-    # TODO: if author is illustrator or architect, use "author" instead of "photographer"
-    # creator: photographer, architect, illustrator
-    template.add('photographer', get_creator_templates(finna_image))
-
-    template.add('title', '\n'.join(r['template_titles']))
-    template.add('description', '\n'.join(r['template_descriptions']))
-    template.add('depicted people', make_lang_template(r['subjectActors'], lang))
-    template.add('depicted place', make_lang_template(r['subjectPlaces'], lang))
-    template.add('date', parse_timestamp_string(r['date']))
-    template.add('medium', '')
-    template.add('dimensions', str(r['measurements']))
-
-    template.add('institution', get_institution_templates(finna_image))
-
-    template.add('department', make_lang_template("; ".join(r['collections']), lang))  # noqa
-    template.add('references', '')
-    template.add('object history', '')
-    template.add('exhibition history', '')
-    template.add('credit line', '')
-    template.add('inscriptions', '')
-    template.add('notes', '')
-    template.add('accession number', r['identifierString'])
-    template.add('source', r['source'])
-
-    template.add('permission',  make_lang_template(get_permission_string(finna_image), lang))
-
-    template.add('other_versions', '')
-    template.add('wikidata', '')
-    template.add('camera coord', '')
-
-    # Add the template to the WikiCode object
-    wikicode.append(template)
-    flat_wikitext = str(wikicode)
-
-    # Add newlines before parameter name
-    params = ['photographer', 'title', 'description', 'depicted people',
-              'depicted place', 'date', 'medium', 'dimensions', 'institution',
-              'department', 'references', 'object history',
-              'exhibition history', 'credit line', 'inscriptions', 'notes',
-              'accession number', 'source', 'permission', 'other_versions',
-              'wikidata', 'camera coord']
-
-    for param in params:
-        flat_wikitext = flat_wikitext.replace(f'|{param}=', f'\n|{param} = ')
-
-    # return the wikitext
-    return flat_wikitext
-
-
 def clean_depicted_places(location_string):
     locations = location_string.split(';')
     sorted_locations = sorted(locations,
@@ -199,29 +140,7 @@ def get_permission_string(finna_image):
         ret = f'{copyright}; {description}'
     return ret
 
-
-def get_photographer_template(finna_image):
-
-    r = {}
-
-    # depicted
-    depicted_people = list(finna_image.subject_actors.values_list('name', flat=True))  # noqa
-    depicted_places = list(finna_image.subject_places.values_list('name', flat=True))  # noqa
-
-    # misc
-    collections = list(finna_image.collections.values_list('name', flat=True))
-
-    langs = ['fi', 'sv', 'en']
-    titles = []
-    for lang in langs:
-        if lang == 'fi':
-            text = finna_image.title
-        else:
-            text = finna_image.alternative_titles.filter(lang=lang).first()
-        if text:
-            title = make_lang_template(text, lang)
-            titles.append(str(title))
-
+def get_descriptions_from_summaries(finna_image):
     descriptions = []
     # there can be multiple separate entries in summary for each language:
     # the strings are in arrays -> combine them all since we can't know order of importance
@@ -245,22 +164,100 @@ def get_photographer_template(finna_image):
             
         #print(summary)
 
-    r['template_titles'] = titles
-    r['template_descriptions'] = descriptions
-    r['subjectActors'] = "; ".join(depicted_people)
-    r['subjectPlaces'] = clean_depicted_places("; ".join(depicted_places))
-    r['date'] = finna_image.date_string
-    #medium : physical description (colored, vertical/horizontal, paper, film negative..)
-    r['measurements'] = finna_image.measurements
-    r['collections'] = collections
-    r['identifierString'] = finna_image.identifier_string
-    r['source'] = finna_image.url
+    return '\n'.join(descriptions)
 
-    return create_photograph_template(r, finna_image)
+def get_titles_from_image(finna_image):
+    langs = ['fi', 'sv', 'en']
+    titles = []
+    for lang in langs:
+        if lang == 'fi':
+            text = finna_image.title
+        else:
+            text = finna_image.alternative_titles.filter(lang=lang).first()
+        if text:
+            title = make_lang_template(text, lang)
+            titles.append(str(title))
+            
+    return '\n'.join(titles)
+
+
+def create_photograph_template(finna_image):
+    lang = 'fi' # no need to repeat
+    
+    # Create a new WikiCode object
+    wikicode = mwparserfromhell.parse("")
+
+    # Create the template
+    template = mwparserfromhell.nodes.Template(name='Photograph')
+
+    # Add the parameters to the template
+    # TODO: if author is illustrator or architect, use "author" instead of "photographer"
+    # creator: photographer, architect, illustrator
+    template.add('photographer', get_creator_templates(finna_image))
+
+    template.add('title', get_titles_from_image(finna_image))
+    
+    # there can be multiple separate entries in summary for each language:
+    # the strings are in arrays -> combine them all since we can't know order of importance
+    template.add('description', get_descriptions_from_summaries(finna_image))
+
+    # depicted
+    depicted_people = list(finna_image.subject_actors.values_list('name', flat=True))  # noqa
+    depicted_places = list(finna_image.subject_places.values_list('name', flat=True))  # noqa
+
+    joinedactors = "; ".join(depicted_people)
+    joinedplaces = clean_depicted_places("; ".join(depicted_places))
+
+
+    template.add('depicted people', make_lang_template(joinedactors, lang))
+    template.add('depicted place', make_lang_template(joinedplaces, lang))
+    template.add('date', parse_timestamp_string(finna_image.date_string))
+    template.add('medium', '')
+    template.add('dimensions', str(finna_image.measurements))
+
+    template.add('institution', get_institution_templates(finna_image))
+    
+    # misc
+    collections = list(finna_image.collections.values_list('name', flat=True))
+    coll_joined = "; ".join(collections)
+
+    template.add('department', make_lang_template(coll_joined, lang))  # noqa
+    template.add('references', '')
+    template.add('object history', '')
+    template.add('exhibition history', '')
+    template.add('credit line', '')
+    template.add('inscriptions', '')
+    template.add('notes', '')
+    template.add('accession number', finna_image.identifier_string)
+    template.add('source', finna_image.url)
+
+    template.add('permission',  make_lang_template(get_permission_string(finna_image), lang))
+
+    template.add('other_versions', '')
+    template.add('wikidata', '')
+    template.add('camera coord', '')
+
+    # Add the template to the WikiCode object
+    wikicode.append(template)
+    flat_wikitext = str(wikicode)
+
+    # Add newlines before parameter name
+    params = ['photographer', 'title', 'description', 'depicted people',
+              'depicted place', 'date', 'medium', 'dimensions', 'institution',
+              'department', 'references', 'object history',
+              'exhibition history', 'credit line', 'inscriptions', 'notes',
+              'accession number', 'source', 'permission', 'other_versions',
+              'wikidata', 'camera coord']
+
+    for param in params:
+        flat_wikitext = flat_wikitext.replace(f'|{param}=', f'\n|{param} = ')
+
+    # return the wikitext
+    return flat_wikitext
 
 
 def get_wikitext_for_new_image(finna_image):
-    creator = get_photographer_template(finna_image)
+    creator = create_photograph_template(finna_image)
 
     wikitext_parts = []
     wikitext_parts.append("== {{int:filedesc}} ==")
