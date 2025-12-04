@@ -163,6 +163,7 @@ class FinnaNonPresenterAuthor(models.Model):
 
     def is_photographer(self):
         # note: SLS uses "pht"
+        # also: "valokuvaamo" ?
         known_roles = ['kuvaaja', 'valokuvaaja', 'Valokuvaaja', 'pht']
         if (self.role in known_roles):
             return True
@@ -172,12 +173,19 @@ class FinnaNonPresenterAuthor(models.Model):
         if (self.role == 'arkkitehti' or self.role == 'Arkkitehti'):
             return True
         return False
+        # note: "kuvan kohteen tekijä" might be used for architect of a depicted building
+
+    def is_illustrator(self):
+        if (self.role == 'piirtäjä' or self.role == 'Piirtäjä'):
+            return True
+        return False
 
     # author: illustrator or other creator
     def is_creator(self):
         if (self.role == 'tekijä' or self.role == 'Tekijä'):
             return True
         return False
+        # note: "alkuperäisen kuvan tekijä" in some drawings
 
 
 # another title for the item

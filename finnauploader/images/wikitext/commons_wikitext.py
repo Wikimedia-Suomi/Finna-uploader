@@ -40,8 +40,8 @@ def clean_depicted_places(location_string):
 
     return ret
 
-
-def get_creator_templates(finna_image):
+# photographers specifically
+def get_creator_templates_for_photographers(finna_image):
     creator_templates = []
     for creator in finna_image.non_presenter_authors.all():
         if (creator.is_photographer()):
@@ -53,17 +53,13 @@ def get_creator_templates(finna_image):
                 if (template not in creator_templates):
                     creator_templates.append(template)
 
-        if (creator.is_architect()):
-            wikidata_id = creator.get_wikidata_id()
-            creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
-            if (creatorName is not None):
-                template = '{{Creator:' + creatorName + '}}'
-                # don't add duplicates (error in source)
-                if (template not in creator_templates):
-                    creator_templates.append(template)
+    return "".join(creator_templates)
 
-        # piirtäjä, kuvittaja
-        if (creator.is_creator()):
+# non-photographer authors (architects, illustrators)
+def get_creator_templates_for_authors(finna_image):
+    creator_templates = []
+    for creator in finna_image.non_presenter_authors.all():
+        if (creator.is_architect() or creator.is_illustrator() or creator.is_creator()):
             wikidata_id = creator.get_wikidata_id()
             creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
             if (creatorName is not None):
@@ -103,19 +99,15 @@ def get_copyright_template_name(finna_image):
         exit(1)
         return ''
 
-
-def get_copyright_template_with_review(finna_image):
-    template_name = get_copyright_template_name(finna_image)
-    return "{{" + template_name + "}}\n{{FinnaReview}}"
-
-
 # generate comment to be shown in upload log?
 def get_comment_text(finna_image):
     authorlist = list()
     npauthors = finna_image.non_presenter_authors.all()
     for author in npauthors:
-        if (author.is_photographer()):
-            authorlist.append(author.name)
+        if (author.is_photographer() or author.is_architect() or author.is_creator()):
+            # skip duplicate (error in source)
+            if (author.name not in authorlist):
+                authorlist.append(author.name)
 
     if not authorlist:
         authorlist.append('unknown')
@@ -146,8 +138,8 @@ def get_descriptions_from_summaries(finna_image):
     # the strings are in arrays -> combine them all since we can't know order of importance
     for summary in finna_image.summaries.all():
         if (summary):
-            print("DEBUG: summary lang", summary.lang)
-            print("DEBUG: summary text", summary.text)
+            #print("DEBUG: summary lang", summary.lang)
+            #print("DEBUG: summary text", summary.text)
             text = str(summary.text)
             
             # strip some unnecessary heading (if any)
@@ -180,6 +172,17 @@ def get_titles_from_image(finna_image):
             
     return '\n'.join(titles)
 
+def get_depicted_people_from_image(finna_image):
+    depicted_people = list(finna_image.subject_actors.values_list('name', flat=True))  # noqa
+    return "; ".join(depicted_people)
+
+def get_depicted_places_from_image(finna_image):
+    depicted_places = list(finna_image.subject_places.values_list('name', flat=True))  # noqa
+    return clean_depicted_places("; ".join(depicted_places))
+
+def get_collections_from_image(finna_image):
+    collections = list(finna_image.collections.values_list('name', flat=True))
+    return "; ".join(collections)
 
 def create_photograph_template(finna_image):
     lang = 'fi' # no need to repeat
@@ -191,37 +194,31 @@ def create_photograph_template(finna_image):
     template = mwparserfromhell.nodes.Template(name='Photograph')
 
     # Add the parameters to the template
-    # TODO: if author is illustrator or architect, use "author" instead of "photographer"
-    # creator: photographer, architect, illustrator
-    template.add('photographer', get_creator_templates(finna_image))
+    # creator: photographer
+    template.add('photographer', get_creator_templates_for_photographers(finna_image))
 
+    # other creators or authors: architects, illustrators
+    template.add('author', get_creator_templates_for_authors(finna_image))
+
+    # short title
     template.add('title', get_titles_from_image(finna_image))
     
     # there can be multiple separate entries in summary for each language:
     # the strings are in arrays -> combine them all since we can't know order of importance
     template.add('description', get_descriptions_from_summaries(finna_image))
 
-    # depicted
-    depicted_people = list(finna_image.subject_actors.values_list('name', flat=True))  # noqa
-    depicted_places = list(finna_image.subject_places.values_list('name', flat=True))  # noqa
-
-    joinedactors = "; ".join(depicted_people)
-    joinedplaces = clean_depicted_places("; ".join(depicted_places))
-
+    joinedactors = get_depicted_people_from_image(finna_image)
+    joinedplaces = get_depicted_places_from_image(finna_image)
+    joinedcollections = get_collections_from_image(finna_image)
+    permissionstring = get_permission_string(finna_image)
 
     template.add('depicted people', make_lang_template(joinedactors, lang))
     template.add('depicted place', make_lang_template(joinedplaces, lang))
     template.add('date', parse_timestamp_string(finna_image.date_string))
     template.add('medium', '')
     template.add('dimensions', str(finna_image.measurements))
-
     template.add('institution', get_institution_templates(finna_image))
-    
-    # misc
-    collections = list(finna_image.collections.values_list('name', flat=True))
-    coll_joined = "; ".join(collections)
-
-    template.add('department', make_lang_template(coll_joined, lang))  # noqa
+    template.add('department', make_lang_template(joinedcollections, lang))  # noqa
     template.add('references', '')
     template.add('object history', '')
     template.add('exhibition history', '')
@@ -230,8 +227,7 @@ def create_photograph_template(finna_image):
     template.add('notes', '')
     template.add('accession number', finna_image.identifier_string)
     template.add('source', finna_image.url)
-
-    template.add('permission',  make_lang_template(get_permission_string(finna_image), lang))
+    template.add('permission',  make_lang_template(permissionstring, lang))
 
     template.add('other_versions', '')
     template.add('wikidata', '')
@@ -242,7 +238,7 @@ def create_photograph_template(finna_image):
     flat_wikitext = str(wikicode)
 
     # Add newlines before parameter name
-    params = ['photographer', 'title', 'description', 'depicted people',
+    params = ['photographer', 'author', 'title', 'description', 'depicted people',
               'depicted place', 'date', 'medium', 'dimensions', 'institution',
               'department', 'references', 'object history',
               'exhibition history', 'credit line', 'inscriptions', 'notes',
@@ -257,13 +253,15 @@ def create_photograph_template(finna_image):
 
 
 def get_wikitext_for_new_image(finna_image):
-    creator = create_photograph_template(finna_image)
+    photo_template = create_photograph_template(finna_image)
+
+    copyrighttemplatename = get_copyright_template_name(finna_image)
 
     wikitext_parts = []
     wikitext_parts.append("== {{int:filedesc}} ==")
-    wikitext_parts.append(creator + '\n')
+    wikitext_parts.append(photo_template + '\n')
     wikitext_parts.append("== {{int:license-header}} ==")
-    wikitext_parts.append(get_copyright_template_with_review(finna_image))
+    wikitext_parts.append("{{" + copyrighttemplatename + "}}\n{{FinnaReview}}")
     wikitext_parts.append(create_categories_new(finna_image))
     wikitext = "\n".join(wikitext_parts)
     return wikitext

@@ -243,6 +243,20 @@ def get_inception_claim(finna_image):
         return None
 
 
+def get_role_qcode_for_author(author):
+    if (author.is_photographer()):
+        return 'Q33231'  # valokuvaaja
+
+    if (author.is_architect()):
+        return 'Q42973'  # arkkitehti
+
+    if (author.is_illustrator()):
+        # Q644687 # illustrator, kuvittaja
+        return 'Q15296811'  # piirtäjä
+    
+    return None
+
+
 # this context is for sdc data in commons
 def get_claims_for_image_upload(finna_image):
     claims = []
@@ -265,39 +279,17 @@ def get_claims_for_image_upload(finna_image):
     claim = create_P6216_copyright_state(copyright_data)
     claims.append(claim)
 
-    # Handle non presenter authors (photographers)
-    # note: SLS uses "pht"
-    known_roles = ['kuvaaja', 'reprokuvaaja', 'valokuvaaja',
-                   'Valokuvaaja', 'pht', 'valokuvaamo']
+    # image authors/creators
+
     non_presenter_authors = finna_image.non_presenter_authors.all()
 
-    # "kuvan kohteen tekijä" ?
-
     for author in non_presenter_authors:
-        if author.role not in known_roles:
-            print(f'{author.role} is not known role')
+        
+        role = get_role_qcode_for_author(author)
+        wikidata_id = author.get_wikidata_id()
+        claim = create_P170_author(wikidata_id, role)
+        claims.append(claim)
 
-        # TODO: if the photographer is marked twice in source, skip another
-        if (author.is_photographer()):
-            role = 'Q33231'  # valokuvaaja
-            wikidata_id = author.get_wikidata_id()
-            claim = create_P170_author(wikidata_id, role)
-            claims.append(claim)
-
-        if (author.is_architect()):
-            role = 'Q42973'  # arkkitehti
-            wikidata_id = author.get_wikidata_id()
-            claim = create_P170_author(wikidata_id, role)
-            claims.append(claim)
-
-        # other creator (such as illustrator)
-        if (author.is_creator()):
-            # Q644687 # illustrator, kuvittaja
-            # Q15296811 # piirtäjä
-            # or other non-specific creator "tekijä"
-            wikidata_id = author.get_wikidata_id()
-            claim = create_P170_author(wikidata_id, None)
-            claims.append(claim)
 
     # Handle collections
 

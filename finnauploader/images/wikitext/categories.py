@@ -653,7 +653,7 @@ def create_categories_new(finna_image):
                     categories.add(category)
 
         # other creator (such as illustrator)
-        if (author.is_creator()):
+        if (author.is_illustrator() or author.is_creator()):
             # Q644687 # illustrator, kuvittaja
             # Q15296811 # piirtäjä
             wikidata_id = author.get_wikidata_id()
