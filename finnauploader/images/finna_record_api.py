@@ -28,6 +28,10 @@ def get_json_response(session, url):
 
 # used by finna_search.py
 def get_supported_collections():
+    # uses list stored in Commons or some hard-coded values as default
+    # this could be improved to support alias-names
+    # (see get_collection_name_from_alias)
+    
     return get_collection_names()
 
 
@@ -112,7 +116,9 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
     url += add_finna_api_free_images_only_parameters()
     if full:
         url += add_finna_api_default_field_parameters()
-    url += finna_api_parameter('limit', '100')
+
+    # with limit=20 maximum page=5000 api returns 100 000 records, see last_indexed
+    url += finna_api_parameter('limit', '100') # 0-100, use 0 to get number of results
     url += finna_api_parameter('page', str(page))
 
     collection = get_collection_name_from_alias(collection)
@@ -137,6 +143,7 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
     return get_json_response(s, url)
 
 
+# called from imagehash_helpers.py
 def is_valid_finna_record(finna_record):
     if not finna_record:
         return False
@@ -155,9 +162,11 @@ def is_valid_finna_record(finna_record):
 
     return True
 
+# called from imagehash_helpers.py
 def is_supported_copyright(imageExtended):
     # Test copyright
-    allowed_copyrighs = ['CC BY 4.0', 'CC0']
+    # note: public domain mark may need additional logic
+    allowed_copyrighs = ['CC BY 4.0', 'CC0', 'PDM']
     if "rights" not in imageExtended:
         # malformed?
         return False
@@ -174,6 +183,68 @@ def is_supported_copyright(imageExtended):
     copyright_msg = imageExtended['rights']['copyright']
     print(f'Incorrect copyright: {copyright_msg}')
     return False
+
+# TODO: check this
+def is_valid_image_copyright(finna_record):
+
+    allowed_copyrighs = ['CC BY 4.0', 'CC0', 'PDM']
+
+    record = finna_record['records'][0]
+    if "imageRights" not in record:
+        # malformed?
+        return False
+    
+    if "copyright" not in record['imageRights']:
+        # malformed?
+        return False
+
+    if record['imageRights']['copyright'] in allowed_copyrighs:
+        # if is in known supported -> true
+        return True
+    return False
+
+def get_finna_image_urls(finna_id):
+    finnaurllist = list()
+
+    finna_record = get_finna_record(finna_id, True)
+    if (is_valid_finna_record(finna_record) == False):
+        print('Not valid record, id:', finna_id)
+        return None
+
+    if finna_record['resultCount'] != 1:
+        print('Finna resultCount != 1')
+        return None
+
+    #if (not allow_multiple_images and len(finna_record['records'][0]['imagesExtended']) > 1):
+    #    print('Multiple images in single record. Skipping')
+    #    return False
+
+    record_finna_id = finna_record['records'][0]['id']
+    if record_finna_id != finna_id:
+        print(f'finna_id update: {finna_id} -> {record_finna_id}')
+
+    for imageExtended in finna_record['records'][0]['imagesExtended']:
+        if (is_supported_copyright(imageExtended) == False):
+            return None
+
+        # Confirm that images are same using imagehash
+
+        file_path = imageExtended['urls']['large']
+        finna_thumbnail_url = f'https://finna.fi{file_path}'
+        print(finna_thumbnail_url)
+
+        # try to catch unsupported format before pillow
+        # note! might have smaller resolution image in another format
+        if "highResolution" in imageExtended:
+            hires = imageExtended['highResolution']
+            if "original" in hires:
+                hires = imageExtended['highResolution']['original'][0]
+                if "format" in hires:
+                    if (isimageformatsupported(hires["format"]) == False):
+                        print("Unknown image format in Finna-data, might not be supported:", hires["format"])
+    
+        finnaurllist.add(finna_thumbnail_url)
+    return finnaurllist
 
 
 # Get finna API record with most of the information

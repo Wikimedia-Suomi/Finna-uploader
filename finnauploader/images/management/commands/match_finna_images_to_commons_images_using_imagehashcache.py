@@ -8,7 +8,9 @@ import pywikibot
 from pywikibot.data import sparql
 import requests
 import time
-from images.imagehash_helpers import compare_image_hashes, is_correct_finna_record
+from images.imagehash_helpers import compare_image_hashes
+from images.imagehash_helpers import compare_finna_hash
+from images.finna_record_api import get_finna_image_urls
 from images.conversion import unsigned_to_signed, signed_to_unsigned
 
 class Command(BaseCommand):
@@ -32,6 +34,10 @@ class Command(BaseCommand):
             photo=Image.objects.filter(finna_id=finna_id).first()
             if photo:
                 continue
+
+            #finna_record = get_finna_record(finna_id, True)
+            finnaurls = get_finna_image_urls(finna_id)
+
 
 #            print(f'{imagehash.finna_image.finna_id}\t{imagehash.finna_image.title}')
             img1 = {
@@ -58,19 +64,20 @@ class Command(BaseCommand):
                         file_page = pywikibot.FilePage(commons_site, page.title())
                         item = file_page.data_item()
                         try:
-                            data=item.get()
+                            data = item.get()
                         except:
                             continue
 
                         if 'P9478' not in str(data):
-                           print(f'\nP9478 missing: {file_page}')
+                            print(f'\nP9478 missing: {file_page}')
 
-                           commons_thumbnail_url=file_page.get_file_url(url_width=500)
-                           confirmed_finna_id=is_correct_finna_record(finna_id, commons_thumbnail_url)
-                           if confirmed_finna_id:
-                               print('adding P9478')
-                               new_claim = pywikibot.Claim(wikidata_site, 'P9478')
-                               new_claim.setTarget(finna_id)
-                               commons_site.addClaim(item,new_claim)                              
+                            commons_thumbnail_url = file_page.get_file_url(url_width=500)
+                            commons_img_hash = get_imagehashes(commons_thumbnail_url)
+                            confirmed_finna_id = compare_finna_hash(finnaurls, commons_img_hash)
+                            if confirmed_finna_id:
+                                print('adding P9478')
+                                new_claim = pywikibot.Claim(wikidata_site, 'P9478')
+                                new_claim.setTarget(finna_id)
+                                commons_site.addClaim(item,new_claim)                              
 
         self.stdout.write(self.style.SUCCESS(f'Images matched succesfully!'))

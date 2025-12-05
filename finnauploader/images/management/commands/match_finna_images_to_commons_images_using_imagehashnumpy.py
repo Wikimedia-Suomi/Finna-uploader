@@ -1,7 +1,8 @@
 from django.core.management.base import BaseCommand
 from images.models import FinnaImageHash, ToolforgeImageHashCache
 import pywikibot
-from images.imagehash_helpers import is_correct_finna_record
+from images.finna_record_api import get_finna_image_urls
+from images.imagehash_helpers import compare_finna_hash
 import numpy as np
 from images.duplicatedetection import search_from_sparql_finna_ids
 
@@ -57,6 +58,9 @@ class Command(BaseCommand):
 #            if finna_id != 'museovirasto.B0ACA4613D5CF819619E461288E6CB01':
 #                continue
 
+            #finna_record = get_finna_record(finna_id, True)
+            finnaurls = get_finna_image_urls(finna_id)
+
             phashes = get_nearest_numbers_phash(imagehash.phash, 6)
             dhashes = get_nearest_numbers_dhash(imagehash.dhash, 6)
             p = ToolforgeImageHashCache.objects
@@ -80,8 +84,8 @@ class Command(BaseCommand):
                     if 'P9478' not in str(data):
                         print(f'\nP9478 missing: {file_page}')
                         thumbnail_url = file_page.get_file_url(url_width=500)
-                        confirmed = is_correct_finna_record(finna_id,
-                                                            thumbnail_url)
+                        commons_img_hash = get_imagehashes(commons_thumbnail_url)
+                        confirmed = compare_finna_hash(finnaurls, commons_img_hash)
                         if confirmed:
                             print('adding P9478')
                             new_claim = pywikibot.Claim(wikidata_site, 'P9478')

@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from images.models import FinnaImage
-from images.imagehash_helpers import is_correct_finna_record
+from images.finna_record_api import get_finna_image_urls
+from images.imagehash_helpers import compare_finna_hash
 import pywikibot
 import time
 import json
@@ -189,11 +190,13 @@ def get_label(qid):
     return finnish_label
 
 
-def get_confirmed_filename(image, finna_id):
+def get_confirmed_filename(image, finnaurls):
+    
     file_page = pywikibot.FilePage(csite, image.title())
     commons_thumbnail_url = file_page.get_file_url(url_width=1024)
-    confirmed_finna_id = is_correct_finna_record(finna_id,
-                                                 commons_thumbnail_url)
+    commons_img_hash = get_imagehashes(commons_thumbnail_url)
+
+    confirmed_finna_id = compare_finna_hash(finnaurls, commons_img_hash)
     if confirmed_finna_id:
         return file_page
     else:
@@ -280,11 +283,15 @@ class Command(BaseCommand):
             entity_prefix = 'https://commons.wikimedia.org/entity/M'
             page_id = row['media'].replace(entity_prefix, '')
             page_id = int(page_id)
+            
             finna_id = row['finna_id']
+            finnaurls = get_finna_image_urls(finna_id)
+
             image = list(csite.load_pages_from_pageids([page_id]))[0]
-            fp = get_confirmed_filename(image, finna_id)
+            fp = get_confirmed_filename(image, finnaurls)
             if not fp:
                 continue
+
             print(fp)
             print(row)
 #            get_phi_sorted(finna_data['P5997'])

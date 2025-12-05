@@ -9,6 +9,8 @@ from images.finna_record_api import do_finna_search, \
 class Command(BaseCommand):
     help = 'Import records from Finna search result to the database'
 
+    # TODO: support for alias or institution:
+    # Helsingin kaupunginmuseo and SA-kuva have institution but no collection information
     def add_arguments(self, parser):
         # Named (optional) arguments
         parser.add_argument(
@@ -68,7 +70,7 @@ class Command(BaseCommand):
         default_collection = 'Studio Kuvasiskojen kokoelma'
         collection = options['collection'] or default_collection
 
-        for page in range(1, 201):
+        for page in range(1, 301):
             # Prevent looping too fast for Finna server
             time.sleep(1)
 

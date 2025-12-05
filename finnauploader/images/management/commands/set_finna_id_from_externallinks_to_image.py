@@ -1,7 +1,10 @@
 from django.core.management.base import BaseCommand
 from images.models import Image, ImageURL
 from images.finna_record_api import get_finna_id_from_url
-from images.imagehash_helpers import is_correct_finna_record
+
+from images.finna_record_api import get_finna_image_urls
+from images.imagehash_helpers import compare_finna_hash
+
 import pywikibot
 from pywikibot.data import sparql
 import requests
@@ -11,21 +14,29 @@ class Command(BaseCommand):
     
     # images might have been renamed in commons -> don't crash
     #
-    def confirm_image(self, site, finna_id, page_title):
-        if not finna_id:
-            return None
+    def get_commons_image_hash(self, site, page_title):
         
-        commons_thumbnail_url = None
         try:
             file_page = pywikibot.FilePage(site, page_title)
             commons_thumbnail_url = file_page.get_file_url(url_width=1000)
+            commons_img_hash = get_imagehashes(commons_thumbnail_url)
+
+            return commons_img_hash
+
         except:
         #except pywikibot.exceptions.NoPageError:
             #print("page missing from commons: ", page_title)
             print("error retrieving page from commons: ", page_title)
             return None
-
-        return is_correct_finna_record(finna_id, commons_thumbnail_url)
+        return None
+    
+    def confirm_image_comparison(self, finna_id, commons_img_hash):
+        if not finna_id:
+            return None
+        #finna_record = get_finna_record(finna_id, True)
+        finnaurls = get_finna_image_urls(finna_id)
+        
+        return compare_finna_hash(finnaurls, commons_img_hash)
 
     def confirm_images(self, site):
         images = Image.objects.filter(finna_id__isnull=False)
@@ -38,13 +49,14 @@ class Command(BaseCommand):
         for image in images:
             nro = nro +1
             print("Nro:", nro, "/", total, "title:", image.page_title)
+            commons_image_hash = get_commons_image_hash(site, image.page_title)
 
             for url in image.urls.all():
                 print(url.url)
                 #finna_id=None
                 
-                finna_id=get_finna_id_from_url(url.url)
-                confirmed_finna_id = self.confirm_image(site, finna_id, image.page_title)
+                finna_id = get_finna_id_from_url(url.url)
+                confirmed_finna_id = self.confirm_image_comparison(finna_id, commons_image_hash)
                 if confirmed_finna_id:
                     print("confirmed id: ", confirmed_finna_id, " old id: ", finna_id)
                     image.finna_id = confirmed_finna_id

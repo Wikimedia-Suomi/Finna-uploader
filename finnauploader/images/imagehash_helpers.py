@@ -280,51 +280,16 @@ def compare_image_hashes(img1, img2):
     else:
         return False
 
-
-def is_correct_finna_record(finna_id, image_url, allow_multiple_images=True):
-
-    finna_record = get_finna_record(finna_id, True)
-    if (is_valid_finna_record(finna_record) == False):
-        print('Not valid record, id:', finna_id)
+def compare_finna_hash(finnaurls, img2_hash):
+    if (len(finnaurls) == 0):
+        print('DEBUG: empty url list')
         return False
 
-    if finna_record['resultCount'] != 1:
-        print('Finna resultCount != 1')
-        return False
-
-    if not allow_multiple_images \
-       and len(finna_record['records'][0]['imagesExtended']) > 1:
-        print('Multiple images in single record. Skipping')
-        return False
-
-    record_finna_id = finna_record['records'][0]['id']
-    if record_finna_id != finna_id:
-        print(f'finna_id update: {finna_id} -> {record_finna_id}')
-
-    for imageExtended in finna_record['records'][0]['imagesExtended']:
-        if (is_supported_copyright(imageExtended) == False):
-            return False
-
-        # Confirm that images are same using imagehash
-
-        file_path = imageExtended['urls']['large']
-        finna_thumbnail_url = f'https://finna.fi{file_path}'
-        print(finna_thumbnail_url)
-
-        # try to catch unsupported format before pillow
-        # note! might have smaller resolution image in another format
-        if "highResolution" in imageExtended:
-            hires = imageExtended['highResolution']
-            if "original" in hires:
-                hires = imageExtended['highResolution']['original'][0]
-                if "format" in hires:
-                    if (isimageformatsupported(hires["format"]) == False):
-                        print("Unknown image format in Finna-data, might not be supported:", hires["format"])
+    for finna_thumbnail_url in finnaurls:
 
         # if image fails to be downloaded (obsolete url? removed?) don't crash on it
         try:
             finna_hash = get_imagehashes(finna_thumbnail_url)
-            img2_hash = get_imagehashes(image_url)
             if (finna_hash != None and img2_hash != None):
                 if compare_image_hashes_strict(finna_hash, img2_hash):
                     return record_finna_id
@@ -335,4 +300,5 @@ def is_correct_finna_record(finna_id, image_url, allow_multiple_images=True):
             #return False
 
     # no match
-    #return None
+    return False
+
