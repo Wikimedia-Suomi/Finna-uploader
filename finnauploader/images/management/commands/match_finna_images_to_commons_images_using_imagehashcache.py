@@ -27,11 +27,11 @@ class Command(BaseCommand):
 #            if finna_id != 'museovirasto.B0ACA4613D5CF819619E461288E6CB01':
 #                continue
 
-            sdc_finna_id=SdcFinnaID.objects.filter(finna_id=finna_id).first()
+            sdc_finna_id = SdcFinnaID.objects.filter(finna_id=finna_id).first()
             if sdc_finna_id:
                 continue
 
-            photo=Image.objects.filter(finna_id=finna_id).first()
+            photo = Image.objects.filter(finna_id=finna_id).first()
             if photo:
                 continue
 
@@ -47,7 +47,7 @@ class Command(BaseCommand):
             }
 
             # "SELECT DISTINCT(*) FROM ToolforgeImageHashCache WHERE dhash=imagehash.dhash OR phash=imagehash.phash"
-            rows=ToolforgeImageHashCache.objects.filter(Q(dhash=imagehash.dhash) | Q(phash=imagehash.phash)).distinct()
+            rows = ToolforgeImageHashCache.objects.filter(Q(dhash=imagehash.dhash) | Q(phash=imagehash.phash)).distinct()
             for row in rows:
                 img2 = {
                     'phash':signed_to_unsigned(row.phash),

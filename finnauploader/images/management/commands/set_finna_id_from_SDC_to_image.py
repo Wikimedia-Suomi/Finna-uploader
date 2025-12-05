@@ -1,3 +1,5 @@
+#
+
 from django.core.management.base import BaseCommand
 from images.models import Image, ImageURL
 from images.finna_record_api import get_finna_image_urls
@@ -30,10 +32,11 @@ class Command(BaseCommand):
         for image in images:
             print(image.page_title)
 
-            file_page = pywikibot.FilePage(site, page_title)
+            file_page = pywikibot.FilePage(site, image.page_title)
             commons_thumbnail_url = file_page.get_file_url(url_width=500)
             commons_img_hash = get_imagehashes(commons_thumbnail_url)
 
+            # why ?
             # Quick copying from SDC to finna_id without confirmation
             print(image.sdc_finna_ids.count())
             if image.sdc_finna_ids.count() == 1:

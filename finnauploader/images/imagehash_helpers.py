@@ -7,7 +7,6 @@ import pycurl
 import certifi
 import hashlib
 import imagehash
-from images.finna_record_api import get_finna_record, is_valid_finna_record, is_supported_copyright
 from PIL import Image
 
 

@@ -1,3 +1,5 @@
+#
+
 from django.core.management.base import BaseCommand
 from images.models import Image, ImageURL, FinnaImage, FinnaBuilding, FinnaNonPresenterAuthor, FinnaImageHash, FinnaImageHashURL, SdcFinnaID
 import pywikibot

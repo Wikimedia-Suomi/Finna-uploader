@@ -1,3 +1,5 @@
+#
+
 from django.core.management.base import BaseCommand
 from images.models import Image, ImageURL
 from images.finna_record_api import get_finna_id_from_url
@@ -33,7 +35,7 @@ class Command(BaseCommand):
     def confirm_image_comparison(self, finna_id, commons_img_hash):
         if not finna_id:
             return None
-        #finna_record = get_finna_record(finna_id, True)
+
         finnaurls = get_finna_image_urls(finna_id)
         
         return compare_finna_hash(finnaurls, commons_img_hash)
