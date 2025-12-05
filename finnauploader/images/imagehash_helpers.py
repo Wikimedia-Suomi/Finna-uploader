@@ -280,6 +280,10 @@ def compare_image_hashes(img1, img2):
         return False
 
 def compare_finna_hash(finnaurls, img2_hash):
+    if (finnaurls == None):
+        print('DEBUG: empty url list')
+        return False
+        
     if (len(finnaurls) == 0):
         print('DEBUG: empty url list')
         return False
