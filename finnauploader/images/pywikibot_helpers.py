@@ -39,12 +39,13 @@ def are_there_messages_for_bot_in_commons():
 
 
 # Edit Wikimedia Commons mediaitem using wbeditentity
-def edit_commons_mediaitem(page, data):
+def edit_commons_mediaitem(page_title, data):
+    
     # Reload file_page to be sure that we have updated page_id
 
-    file_page = pywikibot.FilePage(commonssite, page.title())
-    media_identifier = 'M' + str(file_page.pageid)
-    print(media_identifier)
+    file_page = pywikibot.FilePage(commonssite, page_title)
+    media_identifier = 'M' + str(file_page.pageid) # what is in pageid on error?
+    print("media identifier: ", media_identifier)
 
     csrf_token = commonssite.tokens['csrf']
     payload = {
@@ -60,31 +61,6 @@ def edit_commons_mediaitem(page, data):
     return ret
 
 
-def upload_file_to_commons(source_file_url, file_name, wikitext, comment):
-
-    commons_file_name = "File:" + file_name
-    file_page = pywikibot.FilePage(commonssite, commons_file_name)
-    file_page.text = wikitext
-
-    # Check if the page exists
-    if file_page.exists():
-        print(f"The file {commons_file_name} exists.")
-        exit()
-
-    if (len(comment) > 250):
-        print("WARN: length of comment exceeds 250 characters")
-        #comment = comment[:250]
-
-    try:
-        # Load file from url
-        file_page.upload(source_file_url, comment=comment, asynchronous=True)
-    except:
-        print(f"The file {commons_file_name} failed to be uploaded.")
-        raise
-
-    return file_page
-
-
 # bad name due to existing methods, rename later
 # called from views.py on upload
 #
@@ -92,7 +68,6 @@ def upload_file_update_metadata(finna_image):
 
     # generate name for the upload, show it to the user as well
     filename = finna_image.pseudo_filename
-
     image_url = finna_image.master_url
 
     # if we store incomplete url -> needs fixing
@@ -105,10 +80,25 @@ def upload_file_update_metadata(finna_image):
     if (image_url.find("siiri.urn") > 0 or image_url.find("profium.com") > 0):
         print("Cannot use copy-upload from URL:", image_url)
         return ""
+    
+    # before doing other tasks it would be good to check first if file with same name exists
+    #also make sure not to create it by mistake while checking..
+
+    commons_file_name = "File:" + filename
+    file_page = pywikibot.FilePage(commonssite, commons_file_name)
+
+    # Check if the page exists
+    if file_page.exists():
+        print(f"The file {commons_file_name} exists already in Commons, skipping.")
+        return ""
 
     structured_data = get_structured_data_for_new_image(finna_image)
     wikitext = get_wikitext_for_new_image(finna_image)
     comment = get_comment_text(finna_image)
+
+    if (len(comment) > 250):
+        print("WARN: length of comment exceeds 250 characters")
+        #comment = comment[:250]
 
     # Debug log
     print('')
@@ -119,17 +109,31 @@ def upload_file_update_metadata(finna_image):
 
     print('uploading from:', image_url)
 
+    file_page.text = wikitext
+    try:
+        # Load file from url
+        file_page.upload(image_url, comment=comment, asynchronous=True)
+    except:
+        print(f"The file {commons_file_name} failed to be uploaded.")
+        raise
 
-    page = upload_file_to_commons(image_url, filename,
-                                wikitext, comment)
-    ret = edit_commons_mediaitem(page, structured_data)
+    page_title = file_page.title()
+    print("page uploaded", page_title)
+
+    # this is supposed to reload same page to make sure id is updated?
+    ret = edit_commons_mediaitem(page_title, structured_data)
+    
+    # what is returned on success? what about failure?
+    #if ret:
 
     finna_image.already_in_commons = True
     finna_image.save()
 
     # saved
     print(ret)
-    
+
+    #print('saved:', image_url)
+
     # ok, this is just for user information now
     return filename
 
