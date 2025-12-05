@@ -51,7 +51,7 @@ class Command(BaseCommand):
         for image in images:
             nro = nro +1
             print("Nro:", nro, "/", total, "title:", image.page_title)
-            commons_image_hash = get_commons_image_hash(site, image.page_title)
+            commons_image_hash = self.get_commons_image_hash(site, image.page_title)
 
             for url in image.urls.all():
                 print(url.url)

@@ -7,6 +7,8 @@ import html
 from images.wikitext.wikidata_helpers import get_collection_names, \
                                     get_collection_name_from_alias
 
+from images.imagehash_helpers import isimageformatsupported
+
 s = requests.Session()
 s.headers.update({'User-Agent': 'FinnaUploader 0.2 (https://commons.wikimedia.org/wiki/User:FinnaUploadBot)'}) # noqa
 
@@ -243,7 +245,7 @@ def get_finna_image_urls(finna_id):
                     if (isimageformatsupported(hires["format"]) == False):
                         print("Unknown image format in Finna-data, might not be supported:", hires["format"])
     
-        finnaurllist.add(finna_thumbnail_url)
+        finnaurllist.append(finna_thumbnail_url)
     return finnaurllist
 
 
