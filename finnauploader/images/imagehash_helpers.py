@@ -14,7 +14,8 @@ from PIL import Image
 # http://www.hackerfactor.com/blog/index.php?/archives/432-Looks-Like-It.html
 def calculate_phash(im):
     hash = imagehash.phash(im)
-    hash_int = int(str(hash), 16)
+    s = str(hash)
+    hash_int = int(s, 16)
     return hash_int
 
 
@@ -22,13 +23,15 @@ def calculate_phash(im):
 # http://www.hackerfactor.com/blog/index.php?/archives/529-Kind-of-Like-That.htm
 def calculate_dhash(im):
     hash = imagehash.dhash(im)
-    hash_int = int(str(hash), 16)
+    s = str(hash)
+    hash_int = int(s, 16)
     return hash_int
 
 
 def calculate_dhash_vertical(im):
     hash = imagehash.dhash_vertical(im)
-    hash_int = int(str(hash), 16)
+    s = str(hash)
+    hash_int = int(s, 16)
     return hash_int
 
 
@@ -110,14 +113,14 @@ def get_noncached_imagehashes(url, thumbnail=False):
     # If no filecaching then open image from url
     data = download_image(url)
     if (data == None):
+        # image failed to be downloaded?
+        # obsolete url? 
         print("could not download image from url:", url)
         return None
     
     im = Image.open(data)
-
-    # image failed to be downloaded?
-    # obsolete url? unsupported fileformat?
     if (im == None):
+        # unsupported fileformat?
         print("could not open image from url:", url)
         return None
 
@@ -221,16 +224,20 @@ def get_imagehashes(url, thumbnail=False):
         else:
             print("could not download image from url:", url)
     else:
-        print("cached")
+        print("found cached image")
         exists = True
-
-    if (exists == True):
-        # Open the image1 with Pillow
-        im = Image.open(file_path)
 
     # image failed to be downloaded?
     # obsolete url?
+    if (exists == False):
+        print("Image does not exist from url:", url)
+        return None
+
+    # Open the image1 with Pillow
+    im = Image.open(file_path)
     if (im == None):
+        # unsupported file format?
+        print("could not open image from url:", url)
         return None
 
     # Get width and height
