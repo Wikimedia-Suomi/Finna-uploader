@@ -42,14 +42,21 @@ class Command(BaseCommand):
 
                 print("Image:", photo.title, " url:", url)
 
+                imh = None
                 # supposed to use cache here
-                i = get_imagehashes(url, thumbnail=True, filecache=filecache)
+                if filecache:
+                    imh = get_noncached_imagehashes(url, thumbnail=True)
+                else:
+                    imh = get_imagehashes(url, thumbnail=True)
+                    
+                if (imh == None):
+                    print("Could not get imagehashes for:", photo.title, " url:", url)
 
                 try:
                     imagehash, created = FinnaImageHash.objects.get_or_create(
                         finna_image=photo,
-                        phash=unsigned_to_signed(i['phash']),
-                        dhash=unsigned_to_signed(i['dhash']),
+                        phash=unsigned_to_signed(imh['phash']),
+                        dhash=unsigned_to_signed(imh['dhash']),
                         dhash_vertical=unsigned_to_signed(i['dhash_vertical'])
                         )
                     if created:
@@ -57,11 +64,11 @@ class Command(BaseCommand):
 
                     obj = FinnaImageHashURL.objects
                     imagehash_url, created = obj.get_or_create(
-                                        imagehash=imagehash,
-                                        url=url,
-                                        width=i['width'],
-                                        height=i['height'],
-                                        index=index,
+                                        imagehash = imagehash,
+                                        url = url,
+                                        width = imh['width'],
+                                        height = imh['height'],
+                                        index = index,
                                         thumbnail=True
                                     )
                     if created:

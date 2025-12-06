@@ -103,110 +103,131 @@ def get_finna_image_url(finna_id, index):
     return url
 
 
-def get_imagehashes(url, thumbnail=False, filecache=False):
+# simplify a bit, this one is only used in one case
+def get_noncached_imagehashes(url, thumbnail=False):
+    print("no filecache, url:", url)
+
+    # If no filecaching then open image from url
+    data = download_image(url)
+    if (data == None):
+        print("could not download image from url:", url)
+        return None
+    
+    im = Image.open(data)
+
+    # image failed to be downloaded?
+    # obsolete url? unsupported fileformat?
+    if (im == None):
+        print("could not open image from url:", url)
+        return None
+
+    # Get width and height
+    width, height = im.size
+
+    ret = {
+        'url': url,
+        'phash': calculate_phash(im),
+        'dhash': calculate_dhash(im),
+        'dhash_vertical': calculate_dhash_vertical(im),
+        'width': width,
+        'height': height,
+        'thumbnail': thumbnail
+    }
+    return ret
+
+
+def get_imagehashes(url, thumbnail=False):
     im = None
     
-    if filecache:
-        print("filecache")
-        # Extract the domain from the URL
-        parsed_url = urlparse(url)
-        domain = parsed_url.netloc.replace('www.', '')
+    # Extract the domain from the URL
+    parsed_url = urlparse(url)
+    domain = parsed_url.netloc.replace('www.', '')
 
-        # Cached files should be in human readable directories
-        # and using human readable filenames. Files in directories
-        # should be spread to multiple dirs so that there
-        # is no directories with 100k files.
+    # Cached files should be in human readable directories
+    # and using human readable filenames. Files in directories
+    # should be spread to multiple dirs so that there
+    # is no directories with 100k files.
 
-        # Target filename syntax
-        # Finna: finna_id_index.jog
-        # Finna: museovirasto.0F80A4CD84098203075256A6A395EE41_0.jpg
-        # Commons: M123456.jpg
-        # Ajapaik: ajapaik.123456.jpg
+    # Target filename syntax
+    # Finna: finna_id_index.jog
+    # Finna: museovirasto.0F80A4CD84098203075256A6A395EE41_0.jpg
+    # Commons: M123456.jpg
+    # Ajapaik: ajapaik.123456.jpg
 
-        if domain == 'finna.fi':
-            query_components = parse_qs(parsed_url.query)
-            # Extract the 'id' and 'index' parameters
-            id_param = query_components.get('id', [None])[0]
-            organization = id_param.split(".")[0]
-            index_param = query_components.get('index', [None])[0]
-            organizations = ['museovirasto', 'kansallisgalleria']
-            if organization in organizations:
-                filename = f'{id_param}_{index_param}.jpg'
-                md5_hash = hashlib.md5(filename.encode()).hexdigest()
-                parts = [domain, organization, filename]
-                if not is_valid_path_and_filename(parts):
-                    print('ERROR: filename test failed')
-                    print(parts)
-                    exit(1)
-
-                directory = os.path.join('cache',
-                                         domain,
-                                         organization,
-                                         md5_hash[:1], md5_hash[:2])
-            else:
-                print("ERROR: Unknown org")
-                print(url)
-                exit(1)
-        else:
-            # Limit filecached hashing to specific domains for
-            if 1:
-                print("ERROR: Unknown domain in imagehash_helpers.py")
-                print(url)
-                exit(1)
-
-            # Use the first two characters of the hash for the directory name
-            md5_hash = hashlib.md5(url.encode()).hexdigest()
-            directory = os.path.join('cache',
-                                     domain,
-                                     md5_hash[:1], md5_hash[:2])
-            filename = md5_hash + '.jpg'
-            parts = [domain, filename]
+    if domain == 'finna.fi':
+        query_components = parse_qs(parsed_url.query)
+        # Extract the 'id' and 'index' parameters
+        id_param = query_components.get('id', [None])[0]
+        organization = id_param.split(".")[0]
+        index_param = query_components.get('index', [None])[0]
+        organizations = ['museovirasto', 'kansallisgalleria']
+        if organization in organizations:
+            filename = f'{id_param}_{index_param}.jpg'
+            md5_hash = hashlib.md5(filename.encode()).hexdigest()
+            parts = [domain, organization, filename]
             if not is_valid_path_and_filename(parts):
                 print('ERROR: filename test failed')
                 print(parts)
                 exit(1)
 
-        # Create the directory if it doesn't exist
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-        # The path where the image will be saved
-        file_path = os.path.join(directory, filename)
-        print(file_path)
-        
-        exists = False
-
-        # Check if the file already exists
-        if not os.path.exists(file_path):
-            print("creating file")
-
-            # use pycurl
-            data = download_image(url)
-            if (data != None):
-                out_file = open(file_path, 'wb')
-                out_file.write(data)
-                
-                exists = True
-            else:
-                print("could not download image from url:", url)
+            directory = os.path.join('cache',
+                                        domain,
+                                        organization,
+                                        md5_hash[:1], md5_hash[:2])
         else:
-            print("cached")
-            exists = True
-
-        if (exists == True):
-            # Open the image1 with Pillow
-            im = Image.open(file_path)
-
+            print("ERROR: Unknown org")
+            print(url)
+            exit(1)
     else:
-        print("no filecache")
+        # Limit filecached hashing to specific domains for
+        if 1:
+            print("ERROR: Unknown domain in imagehash_helpers.py")
+            print(url)
+            exit(1)
 
-        # If no filecaching then open image from url
+        # Use the first two characters of the hash for the directory name
+        md5_hash = hashlib.md5(url.encode()).hexdigest()
+        directory = os.path.join('cache',
+                                    domain,
+                                    md5_hash[:1], md5_hash[:2])
+        filename = md5_hash + '.jpg'
+        parts = [domain, filename]
+        if not is_valid_path_and_filename(parts):
+            print('ERROR: filename test failed')
+            print(parts)
+            exit(1)
+
+    # Create the directory if it doesn't exist
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # The path where the image will be saved
+    file_path = os.path.join(directory, filename)
+    print(file_path)
+    
+    exists = False
+
+    # Check if the file already exists
+    if not os.path.exists(file_path):
+        print("creating file")
+
+        # use pycurl
         data = download_image(url)
         if (data != None):
-            im = Image.open(data)
+            out_file = open(file_path, 'wb')
+            out_file.write(data)
+            
+            exists = True
         else:
             print("could not download image from url:", url)
-    
+    else:
+        print("cached")
+        exists = True
+
+    if (exists == True):
+        # Open the image1 with Pillow
+        im = Image.open(file_path)
+
     # image failed to be downloaded?
     # obsolete url?
     if (im == None):
@@ -278,6 +299,7 @@ def compare_image_hashes(img1, img2):
         return True
     else:
         return False
+
 
 def compare_finna_hash(finnaurls, img2_hash):
     if (finnaurls == None):
