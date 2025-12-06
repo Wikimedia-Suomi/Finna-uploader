@@ -45,9 +45,9 @@ class Command(BaseCommand):
                 imh = None
                 # supposed to use cache here
                 if filecache:
-                    imh = get_noncached_imagehashes(url, thumbnail=True)
-                else:
                     imh = get_imagehashes(url, thumbnail=True)
+                else:
+                    imh = get_noncached_imagehashes(url, thumbnail=True)
                     
                 if (imh == None):
                     print("Could not get imagehashes for:", photo.title, " url:", url)
