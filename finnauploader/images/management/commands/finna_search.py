@@ -2,8 +2,10 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 import time
 from images.models import FinnaImage
-from images.finna_record_api import do_finna_search, \
-                         get_supported_collections
+from images.finna_record_api import do_finna_search, get_supported_collections
+
+from images.wikitext.wikidata_helpers import get_collection_name_from_alias, \
+                                            get_collection_aliases
 
 
 class Command(BaseCommand):
@@ -20,6 +22,15 @@ class Command(BaseCommand):
             help=('Finna type argument. '
                   'Argument selects where lookfor matches.')
         )
+
+        parser.add_argument(
+            '--alias',
+            type=str,
+            choices=get_collection_aliases(),
+            help=('Finna type argument. '
+                  'Argument selects where lookfor matches.')
+        )
+
 
         parser.add_argument(
             '--type',
@@ -69,15 +80,23 @@ class Command(BaseCommand):
         type = options['type'] or None
         default_collection = 'Studio Kuvasiskojen kokoelma'
         collection = options['collection'] or default_collection
+        aliascoll = options['alias'] or None
+
+        if (aliascoll != None):
+            collection = get_collection_name_from_alias(aliascoll)
+        
+        #if (collection == None and aliases != None):
+        #    collection = aliases
 
         for page in range(1, 301):
-            # Prevent looping too fast for Finna server
-            time.sleep(1)
 
             # images.finna.do_finna_search() will look again for a collection
             data = do_finna_search(page, lookfor, type, collection)
             if (self.parse_finna_records(data) == False):
                 return False
+            else:
+                # Prevent looping too fast for Finna server
+                time.sleep(1)
 
         FinnaImage.objects.update_wikidata_ids()
         self.stdout.write(self.style.SUCCESS('Images saved succesfully!'))

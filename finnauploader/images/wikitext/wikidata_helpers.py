@@ -65,9 +65,22 @@ def get_collection_names():
 
 
 # Shortcut -> long-name translations
+# TODO: Helsingin kaupunginmuseo has only institution without collections, see about supporting it
+def get_collection_aliases():
+    aliases = {
+             'Kuvasiskot': 'Studio Kuvasiskojen kokoelma',
+             #'hkm': 'Helsingin kaupunginmuseo',
+             'JOKA': 'JOKA Journalistinen kuva-arkisto',
+             'SA-kuva': '0/SA-kuva/',
+             'Kansallisgalleria Ateneumin taidemuseo':
+             '0/Kansallisgalleria Ateneumin taidemuseo/'
+    }
+    return aliases
+
 def get_collection_name_from_alias(name):
     aliases = {
              'Kuvasiskot': 'Studio Kuvasiskojen kokoelma',
+             #'hkm': 'Helsingin kaupunginmuseo',
              'JOKA': 'JOKA Journalistinen kuva-arkisto',
              'SA-kuva': '0/SA-kuva/',
              'Kansallisgalleria Ateneumin taidemuseo':

@@ -36,6 +36,10 @@ def get_supported_collections():
     
     return get_collection_names()
 
+# aliases supported in search (institutions)
+#def get_supported_aliases():
+#    return get_collection_aliases()
+
 
 # urlencode Finna parameters
 def finna_api_parameter(name, value):
@@ -123,7 +127,6 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
     url += finna_api_parameter('limit', '100') # 0-100, use 0 to get number of results
     url += finna_api_parameter('page', str(page))
 
-    collection = get_collection_name_from_alias(collection)
     if collection == '0/SA-kuva/':
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
