@@ -1,3 +1,5 @@
+# search commons for images with specific domains in their externallinks
+
 from django.core.management.base import BaseCommand
 from images.models import Image, ImageURL
 import pywikibot

@@ -1,3 +1,6 @@
+# create hashes for locally known (imported) images
+# note the optional parameter to keep images cached locally
+
 from django.core.management.base import BaseCommand
 from images.models import FinnaImage, FinnaImageHash, FinnaImageHashURL
 from images.imagehash_helpers import get_finna_image_url, get_imagehashes

@@ -1,4 +1,4 @@
-#
+# for each locally known image fetch image from commons and compare hash to images in finna
 
 from django.core.management.base import BaseCommand
 from images.models import Image, ImageURL
