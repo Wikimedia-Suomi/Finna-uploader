@@ -176,6 +176,7 @@ class FinnaNonPresenterAuthor(models.Model):
         # note: "kuvan kohteen tekijä" might be used for architect of a depicted building
 
     def is_illustrator(self):
+        # kuvittaja? is it used?
         if (self.role == 'piirtäjä' or self.role == 'Piirtäjä'):
             return True
         return False
@@ -186,6 +187,9 @@ class FinnaNonPresenterAuthor(models.Model):
             return True
         return False
         # note: "alkuperäisen kuvan tekijä" in some drawings
+
+    # "valmistaja" tai "valmistuttaja"
+    #def is_manufacturer(self):
 
 
 # another title for the item

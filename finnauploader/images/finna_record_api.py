@@ -4,8 +4,7 @@ import re
 import xml.etree.ElementTree as ET
 import html
 
-from images.wikitext.wikidata_helpers import get_collection_names, \
-                                    get_collection_name_from_alias
+from images.wikitext.wikidata_helpers import get_collection_names
 
 from images.imagehash_helpers import isimageformatsupported
 
@@ -116,6 +115,27 @@ def add_finna_api_default_field_parameters():
     return url
 
 
+# Shortcut -> long-name translations
+# TODO: Helsingin kaupunginmuseo has only institution without collections, see about supporting it
+def get_collection_aliases():
+    aliases = {
+             'Kuvasiskot': 'Studio Kuvasiskojen kokoelma',
+             'hkm': '0/HKM/',
+             'Helsingin kaupunginmuseo': 'Helsingin kaupunginmuseo',
+             'JOKA': 'JOKA Journalistinen kuva-arkisto',
+             'SA-kuva': '0/SA-kuva/',
+             'Kansallisgalleria Ateneumin taidemuseo': '0/Kansallisgalleria Ateneumin taidemuseo/'
+    }
+    return aliases
+
+def get_collection_name_from_alias(name):
+    aliases = get_collection_aliases()
+    if name in aliases:
+        return aliases[name]
+    else:
+        return name
+
+
 def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, full=True): # noqa
 
     url = "https://api.finna.fi/v1/search?"
@@ -128,6 +148,9 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
     url += finna_api_parameter('page', str(page))
 
     if collection == '0/SA-kuva/':
+        collection_rule = f'~building:"{collection}"'
+        url += finna_api_parameter('filter[]', collection_rule)
+    elif collection == '0/HKM/':
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/Kansallisgalleria Ateneumin taidemuseo/':

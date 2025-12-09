@@ -2,10 +2,9 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 import time
 from images.models import FinnaImage
-from images.finna_record_api import do_finna_search, get_supported_collections
-
-from images.wikitext.wikidata_helpers import get_collection_name_from_alias, \
-                                            get_collection_aliases
+from images.finna_record_api import do_finna_search, get_supported_collections, \
+                                    get_collection_name_from_alias, \
+                                    get_collection_aliases
 
 
 class Command(BaseCommand):

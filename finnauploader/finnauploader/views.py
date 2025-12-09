@@ -16,7 +16,8 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
     # TODO: selection for collection would be nice
     
     queryset = FinnaImage.objects.filter(
-                                         identifier_string__contains='JOKA'
+                                         #identifier_string__contains='JOKA'
+                                         finna_id__contains='hkm'
                                          #identifier_string__contains='SMK',
                                          )
     serializer_class = FinnaImageSerializer
