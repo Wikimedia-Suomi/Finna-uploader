@@ -7,7 +7,6 @@ from pywikibot.data import sparql
 import requests
 import time
 from images.finna_record_api import do_finna_search
-from images.imagehash_helpers import get_imagehashes
 from images.conversion import unsigned_to_signed, signed_to_unsigned
 
 class Command(BaseCommand):

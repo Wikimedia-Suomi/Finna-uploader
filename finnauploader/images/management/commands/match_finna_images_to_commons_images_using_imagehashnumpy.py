@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from images.models import FinnaImageHash, ToolforgeImageHashCache
 import pywikibot
 from images.finna_record_api import get_finna_image_urls
-from images.imagehash_helpers import compare_finna_hash
+from images.imagehash_helpers import compare_finna_hash, get_imagehashes
 import numpy as np
 from images.duplicatedetection import search_from_sparql_finna_ids
 

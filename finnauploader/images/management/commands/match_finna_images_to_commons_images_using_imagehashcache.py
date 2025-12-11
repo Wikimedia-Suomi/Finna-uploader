@@ -8,8 +8,7 @@ import pywikibot
 from pywikibot.data import sparql
 import requests
 import time
-from images.imagehash_helpers import compare_image_hashes
-from images.imagehash_helpers import compare_finna_hash
+from images.imagehash_helpers import compare_image_hashes, compare_finna_hash, get_imagehashes
 from images.finna_record_api import get_finna_image_urls
 from images.conversion import unsigned_to_signed, signed_to_unsigned
 

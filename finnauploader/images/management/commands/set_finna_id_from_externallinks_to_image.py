@@ -5,7 +5,7 @@ from images.models import Image, ImageURL
 from images.finna_record_api import get_finna_id_from_url
 
 from images.finna_record_api import get_finna_image_urls
-from images.imagehash_helpers import compare_finna_hash
+from images.imagehash_helpers import compare_finna_hash, get_imagehashes
 
 import pywikibot
 from pywikibot.data import sparql
