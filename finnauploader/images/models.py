@@ -1,5 +1,6 @@
 from watson import search as watson
 from django.db import models
+from django.db import transaction
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
@@ -83,7 +84,7 @@ class CacheSparqlBool(models.Model):
 
 
 class FintoYsoMissingCache(models.Model):
-    value = models.CharField(max_length=128)
+    value = models.CharField(max_length=500)
     finna_id = models.CharField(max_length=200, null=False, blank=False)
 
 
@@ -122,8 +123,8 @@ class SdcFinnaID(models.Model):
 
 # description of physical structure where collection/item/object may be placed in
 class FinnaBuilding(models.Model):
-    value = models.CharField(max_length=128)
-    translated = models.CharField(max_length=128)
+    value = models.CharField(max_length=500)
+    translated = models.CharField(max_length=500)
 
     def __str__(self):
         return self.translated
@@ -151,7 +152,7 @@ class FinnaImageRight(models.Model):
 # non-presenter may be creator of is_photograph
 # or creator of object in image
 class FinnaNonPresenterAuthor(models.Model):
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length=200)
     role = models.CharField(max_length=128)
     wikidata_id = models.CharField(max_length=10, null=True, blank=True)
 
@@ -228,7 +229,7 @@ class FinnaSubjectWikidataPlace(models.Model):
 
 class FinnaSubjectExtented(models.Model):
     heading = models.TextField()
-    type = models.CharField(max_length=50)
+    type = models.CharField(max_length=250)
     record_id = models.CharField(max_length=255, null=True, blank=True)
     ids = models.JSONField(null=True, blank=True)
     detail = models.TextField(null=True, blank=True)
@@ -290,7 +291,7 @@ class FinnaInstitution(models.Model):
 # Dynamic subjects based on wiki categories / wikidata items
 class FinnaLocalSubject(models.Model):
     value = models.TextField()
-    normalized_name = models.CharField(max_length=200)
+    normalized_name = models.CharField(max_length=250)
 
     def __str__(self):
         return self.value
@@ -331,6 +332,7 @@ class FinnaRecordManager(models.Manager):
                 image.save(update_fields=['already_in_commons'])
 
     # First try
+    # where is that local_data supposed to come from?
     def create_from_data(self, data, local_data={}):
 
         def clean_subject_name(subject):
@@ -342,6 +344,8 @@ class FinnaRecordManager(models.Manager):
                     print(subject)
                     exit(1)
             return subject
+
+        #print("parsing nonprepsenters")
 
         # Extract and handle non_presenter_authors data
         non_presenter_authors_data = data.pop('nonPresenterAuthors', [])
@@ -362,17 +366,25 @@ class FinnaRecordManager(models.Manager):
 
             non_presenter_authors.append(author)
 
+        #print("parsing buildings")
+
         # Extract and handle buildings data
         buildings_data = data.pop('buildings', [])
         buildings = [FinnaBuilding.objects.get_or_create(value=building_data['value'], defaults={'translated': building_data['translated']})[0] for building_data in buildings_data]
+
+        #print("parsing subjects")
 
         # Extract and handle subjects data
         subjects_data = data.pop('subjects', [])
         subjects = [FinnaSubject.objects.get_or_create(name=clean_subject_name(subject_name))[0] for subject_name in subjects_data]
 
+        #print("parsing subjectsplaces")
+
         # Extract and handle subjectPlaces data
         subject_places_data = data.pop('subjectPlaces', [])
         subject_places = [FinnaSubjectPlace.objects.get_or_create(name=subject_place_name.strip())[0] for subject_place_name in subject_places_data]
+
+        #print("parsing subjectsextended")
 
         # Extract and handle subjectExtented data
         subject_extented_data = data.pop('subjectsExtended', [])
@@ -396,6 +408,8 @@ class FinnaRecordManager(models.Manager):
             r, created = FinnaSubjectExtented.objects.get_or_create(heading=heading, type=se['type'], record_id=se['id'], ids=se['ids'], detail=se['detail'])
             subject_extented.append(r)
 
+        #print("parsing subjectactors")
+
         # Extract and handle subjectActors data
         subject_actors_data = data.pop('subjectActors', [])
         subject_actors = [FinnaSubjectActor.objects.get_or_create(name=subject_actor_name)[0] for subject_actor_name in subject_actors_data]
@@ -409,17 +423,25 @@ class FinnaRecordManager(models.Manager):
             except:
                 pass
 
+        #print("parsing subjectdetails")
+
         # Extract and handle subjectDetails data
         subject_details_data = data.pop('subjectDetails', [])
         subject_details = [FinnaSubjectDetail.objects.get_or_create(name=subject_detail_name)[0] for subject_detail_name in subject_details_data]
+
+        #print("parsing collections")
 
         # Extract and handle collections data
         collections_data = data.pop('collections', [])
         collections = [FinnaCollection.objects.get_or_create(name=collection_name)[0] for collection_name in collections_data]
 
+        #print("parsing institutions")
+
         # Extract and handle institutions data
         institutions_data = data.pop('institutions', [])
         institutions = [FinnaInstitution.objects.get_or_create(value=institution_data['value'], defaults={'translated': institution_data['translated']})[0] for institution_data in institutions_data]
+
+        #print("parsing imagerights")
 
         # Extract and handle image_right data
         image_rights_data = data.pop('imageRights', {})
@@ -439,6 +461,8 @@ class FinnaRecordManager(models.Manager):
 
         # Extract images data
         images_data = data.pop('images', [])
+
+        #print("parsing imagesextended")
 
         # Extract imagesExtended data
         images_extended_data = data.pop('imagesExtended', None)
@@ -463,6 +487,8 @@ class FinnaRecordManager(models.Manager):
                 # might be another museovirasto link, but in different domain
                 print("Warn: not a Finna url and not complete url? ", master_url)
 
+        #print("parsing full record")
+
         # Extract the Summary
         # Data which is stored to separate tables
         full_record_data = parse_full_record(data['fullRecord'])
@@ -486,7 +512,7 @@ class FinnaRecordManager(models.Manager):
                                                  lang=s['attributes']['lang'],
                                                  defaults={'order': 1})
             except:
-                print(s)
+                print('Error saving summary:', s)
                 exit(1)
             summaries.append(summary)
 
@@ -518,13 +544,18 @@ class FinnaRecordManager(models.Manager):
             alternative_titles.append(alt_title)
 
         # classification
-        
+
         # Extract local add_categories data
+        # TODO: why is this using "local_data" instead of record? where is local_data filled?
         add_categories_data = local_data.pop('add_categories', [])
         add_categories = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_categories_data]
 
+
+        # TODO: why is this using "local_data" instead of record? where is local_data filled?
         add_depicts_data = local_data.pop('add_depicts', [])
         add_depicts = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_depicts_data]
+
+        print("creating record instance")
 
         # Create the book instance
         record, created = self.get_or_create(finna_id=data['id'], defaults={'image_right': image_right})
@@ -537,6 +568,16 @@ class FinnaRecordManager(models.Manager):
         record.master_format = master_format
         record.measurements = "\n".join(data['measurements'])
         #record.physical_descriptions = "\n".join(data['physicalDescriptions'])
+        
+        if (len(record.finna_id) >= 128):
+            print("finna id exceeds maximum length", record.finna_id)
+            #print("maximum length currently", record.finna_id.Length())
+            return None # skip
+        # identifier string may have list of accession numbers
+        if (len(record.identifier_string) > 500):
+            print("finna identifier_string exceeds maximum length", record.identifier_string)
+            #print("maximum length currently", record.identifier_string.Length())
+            return None # skip
 
         try:
             record.date_string = data['events']['valmistus'][0]['date']
@@ -590,10 +631,16 @@ class FinnaRecordManager(models.Manager):
 
         record.image_right = image_right
 
-        search_index, created = FinnaRecordSearchIndex.objects.get_or_create(datatext=str(data))
-        record.data = search_index
+        try:
+            print("creating search index")
+            search_index, created = FinnaRecordSearchIndex.objects.get_or_create(datatext=str(data))
+            record.data = search_index
+        except:
+            print('Error creating search index for record')
+            return None
 
         try:
+            print("saving record instance")
             record.save()
         except DataError as e:
             print('Error: {}'.format(e))
@@ -601,13 +648,40 @@ class FinnaRecordManager(models.Manager):
 
         return record
 
+    # try to improve debuggability at least a bit
+    # called from finna_search.py
+    # where is that local_data supposed to come from?
+    def create_from_finna_record(self, finna_records, local_data={}):
+        if not finna_records:
+            return False
+        if not 'records' in finna_records:
+            return False
+
+        for record in finna_records['records']:
+            print(" -- -- -- ") # add a simple separator
+
+            with transaction.atomic():
+                try:
+                    ret = self.create_from_data(record, local_data)
+                    if (ret != None):
+                        print(f'{ret.id} {ret.finna_id} {ret.title} saved')
+                    else:
+                        print("record was skipped ")
+                        
+                except:
+                    print("ERROR saving record: ")
+                    print(record)
+                    # just skip for now
+                    #return False
+        return True
+
 
 class FinnaRecordSearchIndex(models.Model):
     datatext = models.TextField()
 
 
 class FinnaImage(models.Model):
-    objects = FinnaRecordManager()
+    objects = FinnaRecordManager() # why does this refer to top-level "manager" ? hierarchy is backwards here..
 
     finna_id = models.CharField(max_length=200, null=False, blank=False, db_index=True, unique=True)
     title = models.TextField()
@@ -639,8 +713,8 @@ class FinnaImage(models.Model):
     data = models.ForeignKey(FinnaRecordSearchIndex, on_delete=models.RESTRICT, null=True, blank=True)
 
     # Accession number or similar identifier
-    # note that this can be array of short identifiers in some collections
-    identifier_string = models.CharField(max_length=128, null=True, blank=True)
+    # note that this can be array of short identifiers (accession numbers) in some collections
+    identifier_string = models.CharField(max_length=500, null=True, blank=True)
     short_title = models.TextField()
 
     # Pseudo properties
