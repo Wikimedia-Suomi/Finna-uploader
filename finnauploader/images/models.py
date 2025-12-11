@@ -333,6 +333,7 @@ class FinnaRecordManager(models.Manager):
 
     # First try
     # where is that local_data supposed to come from?
+    # this is called (indirectly) from finna_search and directly from views.py as well
     def create_from_data(self, data, local_data={}):
 
         def clean_subject_name(subject):
@@ -776,16 +777,16 @@ class FinnaImage(models.Model):
         if not name:
             name = self.short_title
 
-        # filename in commons can't exceed 250 bytes:
+        # filename in commons can't exceed 240 bytes:
         # let's assume we have narrow ASCII only..
-        if (len(name) > 250):
-            if (self.short_title is not None and len(self.short_title) < 250):
+        if (len(name) > 240):
+            if (self.short_title is not None and len(self.short_title) < 240):
                 print("using short title name")
                 name = self.short_title
-            elif (alt_title_name is not None and len(str(alt_title_name)) < 250):
+            elif (alt_title_name is not None and len(str(alt_title_name)) < 240):
                 print("using alt title name")
                 name = alt_title_name.text
-            elif (summaries_name is not None and len(str(summaries_name)) < 250):
+            elif (summaries_name is not None and len(str(summaries_name)) < 240):
                 print("using summaries name")
                 name = summaries_name.text
             else:
@@ -830,21 +831,27 @@ class FinnaImage(models.Model):
         name = name.replace(u"\u00A0", "")
         name = name.replace("\xc2\xa0", "")
 
-        if ((len(name) + len(year) + len(identifier)) > 240):
-            print("filename is becoming too long, limiting it")
+        lenident = len(year) +1 + len(identifier)+2 + len(filename_extension)+1
 
-        # each character with umlaut becomes at least three in HTML-encoding..
         quoted_name = urllib.parse.quote_plus(name)
-        if (len(quoted_name) > 200):
-            print("filename is becoming too long, limiting it")
-            name = name[:200] + "__"
-            print("new name: ", name)
 
         # wiki doesn't allow soft hyphen in names:
         # normal replace() does not work on silent characters for some reason?
         # -> kludge around it
-        quoted_name = urllib.parse.quote_plus(name)
         quoted_name = quoted_name.replace("%C2%AD", "")
+
+        # each character with umlaut becomes at least three in HTML-encoding..
+        if ((len(quoted_name) + lenident) >=  200):
+            print("WARN: quoted filename is becoming too long, limiting it")
+            
+            newnamelen = (220 - lenident)
+            if (newnamelen > 200):
+                newnamelen = 200
+            
+            quoted_name = quoted_name[:newnamelen] + "__"
+            print("new name: ", quoted_name)
+
+        # unquote again..
         name = urllib.parse.unquote(quoted_name)
 
         if (len(year) > 0):
@@ -859,9 +866,10 @@ class FinnaImage(models.Model):
         # 0xC2 0xA0 in utf-8, 0x00A0 in utf-16
         file_name = file_name.replace(u"\u00A0", " ")
 
-        # wiki doesn't allow non-breakable spaces
+        # wiki doesn't allow non-breakable spaces or soft-hyphens
         quoted_name = urllib.parse.quote_plus(file_name)
         quoted_name = quoted_name.replace("%C2%A0", " ")
+        quoted_name = quoted_name.replace("%C2%AD", "")
         file_name = urllib.parse.unquote(quoted_name)
 
         return file_name
