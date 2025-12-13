@@ -164,8 +164,8 @@ class FinnaNonPresenterAuthor(models.Model):
 
     def is_photographer(self):
         # note: SLS uses "pht"
-        # also: "valokuvaamo" ?
-        known_roles = ['kuvaaja', 'valokuvaaja', 'Valokuvaaja', 'pht']
+        # also: "valokuvaamo" for studios
+        known_roles = ['kuvaaja', 'valokuvaaja', 'Valokuvaaja', 'valokuvaamo', 'pht']
         if (self.role in known_roles):
             return True
         return False
@@ -869,7 +869,6 @@ class FinnaImage(models.Model):
         # wiki doesn't allow non-breakable spaces or soft-hyphens
         quoted_name = urllib.parse.quote_plus(file_name)
         quoted_name = quoted_name.replace("%C2%A0", " ")
-        quoted_name = quoted_name.replace("%C2%AD", "")
         file_name = urllib.parse.unquote(quoted_name)
 
         return file_name
