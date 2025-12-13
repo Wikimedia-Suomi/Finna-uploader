@@ -16,6 +16,8 @@ def get_json_response(session, url):
     if not url:
         print("empty url, cannot request")
         return None
+
+    print("DEBUG: requesting with url:", url)
     
     try:
         response = session.get(url)
@@ -124,6 +126,7 @@ def get_collection_aliases():
              'Helsingin kaupunginmuseo': 'Helsingin kaupunginmuseo',
              'JOKA': 'JOKA Journalistinen kuva-arkisto',
              'SA-kuva': '0/SA-kuva/',
+             'SibeliusMuseum' : '0/SibeliusmuseumsArkiv/',
              'Kansallisgalleria Ateneumin taidemuseo': '0/Kansallisgalleria Ateneumin taidemuseo/'
     }
     return aliases
@@ -151,6 +154,9 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/HKM/':
+        collection_rule = f'~building:"{collection}"'
+        url += finna_api_parameter('filter[]', collection_rule)
+    elif collection == '0/SibeliusmuseumsArkiv/':
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/Kansallisgalleria Ateneumin taidemuseo/':
