@@ -440,7 +440,16 @@ class FinnaRecordManager(models.Manager):
 
         # Extract and handle institutions data
         institutions_data = data.pop('institutions', [])
-        institutions = [FinnaInstitution.objects.get_or_create(value=institution_data['value'], defaults={'translated': institution_data['translated']})[0] for institution_data in institutions_data]
+        institutions = [FinnaInstitution.objects.get_or_create(value=institution_data['value'], 
+                                                               defaults={'translated': institution_data['translated']})[0] for institution_data in institutions_data]
+
+        # sanitize data: newlines and tabulators into regular spaces at least
+        #
+        for instmp in institutions:
+            instval = instmp.value
+            instval = instval.replace("\n", " ").replace("\t", " ")
+            instval = instval.replace("  ", " ")
+            instmp.value = instval
 
         #print("parsing imagerights")
 
@@ -492,7 +501,9 @@ class FinnaRecordManager(models.Manager):
 
         # Extract the Summary
         # Data which is stored to separate tables
-        full_record_data = parse_full_record(data['fullRecord'])
+        # try to rationalize this..
+        fullrecord = data['fullRecord']
+        full_record_data = parse_full_record(fullrecord)
 
         summaries = []
         obj = FinnaSummary.objects
