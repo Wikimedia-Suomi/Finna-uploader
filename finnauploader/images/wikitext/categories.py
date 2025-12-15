@@ -567,8 +567,16 @@ def get_category_for_collection(collection_name):
 # categories for institutions like Sibelius museum, Helsinki City museum or Theater museum
 def get_category_for_institution(institution_name):
 
+    instname = ""
     if (institution_name.find("\n") > 0 or institution_name.find("\t") > 0):
         instname = get_clean_institution_name(institution_name)
+    else:
+        instname = institution_name
+
+    if (instname.find("Teatterimuseo") >= 0):
+        return "Theatre Museum (Helsinki)"
+    
+    #if (instname.find("Sibelius-museo") >= 0):
 
     #print("DEBUG: no category for institution:", institution_name)
 

@@ -127,6 +127,9 @@ def get_collection_aliases():
              'JOKA': 'JOKA Journalistinen kuva-arkisto',
              'SA-kuva': '0/SA-kuva/',
              'SibeliusMuseum' : '0/SibeliusmuseumsArkiv/',
+             'Teatterimuseo' : '0/TEATTERIMUSEO/',
+             'Siiri': '0/Siiri/', # Tampereen historialliset museot
+             'Vapriikki': '1/Siiri/Vapriikin kuva-arkisto/',
              'Kansallisgalleria Ateneumin taidemuseo': '0/Kansallisgalleria Ateneumin taidemuseo/'
     }
     return aliases
@@ -157,6 +160,9 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/SibeliusmuseumsArkiv/':
+        collection_rule = f'~building:"{collection}"'
+        url += finna_api_parameter('filter[]', collection_rule)
+    elif collection == '0/TEATTERIMUSEO/':
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/Kansallisgalleria Ateneumin taidemuseo/':
@@ -356,21 +362,77 @@ def get_finna_id_from_url(url):
                 return id
 
 
-# TODO: for categories, parse additional categories from the full record xml:
-# classificationWrap><classification><term lang="fi" label="luokitus">
-#
+# # # #
+# xml record parsing below (embedded in json data)
+
+# descriptive may have some summary text?
+def parsexml_descriptions(xml_root):
+
+    # Find all 'descriptiveNoteValue' elements
+    # and extract their text and attributes
+    descriptive_notes = xml_root.findall(".//descriptiveNoteValue")
+    descriptive_note_values = [
+        {
+            'text': html.unescape(note.text) if note.text else '',
+            'attributes': note.attrib
+        }
+        for note in descriptive_notes
+    ]
+    return descriptive_note_values
+
+
+# "apellations" may have title text?
+def parsexml_appellations(xml_root):
+
+    # Find all 'appellationValue' elements
+    # and extract their text and attributes
+    appellations = xml_root.findall(".//appellationValue")
+    appellation_values = [
+        {
+        'text': html.unescape(appellation.text) if appellation.text else '',
+        'attributes': appellation.attrib
+        }
+        for appellation in appellations
+    ]
+    return appellation_values
+
+
 # TODO: parse original publication (newspaper, date, page):
 # <relatedWorkSet><relatedWork><displayObject>Hufvudstadsbladet 16.6.1940, s. 4</displayObject>
 #
+def parsexml_related_display(xml_root):
+
+    # we want to get those that have <displayObject label=\"julkaisu\">
+    # since <displayObject lang=\"fi\"> has collections which we get already
+    # <relatedWorkSet><relatedWork><displayObject>Hufvudstadsbladet 16.6.1940, s. 4</displayObject>
+    related_works = xml_root.findall(".//displayObject")
+    relatedworks_values = [
+        {
+        'text': html.unescape(relatedwork.text) if relatedwork.text else '',
+        'attributes': relatedwork.attrib
+        }
+        for relatedwork in related_works
+    ]
+    return relatedworks_values
+
+
+# TODO: for categories, parse additional categories from the full record xml:
+# classificationWrap><classification><term lang="fi" label="luokitus">
+#
+#def parsexml_classifications(xml_root):
+    # classificationWrap><classification><term lang="fi" label="luokitus">
+    #classifications = root.findall(".//term")
+
+
 # TODO: parse inscriptions:
 # <inscriptionsWrap><inscriptions><inscriptionDescription><descriptiveNoteValue>Kirjoitus..
 #
+#def parsexml_inscriptions(xml_root):
+
 def parse_full_record(xml_data):
     # Parse the XML data
     root = ET.fromstring(xml_data)
 
-    #descriptive_note_values = []
-    #appellation_values = []
     try:
         # Find all 'descriptiveNoteValue' elements
         # and extract their text and attributes
@@ -394,10 +456,6 @@ def parse_full_record(xml_data):
             for appellation in appellations
         ]
 
-        # <relatedWorkSet><relatedWork><displayObject>Hufvudstadsbladet 16.6.1940, s. 4</displayObject>
-        #related_works = root.findall(".//displayObject")
-        # classificationWrap><classification><term lang="fi" label="luokitus">
-        #classifications = root.findall(".//term")
 
         return {'summary': descriptive_note_values, 'title': appellation_values}
 
