@@ -4,7 +4,7 @@
 import mwparserfromhell
 
 from images.wikitext.wikidata_helpers import get_subject_image_category_from_wikidata_id, \
-                                    get_creator_nane_by_wikidata_id
+                                    get_creator_nane_by_wikidata_id, get_clean_institution_name
 
 
 def get_category_by_wikidata_id(wikidata_id):
@@ -426,6 +426,7 @@ def get_category_for_subject_in_country(subject_name):
         'maitolaiturit' : 'Milk churn stands in',
         'elintarvikeliikkeet' : 'Grocery stores in',
         'elokuvateatterit' : 'Cinemas in',
+        #'teatteri' : 'Theatre of',
         'myymälät' : 'Shops in',
         'ravintolat' : 'Restaurants in',
         'kahvilat' : 'Coffee shops in',
@@ -562,6 +563,16 @@ def get_category_for_collection(collection_name):
         return category
     return None
 
+# TODO:
+# categories for institutions like Sibelius museum, Helsinki City museum or Theater museum
+def get_category_for_institution(institution_name):
+
+    if (institution_name.find("\n") > 0 or institution_name.find("\t") > 0):
+        instname = get_clean_institution_name(institution_name)
+
+    #print("DEBUG: no category for institution:", institution_name)
+
+    return None
 
 # filter some possible errors in names:
 # extra spaces, commas etc.
@@ -808,6 +819,11 @@ def create_categories_new(finna_image):
 
     for collection in finna_image.collections.all():
         category = get_category_for_collection(collection.name)
+        if (category is not None):
+            categories.add(category)
+
+    for institution in finna_image.institutions.all():
+        category = get_category_for_institution(institution.value)
         if (category is not None):
             categories.add(category)
 

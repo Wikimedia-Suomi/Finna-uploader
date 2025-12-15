@@ -18,7 +18,7 @@ from images.duplicatedetection import is_already_in_commons
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_institution_wikidata_id, \
-                                    get_collection_wikidata_id
+                                    get_collection_wikidata_id, get_clean_institution_name
 
 
 def update_dates_in_filename(input_str):
@@ -446,10 +446,10 @@ class FinnaRecordManager(models.Manager):
         # sanitize data: newlines and tabulators into regular spaces at least
         #
         for instmp in institutions:
+
             instval = instmp.value
-            instval = instval.replace("\n", " ").replace("\t", " ")
-            instval = instval.replace("  ", " ")
-            instmp.value = instval
+            if (instval.find("\n") > 0 or instval.find("\t") > 0):
+                instmp.value = get_clean_institution_name(instval)
 
         #print("parsing imagerights")
 
