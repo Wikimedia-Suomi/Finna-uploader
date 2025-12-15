@@ -86,11 +86,59 @@ def get_collection_wikidata_id(name):
     exit(1)
 
 
+def findspc(text, begin, end):
+    i = begin
+    while (i < end):
+        ch = text[i]
+        
+        if (ch == " " or ch == "\n" or ch == "\t"):
+            return i
+        i += 1
+    return -1
+
+def findnonspc(text, begin, end):
+    i = begin
+    while (i < end):
+        ch = text[i]
+        
+        if (ch != " " and ch != "\n" and ch != "\t"):
+            return i
+        i += 1
+    return -1
+
+def striprepeatespaces(text):
+    i = 0
+    end = len(text)
+    while (i < end):
+        ispc = findspc(text, i, end)
+        if (ispc > 0):
+            ins = findnonspc(text, ispc, end)
+            # only strip multiple continuous spaces
+            if (ins > 0 and (ins-ispc) > 1):
+                text = text[:ispc] + " " + text[ins:]
+                return text
+            else:
+                i = ins
+        else:
+            i = end
+    return text
+
 # use mapping from Finna-string to qcode
 def get_institution_wikidata_id(institution_name):
-    obj = InstitutionsCache.objects.get(name=institution_name)
-    if obj:
-        return obj.wikidata_id
+
+    if (institution_name.find("\n") > 0 or institution_name.find("\t") > 0):
+        # cleanup some garbage in names
+        # this ugly hack
+        instname = striprepeatespaces(institution_name.strip())
+        #print("DEBUG: searching institution with [", instname, "] instead of [", institution_name, "]")
+        
+        obj = InstitutionsCache.objects.get(name=instname)
+        if obj:
+            return obj.wikidata_id
+    else:
+        obj = InstitutionsCache.objects.get(name=institution_name)
+        if obj:
+            return obj.wikidata_id
 
     print("Unknown institution: " + str(institution_name))
     exit(1)

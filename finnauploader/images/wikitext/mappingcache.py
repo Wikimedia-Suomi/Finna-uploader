@@ -46,3 +46,11 @@ class MappingCache:
                 for key, value in sub.items():
                     cache[key] = value
         return cache
+
+    def is_cached(self, name):
+        try:
+            obj = self.objects.get(name=name)
+            return True
+        except:
+            pass
+        return False
