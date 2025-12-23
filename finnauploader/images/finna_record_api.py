@@ -118,16 +118,21 @@ def add_finna_api_default_field_parameters():
 
 
 # Shortcut -> long-name translations
-# TODO: Helsingin kaupunginmuseo has only institution without collections, see about supporting it
+# for example, Helsingin kaupunginmuseo has only institution without collections
+# there are also others
 def get_collection_aliases():
     aliases = {
              'Kuvasiskot': 'Studio Kuvasiskojen kokoelma',
              'hkm': '0/HKM/',
              'Helsingin kaupunginmuseo': 'Helsingin kaupunginmuseo',
+             'Vantaa' : '0/VANTAA/', # Vantaan kaupunginmuseo
+             'FMP': '0/FMP/', # Suomen valokuvataiteen museo
              'JOKA': 'JOKA Journalistinen kuva-arkisto',
              'SA-kuva': '0/SA-kuva/',
              'SibeliusMuseum' : '0/SibeliusmuseumsArkiv/',
              'Teatterimuseo' : '0/TEATTERIMUSEO/',
+             'Liekki' : '0/yo-museo/',
+             'Metsästysmuseo' : '0/Metsastysmuseo/', # Suomen Metsästysmuseo
              'Siiri': '0/Siiri/', # Tampereen historialliset museot
              'Vapriikki': '1/Siiri/Vapriikin kuva-arkisto/',
              'Kansallisgalleria Ateneumin taidemuseo': '0/Kansallisgalleria Ateneumin taidemuseo/'
@@ -159,10 +164,22 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
     elif collection == '0/HKM/':
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
+    elif collection == '0/VANTAA/':
+        collection_rule = f'~building:"{collection}"'
+        url += finna_api_parameter('filter[]', collection_rule)
+    elif collection == '0/FMP/':
+        collection_rule = f'~building:"{collection}"'
+        url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/SibeliusmuseumsArkiv/':
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/TEATTERIMUSEO/':
+        collection_rule = f'~building:"{collection}"'
+        url += finna_api_parameter('filter[]', collection_rule)
+    elif collection == '0/yo-museo/':
+        collection_rule = f'~building:"{collection}"'
+        url += finna_api_parameter('filter[]', collection_rule)
+    elif collection == '0/Metsastysmuseo/':
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/Kansallisgalleria Ateneumin taidemuseo/':
@@ -401,23 +418,48 @@ def parsexml_appellations(xml_root):
 # <relatedWorkSet><relatedWork><displayObject>Hufvudstadsbladet 16.6.1940, s. 4</displayObject>
 #
 def parsexml_related_display(xml_root):
+    if (xml_root == None):
+        return None
 
     # we want to get those that have <displayObject label=\"julkaisu\">
     # since <displayObject lang=\"fi\"> has collections which we get already
     # <relatedWorkSet><relatedWork><displayObject>Hufvudstadsbladet 16.6.1940, s. 4</displayObject>
-    related_works = xml_root.findall(".//displayObject")
-    relatedworks_values = [
-        {
-        'text': html.unescape(relatedwork.text) if relatedwork.text else '',
-        'attributes': relatedwork.attrib
-        }
-        for relatedwork in related_works
-    ]
-    return relatedworks_values
+
+    # item may have been in multiple publications
+    publications = list()
+
+    # note: for better safety, use longer path where possible
+    related_works = xml_root.findall(".//relatedWork/displayObject")
+    for work in related_works:
+        foundMatchingAttrib = False
+        #lang = ""
+        if (work.attrib != None):
+            # TODO: use direct lookup if possible (when defined)
+            #a = work.attrib.get("label")
+            
+            for k, v in work.attrib.items():
+                key = html.unescape(k)
+                value = html.unescape(v)
+                #print("DEBUG: related work key ", key, " value ", value )
+                # ok, this tag has what we want
+                if (key == "label" and value == "julkaisu"):
+                    foundMatchingAttrib = True
+                #if (key == "lang"):
+                #    lang = value
+            
+        if (work.text != None and foundMatchingAttrib == True):
+            julkaisu = html.unescape(work.text)
+
+            publications.append(julkaisu)
+    
+    return publications
 
 
 # TODO: for categories, parse additional categories from the full record xml:
 # classificationWrap><classification><term lang="fi" label="luokitus">
+#
+# TODO: parse classification><term lang="fi" label="luokitus"
+# has information like >mustavalkoinen  negatiivi< that we can further categorize with later
 #
 #def parsexml_classifications(xml_root):
     # classificationWrap><classification><term lang="fi" label="luokitus">
