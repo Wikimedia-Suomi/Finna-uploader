@@ -108,24 +108,24 @@ def main(wikidata_id):
     print(f"Actual name on Wikidata: {actual_name}")
 
     # should not include namespace "Category:"
-    sitelink = get_commons_sitelink(wikidata_item)
-    if (sitelink != None):
-        print("Sitelink already in Wikidata:", sitelink )
+    oldsitelink = get_commons_sitelink(wikidata_item)
+    if (oldsitelink != None):
+        print("Sitelink already in Wikidata:", oldsitelink )
 
     commonscatprop = get_commonscat_property(wikidata_item)
     if (commonscatprop != None):
         print("Commons properties already in Wikidata:", commonscatprop )
 
-    if (sitelink != None and commonscatprop != None):
-        if (sitelink not in commonscatprop):
-            print("WARN: Commons property different from commons sitelink:", sitelink )
+    if (oldsitelink != None and commonscatprop != None):
+        if (oldsitelink not in commonscatprop):
+            print("WARN: Commons property different from commons sitelink:", oldsitelink )
 
     # by default, use name from label for category
     new_catname = actual_name
-    if (sitelink != None):
+    if (oldsitelink != None):
         # if there is already sitelink, use that to avoid mismatches:
         # add this to property if it isn't there yet
-        new_catname = sitelink
+        new_catname = oldsitelink
 
     print("Using Commons category name:", new_catname)
 
@@ -147,9 +147,12 @@ def main(wikidata_id):
         category_claim.setTarget(new_catname)
         wikidata_item.addClaim(category_claim)
 
-        sitelink = {'site': 'commonswiki', 'title': created_category_name}
-        summary = 'Add Commons category'
-        wikidata_item.setSitelink(sitelink=sitelink, summary=summary)
+        if (oldsitelink == None):
+            new_sitelink = {'site': 'commonswiki', 'title': created_category_name}
+            summary = 'Add Commons category'
+            wikidata_item.setSitelink(sitelink=new_sitelink, summary=summary)
+
+        print("Property saved")
 
     #return wikidata_id
 
