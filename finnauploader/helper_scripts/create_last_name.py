@@ -220,6 +220,9 @@ def addname(par_name):
     #q_targetph = pywikibot.ItemPage(wikidata_site, hash_methodqcode)
     #p_claim.setTarget(q_targetph)
     #claim.addQualifier(p_claim)
+
+    # force reading back
+    newitem.get()
     
     print('All done', newitem.getID())
 
