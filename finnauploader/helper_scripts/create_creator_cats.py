@@ -44,6 +44,14 @@ def is_designer(item):
     qid = 'Q5322166'  # QID for designer
     return any(claim.getTarget().id == qid for claim in instance_of)
 
+def is_illustrator(item):
+    profession = item.claims.get('P106', [])
+    qid = 'Q644687'  # QID for illustrator
+    #'Q15296811'  # piirtäjä
+    return any(claim.getTarget().id == qid for claim in instance_of)
+
+
+
 # Function to create a creator template in Wikimedia Commons
 def create_creator_template(name, wikidata_id):
     template_text = "{{Creator\n"
@@ -106,6 +114,7 @@ def create_works_commons_category(name):
         works_cat_page.text = "[[Category:%s]]\n\n" % name
         # works by designer
         # Works by <architect>
+        # Works by <illustrator> ?
         #photo_cat_page.text += "[[Category: <>]]" # noqa
         works_cat_page.save("Creating Works subcategory for %s" % name)
 
@@ -181,9 +190,9 @@ def main(wikidata_id, expected_name):
     
     # note: artist/designer works might not be free to upload..
     # check date of death?
-    #if is_designer(wikidata_item):
-        #works_category_name = create_works_commons_category(name)
-        #print(works_category_name)
+    #if is_designer(wikidata_item) or is_illustrator(wikidata_item)
+    #works_category_name = create_works_commons_category(name)
+    #print(works_category_name)
     
     update_commons_list(expected_name, wikidata_id)
 
