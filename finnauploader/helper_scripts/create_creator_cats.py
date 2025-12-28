@@ -22,34 +22,36 @@ def update_commons_list(name, wikidata_id):
         page.text += f"\n* {name} : {{{{Q|{wikidata_id}}}}}"
         page.save("Adding new entry for %s" % name)
 
+def is_instance_of(item, qid):
+    instance_of = item.claims.get('P31', [])
+    for claim in instance_of:
+        if (claim.getTarget().id == qid):
+            return True
+    return False
+
+def has_property_of(item, prop, qid):
+    instance_of = item.claims.get(prop, [])
+    for claim in instance_of:
+        if (claim.getTarget().id == qid):
+            return True
+    return False
 
 # Function to check if the Wikidata item is a human
 def is_human(item):
-    instance_of = item.claims.get('P31', [])
-    human_qid = 'Q5'  # QID for human
-    return any(claim.getTarget().id == human_qid for claim in instance_of)
+    return is_instance_of(item, 'Q5')  # QID for human
 
 def is_photographer(item):
-    profession = item.claims.get('P106', [])
-    qid = 'Q33231'  # QID for photographer
-    return any(claim.getTarget().id == qid for claim in instance_of)
+    return has_property_of(item, 'P106', 'Q33231')  # QID for photographer
 
 def is_architect(item):
-    profession = item.claims.get('P106', [])
-    qid = 'Q42973'  # QID for architect
-    return any(claim.getTarget().id == qid for claim in instance_of)
+    return has_property_of(item, 'P106', 'Q42973')  # QID for architect
 
 def is_designer(item):
-    profession = item.claims.get('P106', [])
-    qid = 'Q5322166'  # QID for designer
-    return any(claim.getTarget().id == qid for claim in instance_of)
+    return has_property_of(item, 'P106', 'Q5322166')  # QID for designer
 
 def is_illustrator(item):
-    profession = item.claims.get('P106', [])
-    qid = 'Q644687'  # QID for illustrator
+    return has_property_of(item, 'P106', 'Q644687')  # QID for illustrator
     #'Q15296811'  # piirtäjä
-    return any(claim.getTarget().id == qid for claim in instance_of)
-
 
 
 # Function to create a creator template in Wikimedia Commons
