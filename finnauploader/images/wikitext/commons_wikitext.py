@@ -134,6 +134,11 @@ def get_permission_string(finna_image):
 
 def get_descriptions_from_summaries(finna_image):
     descriptions = []
+
+    # TODO: if there are equal-signs in text remove them before using language templates:
+    # equal-characters will confuse wikimedia templates..
+    # also in case of many tabulators in data those should be cleaned up as well (stripped)
+    
     # there can be multiple separate entries in summary for each language:
     # the strings are in arrays -> combine them all since we can't know order of importance
     for summary in finna_image.summaries.all():

@@ -415,14 +415,15 @@ class FinnaRecordManager(models.Manager):
         subject_actors_data = data.pop('subjectActors', [])
         subject_actors = [FinnaSubjectActor.objects.get_or_create(name=subject_actor_name)[0] for subject_actor_name in subject_actors_data]
         for subject_actor in subject_actors:
-            try:
-                # Update wikidata id
-                wikidata_id = subject_actor.get_wikidata_id()
-                if subject_actor.wikidata_id != wikidata_id:
-                    subject_actor.wikidata_id = wikidata_id
-                    subject_actor.save(update_fields=['wikidata_id'])
-            except:
-                pass
+            if (subject_actor != None):
+                try:
+                    # Update wikidata id
+                    wikidata_id = subject_actor.get_wikidata_id()
+                    if subject_actor.wikidata_id != wikidata_id:
+                        subject_actor.wikidata_id = wikidata_id
+                        subject_actor.save(update_fields=['wikidata_id'])
+                except:
+                    pass
 
         #print("parsing subjectdetails")
 
@@ -622,7 +623,9 @@ class FinnaRecordManager(models.Manager):
             record.subject_extented.add(se)
 
         for subject_actor in subject_actors:
-            record.subject_actors.add(subject_actor)
+            # there are emoty entries in some cases, which end is the reason?
+            if (subject_actor != None):
+                record.subject_actors.add(subject_actor)
 
         for subject_detail in subject_details:
             record.subject_details.add(subject_detail)

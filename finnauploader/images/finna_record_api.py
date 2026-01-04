@@ -137,6 +137,7 @@ def get_collection_aliases():
              'Satmuseo0' : "0/SATMUSEO/", # Satakunnan Museo
              'Satmuseo1' : "1/SATMUSEO/Kuvakokoelma/", # Kuvakokoelma
              'Vapriikki': '1/Siiri/Vapriikin kuva-arkisto/',
+             'Kansallisgalleria' : '0/Kansallisgalleria Arkistokokoelmat/',
              'Kansallisgalleria Ateneumin taidemuseo': '0/Kansallisgalleria Ateneumin taidemuseo/'
     }
     return aliases
@@ -173,6 +174,9 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '1/SATMUSEO/Kuvakokoelma/':
+        collection_rule = f'~building:"{collection}"'
+        url += finna_api_parameter('filter[]', collection_rule)
+    elif collection == '0/Kansallisgalleria Arkistokokoelmat/':
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/FMP/':
