@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 
-
+# is this used anywhere?
 def parse_timestamp(datestr):
     if not datestr:
         return None, None
@@ -81,7 +81,7 @@ def parse_timestamp_string(datestr):
 
         if not datestr:
             return ''
-        return '{{fi|' + datestr + '}}'
+        return datestr
     except:
-        print(f'Parse_timestamp failed: {datestr}')
+        print(f'parse_timestamp_string failed: {datestr}')
         return ''

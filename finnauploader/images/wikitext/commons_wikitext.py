@@ -99,6 +99,22 @@ def get_copyright_template_name(finna_image):
         exit(1)
         return ''
 
+def get_timestamp_string(finna_image):
+    date_string = finna_image.date_string
+
+    #print("DEBUG: timestring before: ", date_string)
+
+    # another plance to cleanup repeated newlines or tabulators,
+    # do it before other parsing
+    date_string = striprepeatespaces(date_string)
+
+    #print("DEBUG: timestring after: ", date_string)
+    
+    parsed_string = parse_timestamp_string(date_string)
+    if (len(parsed_string) < 1):
+        return ''
+    return '{{fi|' + parsed_string + '}}'
+
 # generate comment to be shown in upload log?
 def get_comment_text(finna_image):
     authorlist = list()
@@ -126,6 +142,11 @@ def get_permission_string(finna_image):
     link = finna_image.image_right.get_link()
     copyright = finna_image.image_right.get_copyright()
     description = finna_image.image_right.get_description()
+
+    # if there sequences of tabulators just strip them out,
+    # they won't make any sense in HTML anyway
+    description = striprepeatespaces(description)
+
     if link:
         ret = f'[{link} {copyright}]; {description}'
     else:
@@ -222,7 +243,7 @@ def create_photograph_template(finna_image):
 
     template.add('depicted people', make_lang_template(joinedactors, lang))
     template.add('depicted place', make_lang_template(joinedplaces, lang))
-    template.add('date', parse_timestamp_string(finna_image.date_string))
+    template.add('date', get_timestamp_string(finna_image))
     template.add('medium', '')
     template.add('dimensions', str(finna_image.measurements))
     template.add('institution', get_institution_templates(finna_image))
