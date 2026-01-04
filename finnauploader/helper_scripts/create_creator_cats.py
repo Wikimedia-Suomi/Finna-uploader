@@ -53,6 +53,34 @@ def is_illustrator(item):
     return has_property_of(item, 'P106', 'Q644687')  # QID for illustrator
     #'Q15296811'  # piirtäjä
 
+def get_name_from_label(wikidata_item, lang='fi'):
+    for li in wikidata_item.labels:
+        label = wikidata_item.labels[li]
+        if (li == lang):
+            return label
+    return None
+
+# check if there is sitelink in wikidata and return it if there is
+def get_commons_sitelink(wikidata_item):
+
+    # throws exception if link does not exist yet
+    #sitelink = wikidata_item.getSitelink('commonswiki')
+
+    if 'commonswiki' in wikidata_item.sitelinks:
+        commonslink = wikidata_item.sitelinks['commonswiki']
+        linktitle = commonslink.canonical_title()
+
+        if (linktitle.find("Category:") == 0):
+            l = len("Category:")
+            return linktitle[l:]
+        return linktitle
+    return None
+
+# check if there is commons-category property in wikidata and return it if there is
+def get_commonscat_property(wikidata_item):
+    if 'P373' in wikidata_item.claims:
+        proplist = wikidata_item.claims['P373']
+    return None
 
 # Function to create a creator template in Wikimedia Commons
 def create_creator_template(name, wikidata_id):
@@ -141,9 +169,36 @@ def main(wikidata_id, expected_name):
         return
 
     # Get the actual name from the Wikidata item
-    actual_name = wikidata_item.labels.get('fi', '[No label]')
+    actual_name = get_name_from_label(wikidata_item)
+    if (actual_name == None):
+        # wikidata item needs fixing first
+        print("There is no Finnish label in Wikidata for:", wikidata_id )
+        return
+    
     print(f"Actual name on Wikidata: {actual_name}")
     print(f"Expected name from parameter: {expected_name}")
+
+    # should not include namespace "Category:"
+    oldsitelink = get_commons_sitelink(wikidata_item)
+    if (oldsitelink != None):
+        print("Sitelink already in Wikidata:", oldsitelink )
+
+    commonscatprop = get_commonscat_property(wikidata_item)
+    if (commonscatprop != None):
+        print("Commons properties already in Wikidata:", commonscatprop )
+
+    if (oldsitelink != None and commonscatprop != None):
+        if (oldsitelink not in commonscatprop):
+            print("WARN: Commons property different from commons sitelink:", oldsitelink )
+
+    # by default, use name from label for category
+    new_catname = actual_name
+    if (oldsitelink != None):
+        # if there is already sitelink, use that to avoid mismatches:
+        # add this to property if it isn't there yet
+        new_catname = oldsitelink
+
+    print("Using Commons category name:", new_catname)
 
     # Confirm from the user if they want to continue
     confirmation = pywikibot.input_choice(
@@ -158,32 +213,34 @@ def main(wikidata_id, expected_name):
 
     # Check for Wikimedia Creator template (P1472)
     if 'P1472' not in wikidata_item.claims:
-        name = wikidata_item.labels['fi']
-        create_creator_template(name, wikidata_id)
+        create_creator_template(new_catname, wikidata_id)
         creator_claim = pywikibot.Claim(wikidata_site, 'P1472')
-        creator_claim.setTarget(name)
+        creator_claim.setTarget(new_catname)
         wikidata_item.addClaim(creator_claim)
+
+        print("Property for creator template saved")
 
     # Check for Commons category (P373)
     if 'P373' not in wikidata_item.claims:
-        name = wikidata_item.labels['fi']
-        category_name = create_commons_category(name)
+        created_category_name = create_commons_category(new_catname)
         category_claim = pywikibot.Claim(wikidata_site, 'P373')
-        category_claim.setTarget(name)
+        category_claim.setTarget(new_catname)
         wikidata_item.addClaim(category_claim)
 
-        sitelink = {'site': 'commonswiki', 'title': category_name}
-        summary = 'Add Commons category'
-        wikidata_item.setSitelink(sitelink=sitelink, summary=summary)
+        if (oldsitelink == None):
+            new_sitelink = {'site': 'commonswiki', 'title': created_category_name}
+            summary = 'Add Commons category'
+            wikidata_item.setSitelink(sitelink=new_sitelink, summary=summary)
 
-    name = wikidata_item.labels['fi']
-    
+        print("Property for sitelink saved")
+
+
     # TODO: if creator is not photographer, don't create photography category:
     # if creator is architect, use create_buildings_commons_category()
     # check property P106 for appropriate category?
     #
     #if is_photographer(wikidata_item):
-    photo_category_name = create_photographs_commons_category(name)
+    photo_category_name = create_photographs_commons_category(new_catname)
     print(photo_category_name)
     
     #if is_architect(wikidata_item):
