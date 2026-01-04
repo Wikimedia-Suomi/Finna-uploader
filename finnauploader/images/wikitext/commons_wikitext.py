@@ -6,7 +6,7 @@ from images.wikitext.timestamps import parse_timestamp_string
 from images.wikitext.categories import create_categories_new
 
 from images.wikitext.wikidata_helpers import get_creator_nane_by_wikidata_id, \
-                                      get_institution_name_by_wikidata_id
+                                      get_institution_name_by_wikidata_id, striprepeatespaces
 
 
 #def lang_template(lang, text):
@@ -135,10 +135,6 @@ def get_permission_string(finna_image):
 def get_descriptions_from_summaries(finna_image):
     descriptions = []
 
-    # TODO: if there are equal-signs in text remove them before using language templates:
-    # equal-characters will confuse wikimedia templates..
-    # also in case of many tabulators in data those should be cleaned up as well (stripped)
-    
     # there can be multiple separate entries in summary for each language:
     # the strings are in arrays -> combine them all since we can't know order of importance
     for summary in finna_image.summaries.all():
@@ -151,6 +147,13 @@ def get_descriptions_from_summaries(finna_image):
             text = text.replace('sisällön kuvaus: ', '')
             text = text.replace('innehållsbeskrivning: ', '')
             text = text.replace('content description: ', '')
+
+            # if there sequences of tabulators just strip them out,
+            # they won't make any sense in HTML anyway
+            text = striprepeatespaces(text)
+
+            # wikimedia templates will break if there are equal signs in text
+            text = text.replace("=", "&equals;")
 
             # in some images, the summary does not have related language?
             if (summary.lang):

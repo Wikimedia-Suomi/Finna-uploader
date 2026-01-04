@@ -116,7 +116,11 @@ def striprepeatespaces(text):
             # only strip multiple continuous spaces
             if (ins > 0 and (ins-ispc) > 1):
                 text = text[:ispc] + " " + text[ins:]
-                return text
+                # continue searching from where we started truncation
+                # since string was shortened
+                i = ispc
+                end = len(text)
+                #return text
             else:
                 i = ins
         else:
