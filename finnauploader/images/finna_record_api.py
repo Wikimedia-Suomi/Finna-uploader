@@ -126,12 +126,13 @@ def get_collection_aliases():
              'hkm': '0/HKM/',
              'Helsingin kaupunginmuseo': 'Helsingin kaupunginmuseo',
              'Vantaa' : '0/VANTAA/', # Vantaan kaupunginmuseo
+             'Kymenlaakso' : '0/Kymenlaakson museo/',
              'FMP': '0/FMP/', # Suomen valokuvataiteen museo
              'JOKA': 'JOKA Journalistinen kuva-arkisto',
              'SA-kuva': '0/SA-kuva/',
              'SibeliusMuseum' : '0/SibeliusmuseumsArkiv/',
              'Teatterimuseo' : '0/TEATTERIMUSEO/',
-             'Liekki' : '0/yo-museo/',
+             'Yomuseo' : '0/yo-museo/',
              'Metsästysmuseo' : '0/Metsastysmuseo/', # Suomen Metsästysmuseo
              'Siiri': '0/Siiri/', # Tampereen historialliset museot
              'Satmuseo0' : "0/SATMUSEO/", # Satakunnan Museo
@@ -170,13 +171,13 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
     elif collection == '0/VANTAA/':
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
+    elif collection == '0/Kymenlaakson museo/':
+        collection_rule = f'~building:"{collection}"'
+        url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/SATMUSEO/':
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '1/SATMUSEO/Kuvakokoelma/':
-        collection_rule = f'~building:"{collection}"'
-        url += finna_api_parameter('filter[]', collection_rule)
-    elif collection == '0/Kansallisgalleria Arkistokokoelmat/':
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/FMP/':
@@ -192,6 +193,9 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/Metsastysmuseo/':
+        collection_rule = f'~building:"{collection}"'
+        url += finna_api_parameter('filter[]', collection_rule)
+    elif collection == '0/Kansallisgalleria Arkistokokoelmat/':
         collection_rule = f'~building:"{collection}"'
         url += finna_api_parameter('filter[]', collection_rule)
     elif collection == '0/Kansallisgalleria Ateneumin taidemuseo/':

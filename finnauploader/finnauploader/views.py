@@ -8,17 +8,22 @@ from django.shortcuts import get_object_or_404
 from watson import search as watson
 
 from images.finna_record_api import get_finna_record, is_valid_finna_record
-from images.pywikibot_helpers import are_there_messages_for_bot_in_commons, \
-                                    upload_file_update_metadata
+from images.pywikibot_helpers import are_there_messages_for_bot_in_commons
+from images.upload_helper import upload_file_update_metadata
 
 
 class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
     # TODO: selection for collection would be nice
     
     queryset = FinnaImage.objects.filter(
-                                         #identifier_string__contains='JOKA'
-                                         finna_id__contains='hkm'
+                                         identifier_string__contains='JOKA'
+                                         #finna_id__contains='hkm'
+                                         #finna_id__contains='fmp'
                                          #identifier_string__contains='SMK',
+                                         #finna_id__contains='sibelius',
+                                         #identifier_string__contains='TeaMK',
+                                         #finna_id__contains='teatterimuseo',
+                                         
                                          )
     serializer_class = FinnaImageSerializer
 
@@ -42,9 +47,9 @@ class FinnaImageViewSet(viewsets.ReadOnlyModelViewSet):
 
         print("DEBUG: new record from finna for id:", old_finna_image.finna_id)
         print(str(new_record))
-        
-        finna_image = FinnaImage.objects.create_from_data(new_record)
 
+        finna_image = FinnaImage.objects.create_from_data(new_record)
+        
         filename = upload_file_update_metadata(finna_image)
         if (filename == ""):
             # cannot upload for some reason
