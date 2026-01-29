@@ -1,9 +1,11 @@
+from images.models import FinnaImage
 import pywikibot
 from pywikibot.exceptions import NoPageError
 import json
 import re
 from datetime import datetime
 
+from images.finna_record_api import get_finna_record, is_valid_finna_record
 from images.pywikibot_helpers import edit_commons_mediaitem
 from images.sdc_helpers import get_structured_data_for_new_image
 from images.wikitext.commons_wikitext import get_wikitext_for_new_image, \
@@ -13,10 +15,19 @@ from images.wikitext.commons_wikitext import get_wikitext_for_new_image, \
 # bad name due to existing methods, rename later
 # called from views.py on upload
 #
-def upload_file_update_metadata(finna_image):
+def upload_file_update_metadata(finna_id):
+    
+    # Update to latest finna_record
+    response = get_finna_record(finna_id, True)
+    if (is_valid_finna_record(response) == False):
+        print("could not get finna record by id:", finna_id)
+        return ""
+    new_record = response['records'][0]
 
-    commonssite = pywikibot.Site('commons', 'commons')
-    commonssite.login()
+    print("DEBUG: new record from finna for id:", finna_id)
+    print(str(new_record))
+
+    finna_image = FinnaImage.objects.create_from_data(new_record)
 
     # generate name for the upload, show it to the user as well
     filename = finna_image.pseudo_filename
@@ -32,6 +43,9 @@ def upload_file_update_metadata(finna_image):
     if (image_url.find("siiri.urn") > 0 or image_url.find("profium.com") > 0):
         print("Cannot use copy-upload from URL:", image_url)
         return ""
+
+    commonssite = pywikibot.Site('commons', 'commons')
+    commonssite.login()
     
     # before doing other tasks it would be good to check first if file with same name exists
     #also make sure not to create it by mistake while checking..
