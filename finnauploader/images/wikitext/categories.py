@@ -566,6 +566,8 @@ def get_category_for_collection(collection_name):
 # TODO:
 # categories for institutions like Sibelius museum, Helsinki City museum or Theater museum
 def get_category_for_institution(institution_name):
+    
+    # use mapping via qcode to category name?
 
     instname = ""
     if (institution_name.find("\n") > 0 or institution_name.find("\t") > 0):
@@ -575,6 +577,9 @@ def get_category_for_institution(institution_name):
 
     if (instname.find("Teatterimuseo") >= 0):
         return "Theatre Museum (Helsinki)"
+    
+    if (instname.find("Tekniikan museo") >= 0):
+        return "Files from Museum of Technology, Helsinki"
     
     #if (instname.find("Sibelius-museo") >= 0):
 
@@ -672,13 +677,20 @@ def create_categories_new(finna_image):
                     categories.add(category)
 
         # other creator (such as illustrator)
-        if (author.is_illustrator() or author.is_creator()):
+        if (author.is_illustrator()):
             # Q644687 # illustrator, kuvittaja
             # Q15296811 # piirtäjä
             wikidata_id = author.get_wikidata_id()
             category = get_works_category_by_creator_id(wikidata_id)
             if (category != None):
                 categories.add(category)
+
+        # skip claim where author role is "tekijä"?
+        #if (author.is_creator()):
+        #    continue
+         
+        # category for manufacturer of object
+        #if (author.is_manufacturer()):
 
     # categories from 
     for best_wikidata_location in best_wikidata_locations.all():

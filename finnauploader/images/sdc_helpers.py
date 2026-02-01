@@ -253,7 +253,8 @@ def get_role_qcode_for_author(author):
     if (author.is_illustrator()):
         # Q644687 # illustrator, kuvittaja
         return 'Q15296811'  # piirtäjä
-    
+
+    # unknown role ("tekijä", "valmistaja", etc.)
     return None
 
 
@@ -285,6 +286,15 @@ def get_claims_for_image_upload(finna_image):
 
     for author in non_presenter_authors:
         
+        # skip claim where author role is "valmistaja"
+        if (author.is_manufacturer()):
+            continue
+        
+        # skip claim where author role is "tekijä"
+        if (author.is_creator()):
+            continue
+
+        #if (author.is_photographer() or author.is_architect() or author.is_illustrator() or author.is_creator()):
         role = get_role_qcode_for_author(author)
         wikidata_id = author.get_wikidata_id()
         claim = create_P170_author(wikidata_id, role)

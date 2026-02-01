@@ -107,6 +107,9 @@ def findnonspc(text, begin, end):
     return -1
 
 def striprepeatespaces(text):
+    # if there is carriage return replace it with normal newline
+    # and clean up duplications below
+    #text = text.replace("\r", "\n")
     i = 0
     end = len(text)
     while (i < end):

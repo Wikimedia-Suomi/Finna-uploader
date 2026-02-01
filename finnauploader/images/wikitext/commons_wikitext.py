@@ -59,7 +59,8 @@ def get_creator_templates_for_photographers(finna_image):
 def get_creator_templates_for_authors(finna_image):
     creator_templates = []
     for creator in finna_image.non_presenter_authors.all():
-        if (creator.is_architect() or creator.is_illustrator() or creator.is_creator()):
+        creatorName = None
+        if (creator.is_architect() or creator.is_illustrator()):
             wikidata_id = creator.get_wikidata_id()
             creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
             if (creatorName is not None):
@@ -67,6 +68,14 @@ def get_creator_templates_for_authors(finna_image):
                 # don't add duplicates (error in source)
                 if (template not in creator_templates):
                     creator_templates.append(template)
+                    
+        if (creatorName == None and (creator.is_creator() or creator.is_manufacturer())):
+            if (creator.name not in creator_templates):
+                creator_templates.append(creator.name)
+        
+        # just use plain string for manufacturer of object?
+        # note: in some cases this is the photographer..
+        #if (creator.is_manufacturer()):
 
     return "".join(creator_templates)
 
@@ -228,6 +237,9 @@ def create_photograph_template(finna_image):
 
     # other creators or authors: architects, illustrators
     template.add('author', get_creator_templates_for_authors(finna_image))
+    
+    # TODO:
+    # for other kinds of creators (manufacturer of object), just use plain string?
 
     # short title
     template.add('title', get_titles_from_image(finna_image))
