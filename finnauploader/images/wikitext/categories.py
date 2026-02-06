@@ -387,6 +387,7 @@ def get_category_for_subject_in_country(subject_name):
         'huonekalut' : 'Furniture in',
         'sohvat' : 'Couches in',
         'tuolit' : 'Chairs in',
+        'verhot' : 'Curtains in',
         'jääkaapit' : 'Refrigerators in‎',
         'sisustus' : 'Interior decoration in',
         'interiöörit' : 'Building interiors in',
@@ -406,6 +407,7 @@ def get_category_for_subject_in_country(subject_name):
         'kirveet' : 'Axes of',
         'vasarat' : 'Hammers of',
         'alasimet' : 'Anvils in',
+        'sorvit' : 'Lathes in',
         #astiat 
         #dreijaus
         #'keramiikka'
@@ -430,6 +432,7 @@ def get_category_for_subject_in_country(subject_name):
         'myymälät' : 'Shops in',
         'ravintolat' : 'Restaurants in',
         'kahvilat' : 'Coffee shops in',
+        # Cafes in
         'konditoriat' : 'Konditoreien in',
         'leipomoteollisuus' : 'Bread industry in',
         #'leipomotuotteet' : '',
