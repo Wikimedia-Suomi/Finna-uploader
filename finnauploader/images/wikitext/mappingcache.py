@@ -39,9 +39,10 @@ class MappingCache:
         print("Loading page:", page_title)
         page = pywikibot.Page(site, page_title)
         cache = self.parse_name_and_q_item(page.text)
-        for n in range(2, 5):
-            page = pywikibot.Page(site, f'{page_title}_{n}')
+        for n in range(2, 6):
+            page = pywikibot.Page(site, f'{page_title} {n}')
             if page.exists():
+                print("Parsing page:", page.title())
                 sub = self.parse_name_and_q_item(page.text)
                 for key, value in sub.items():
                     cache[key] = value

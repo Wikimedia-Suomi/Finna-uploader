@@ -189,6 +189,11 @@ class FinnaNonPresenterAuthor(models.Model):
         return False
         # note: "alkuperäisen kuvan tekijä" in some drawings
 
+    def is_publisher(self):
+        if (self.role == 'kustantaja' or self.role == 'Kustantaja'):
+            return True
+        return False
+
     # "valmistaja" tai "valmistuttaja"
     def is_manufacturer(self):
         if (self.role == 'valmistaja' or self.role == 'Valmistaja'):

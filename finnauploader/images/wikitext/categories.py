@@ -172,6 +172,8 @@ def get_category_place(subject_places):
         return "Sortavala"
     if ('Petsamo'  in subject_places):
         return "Petsamo"
+    if ('Kristiinankaupunki' in subject_places):
+        return "Kristinestad"
 
     cat_place = {
         "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Joutseno","Juupajoki","Jyväskylä","Jämsä","Kaarina","Karkkila","Kajaani","Kauhajoki","Kerava","Kemi","Kitee","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Muhos","Naantali","Padasjoki","Perniö","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tammela","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Vihti","Virolahti","Virrat"
@@ -311,6 +313,8 @@ def get_category_for_subject_in_country(subject_name):
         'liikenneonnettomuudet' : 'Road accidents in',
         'taksit' : 'Taxis in',
         'taksiasemat' : 'Taxi stands in',
+        #'torit' : 'Squares in', # 
+        #'torit' : 'Urban squares in', # 
         'hotellit' : 'Hotels in',
         'kodit' : 'Accommodation buildings in',
         'asuinrakennukset' : 'Houses in',
@@ -424,6 +428,8 @@ def get_category_for_subject_in_country(subject_name):
         'räsymatot' : 'Rugs and carpets of',
         'nuket' : 'Dolls in',
         'leikkikalut' : 'Toys in',
+        'kellarit' : 'Cellars in',
+        'navetat' : 'Cowhouses in',
         'meijerit' : 'Dairies in',
         'maitolaiturit' : 'Milk churn stands in',
         'elintarvikeliikkeet' : 'Grocery stores in',
@@ -431,7 +437,7 @@ def get_category_for_subject_in_country(subject_name):
         #'teatteri' : 'Theatre of',
         'myymälät' : 'Shops in',
         'ravintolat' : 'Restaurants in',
-        'kahvilat' : 'Coffee shops in',
+        'kahvilat' : 'Cafés in',
         # Cafes in
         'konditoriat' : 'Konditoreien in',
         'leipomoteollisuus' : 'Bread industry in',
@@ -523,6 +529,11 @@ def get_category_for_building_by_place(subject_name, subject_places):
     # or Askainen
     if (subject_name == 'kartanot' and 'Louhisaari' in subject_places):
         return 'Louhisaari Manor'
+
+    # note: raadelma and pukkila may be now in same municipality/city (piikkiö, kaarina)
+    # so check in order
+    if (subject_name == 'kartanot' and 'Raadelma' in subject_places):
+        return 'Raadelma mansion'
 
     if (subject_name == 'kartanot' and 'Piikkiö' in subject_places):
         return 'Pukkila Manor'

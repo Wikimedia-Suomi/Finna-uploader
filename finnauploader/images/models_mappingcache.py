@@ -52,6 +52,7 @@ class FinnaMappingsCacheManager(models.Manager):
                 new_page_title = f'{page_title}_{n}'
             page = pywikibot.Page(site, new_page_title)
             if page.exists() and page.latest_revision_id > rev_id:
+                print("Updating from page:", page.title())
                 rev_id = page.latest_revision_id
         print("Page:", page_title, "revision:", rev_id)
         return rev_id
