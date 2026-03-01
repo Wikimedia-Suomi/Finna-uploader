@@ -88,9 +88,11 @@ def get_creator_templates_for_authors(finna_image):
 def get_institution_templates(finna_image):
     institution_templates = []
     for institution in finna_image.institutions.all():
-        #wikidata_id = institution.get_wikidata_id()
-        institution_wikidata_id = get_institution_wikidata_id(institution.translated)
-        institutionName = get_institution_name_by_wikidata_id(institution_wikidata_id)
+        if (not institution.wikidata_id):
+            print("wikidata id missing for institution: ", institution.name)
+            exit()
+        
+        institutionName = get_institution_name_by_wikidata_id(institution.wikidata_id)
         if (institutionName is not None):
             print("using name", institutionName, " for institution ", institution.translated)
             template = '{{Institution:' + institutionName + '}}'

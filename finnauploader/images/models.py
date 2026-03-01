@@ -360,6 +360,15 @@ class FinnaRecordManager(models.Manager):
             except:
                 pass
 
+        # try to update collections in case new ones were added
+        collections = FinnaCollection.objects.all()
+        for collection in collections:
+            try:
+                wikidata_id = get_collection_wikidata_id(collection.name)
+                collection.set_wikidata_id(wikidata_id)
+            except:
+                pass
+
         images = FinnaImage.objects.filter(already_in_commons=False)
         for image in images:
             uploaded = is_already_in_commons(image.finna_id, fast=True)
@@ -477,6 +486,7 @@ class FinnaRecordManager(models.Manager):
                 # Update wikidata id
                 wikidata_id = get_collection_wikidata_id(collection.name)
                 collection.set_wikidata_id(wikidata_id)
+                #print("keeping collection id for", collection.name)
             except:
                 pass
 

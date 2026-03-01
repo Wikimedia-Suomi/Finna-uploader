@@ -221,12 +221,13 @@ def get_source_of_file_claim(finna_image):
 
     instlist = list()
     for institution in finna_image.institutions.all():
-        try:
-            institution_wikidata_id = get_institution_wikidata_id(institution.translated)
-            instlist.append(institution_wikidata_id)
-        except:
-            print(institution)
-            exit(1)
+
+        if (not institution.wikidata_id):
+            print("wikidata id missing for institution: ", institution.name)
+            exit()
+
+        instlist.append(institution.wikidata_id)
+        
 
     if (len(instlist) != 1):
         # TODO: check that create_P7482_source_of_file()
@@ -292,7 +293,6 @@ def get_claims_for_image_upload(finna_image):
     # image authors/creators
 
     non_presenter_authors = finna_image.non_presenter_authors.all()
-
     for author in non_presenter_authors:
         
         # skip claim where author role is "valmistaja"
@@ -305,13 +305,6 @@ def get_claims_for_image_upload(finna_image):
 
         #if (author.is_photographer() or author.is_architect() or author.is_illustrator() or author.is_creator()):
         role = get_role_qcode_for_author(author)
-        #wikidata_id = author.get_wikidata_id()
-        #author.wikidata_id = wikidata_id
-        if (not author.wikidata_id):
-            wikidata_id = get_author_wikidata_id(author.name)
-            author.set_wikidata_id(wikidata_id)
-
-        # recheck after fetching and saving
         if (not author.wikidata_id):
             print("wikidata id missing for author: ", author.name)
             exit()
@@ -328,13 +321,7 @@ def get_claims_for_image_upload(finna_image):
     # TODO: collection might need a configuration hierarchy
     # due to some ambigious names to get accurate collection
     for collection in collections:
-        #wikidata_id = collection.get_wikidata_id()
-        #collection.wikidata_id = wikidata_id
-        if (not collection.wikidata_id):
-            wikidata_id = get_collection_wikidata_id(collection.name)
-            collection.set_wikidata_id(wikidata_id)
-            print("wikidata id set for collection: ", collection.name)
-            
+           
         if (not collection.wikidata_id):
             print("wikidata id missing for collection: ", collection.name)
             exit()
@@ -346,11 +333,9 @@ def get_claims_for_image_upload(finna_image):
 
     subject_actors = finna_image.subject_actors.all()
     for subject_actor in subject_actors:
-        #wikidata_id = subject_actor.get_wikidata_id()
-        #subject_actor.wikidata_id = wikidata_id
-        if (not subject_actor.wikidata_id):
-            wikidata_id = get_subject_actors_wikidata_id(subject_actor.name)
-            subject_actor.set_wikidata_id(wikidata_id)
+        # there is bug in some data
+        if (subject_actor.name == None or subject_actor.name == "" or subject_actor.name == "null"):
+            continue
 
         if subject_actor.wikidata_id:
             claim = create_P180_depict(subject_actor.wikidata_id)
@@ -359,11 +344,10 @@ def get_claims_for_image_upload(finna_image):
     # Handle local subjects
 
     for add_depict in finna_image.add_depicts.all():
-        #wikidata_id = add_depict.get_wikidata_id()
-        #add_depict.wikidata_id = wikidata_id
-        if (not add_depict.wikidata_id):
-            wikidata_id = get_wikidata_id_from_url(add_depict.value)
-            add_depict.set_wikidata_id(wikidata_id)
+
+        if (not collection.wikidata_id):
+            print("wikidata id missing for subject: ", add_depict.name)
+            exit()
 
         claim = create_P180_depict(add_depict.wikidata_id)
         claims.append(claim)

@@ -101,8 +101,7 @@ def get_subject_category(finna_subject):
     if '^Category:' in value:
         return value.replace('Category:', '')
 
-    wikidata_id = finna_subject.get_wikidata_id()
-    return get_category_by_wikidata_id(wikidata_id)
+    return get_category_by_wikidata_id(finna_subject.wikidata_id)
 
 
 def get_category_for_building(subject_name, depicted_places):
@@ -609,8 +608,6 @@ def get_categories_for_authors(finna_image):
     for author in authors:
         if (author.is_photographer()):
             if (not author.wikidata_id):
-                #wikidata_id = get_author_wikidata_id(author.name)
-                #author.set_wikidata_id(wikidata_id)
                 print("wikidata id missing for author: ", author.name)
                 exit()
             
@@ -624,8 +621,6 @@ def get_categories_for_authors(finna_image):
             if (finna_image.is_entry_in_subjects("rakennukset") or finna_image.is_entry_in_subjects("kirkkorakennukset")):
                 # "buildings by" category under architect
                 if (not author.wikidata_id):
-                    #wikidata_id = get_author_wikidata_id(author.name)
-                    #author.set_wikidata_id(wikidata_id)
                     print("wikidata id missing for author: ", author.name)
                     exit()
 
@@ -638,8 +633,6 @@ def get_categories_for_authors(finna_image):
             # Q644687 # illustrator, kuvittaja
             # Q15296811 # piirtäjä
             if (not author.wikidata_id):
-                #wikidata_id = get_author_wikidata_id(author.name)
-                #author.set_wikidata_id(wikidata_id)
                 print("wikidata id missing for author: ", author.name)
                 exit()
             category = get_works_category_by_creator_id(author.wikidata_id)
@@ -723,9 +716,6 @@ def create_categories_new(finna_image):
         # there is bug in some cases: skip if no valid name
         if (subject_actor.name == None or subject_actor.name == "" or subject_actor.name == "null"):
             continue
-        if (not subject_actor.wikidata_id):
-            wikidata_id = get_subject_actors_wikidata_id(subject_actor.name)
-            subject_actor.set_wikidata_id(wikidata_id)
 
         category = get_category_by_wikidata_id(subject_actor.wikidata_id)
         if category:
@@ -896,10 +886,6 @@ def create_categories_new(finna_image):
     # these are "local subjects" again?
     # this is never used?
     for add_category in finna_image.add_categories.all():
-        #wikidata_id = finna_subject.get_wikidata_id() # ??
-        if (not add_category.wikidata_id):
-            wikidata_id = get_wikidata_id_from_url(add_category.value)
-            add_category.set_wikidata_id(wikidata_id)
 
         category_name = get_category_by_wikidata_id(add_category.wikidata_id)
         if category_name:
