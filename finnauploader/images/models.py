@@ -285,6 +285,7 @@ class FinnaSubjectDetail(models.Model):
 
 class FinnaCollection(models.Model):
     name = models.TextField()
+    wikidata_id = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -293,18 +294,24 @@ class FinnaCollection(models.Model):
     #    wikidata_id = wikidata_id
     #    return wikidata_id
 
-    #def set_wikidata_id(self, wikidata_id):
-    #    if (self.wikidata_id != wikidata_id):
-    #        self.wikidata_id = wikidata_id
-    #        self.save(update_fields=['wikidata_id'])
+    def set_wikidata_id(self, wikidata_id):
+        if (self.wikidata_id != wikidata_id):
+            self.wikidata_id = wikidata_id
+            self.save(update_fields=['wikidata_id'])
 
 
 class FinnaInstitution(models.Model):
     value = models.TextField()
     translated = models.TextField()
+    wikidata_id = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
         return self.value
+
+    def set_wikidata_id(self, wikidata_id):
+        if (self.wikidata_id != wikidata_id):
+            self.wikidata_id = wikidata_id
+            self.save(update_fields=['wikidata_id'])
 
 
 # Dynamic subjects based on wiki categories / wikidata items
@@ -465,6 +472,14 @@ class FinnaRecordManager(models.Manager):
         # Extract and handle collections data
         collections_data = data.pop('collections', [])
         collections = [FinnaCollection.objects.get_or_create(name=collection_name)[0] for collection_name in collections_data]
+        for collection in collections:
+            try:
+                # Update wikidata id
+                wikidata_id = get_collection_wikidata_id(collection.name)
+                collection.set_wikidata_id(wikidata_id)
+            except:
+                pass
+
 
         #print("parsing institutions")
 
@@ -472,14 +487,19 @@ class FinnaRecordManager(models.Manager):
         institutions_data = data.pop('institutions', [])
         institutions = [FinnaInstitution.objects.get_or_create(value=institution_data['value'], 
                                                                defaults={'translated': institution_data['translated']})[0] for institution_data in institutions_data]
+        for institution in institutions:
 
-        # sanitize data: newlines and tabulators into regular spaces at least
-        #
-        for instmp in institutions:
-
-            instval = instmp.value
+            # sanitize data: newlines and tabulators into regular spaces at least
+            instval = institution.value
             if (instval.find("\n") > 0 or instval.find("\t") > 0):
-                instmp.value = get_clean_institution_name(instval)
+                institution.value = get_clean_institution_name(instval)
+            
+            try:
+                # Update wikidata id
+                wikidata_id = get_institution_wikidata_id(institution.translated)
+                institution.set_wikidata_id(wikidata_id)
+            except:
+                pass
 
         #print("parsing imagerights")
 

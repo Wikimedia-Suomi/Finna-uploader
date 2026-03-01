@@ -231,7 +231,7 @@ def get_source_of_file_claim(finna_image):
     if (len(instlist) != 1):
         # TODO: check that create_P7482_source_of_file()
         # can handle multiple institutions
-        print(('excpected one institution, found:', str(instlist)))
+        print(('expected one institution, found:', str(instlist)))
         exit(1)
 
     # TODO: fix handling so that potentially multiple
@@ -325,16 +325,21 @@ def get_claims_for_image_upload(finna_image):
     collections = finna_image.collections.all()
     identifier = finna_image.identifier_string
 
+    # TODO: collection might need a configuration hierarchy
+    # due to some ambigious names to get accurate collection
     for collection in collections:
         #wikidata_id = collection.get_wikidata_id()
         #collection.wikidata_id = wikidata_id
-        #if (not collection.wikidata_id):
-        wikidata_id = get_collection_wikidata_id(collection.name)
-        if (not wikidata_id):
+        if (not collection.wikidata_id):
+            wikidata_id = get_collection_wikidata_id(collection.name)
+            collection.set_wikidata_id(wikidata_id)
+            print("wikidata id set for collection: ", collection.name)
+            
+        if (not collection.wikidata_id):
             print("wikidata id missing for collection: ", collection.name)
             exit()
         
-        claim = create_P195_collection(wikidata_id, identifier)
+        claim = create_P195_collection(collection.wikidata_id, identifier)
         claims.append(claim)
 
     # Handle subject actors
