@@ -321,11 +321,12 @@ def get_claims_for_image_upload(finna_image):
     # TODO: collection might need a configuration hierarchy
     # due to some ambigious names to get accurate collection
     for collection in collections:
-           
+
+        # 
         if (not collection.wikidata_id):
             print("wikidata id missing for collection: ", collection.name)
             exit()
-        
+
         claim = create_P195_collection(collection.wikidata_id, identifier)
         claims.append(claim)
 
@@ -345,7 +346,7 @@ def get_claims_for_image_upload(finna_image):
 
     for add_depict in finna_image.add_depicts.all():
 
-        if (not collection.wikidata_id):
+        if (not add_depict.wikidata_id):
             print("wikidata id missing for subject: ", add_depict.name)
             exit()
 
