@@ -6,6 +6,12 @@ import json
 from images.wikitext.commons_wikitext import clean_depicted_places
 from images.wikitext.timestamps import parse_timestamp
 
+from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
+                                    get_subject_actors_wikidata_id, \
+                                    get_institution_wikidata_id, \
+                                    get_collection_wikidata_id, get_clean_institution_name
+
+
 wikidata_site = pywikibot.Site("wikidata", "wikidata")  # Connect to Wikidata
 
 
@@ -107,7 +113,7 @@ def create_P6216_copyright_state(value):
 
     return claim
 
-
+# finna id property
 def create_P9478_finna_id(value):
     if not value:
         return None
@@ -120,13 +126,13 @@ def create_P9478_finna_id(value):
 
 
 # TODO: this include photograper, by could include "illustrator" or other such role as well
-def create_P170_author(value, role):
-    if not value:
+def create_P170_author(wikidata_id, role):
+    if not wikidata_id:
         return None
 
     # P170 "Author"
     claim = pywikibot.Claim(wikidata_site, 'P170')
-    claim_target = pywikibot.ItemPage(wikidata_site, value)
+    claim_target = pywikibot.ItemPage(wikidata_site, wikidata_id)
     claim.setTarget(claim_target)
 
     # if there is specific role known for creator (photographer, architect..)
@@ -162,6 +168,9 @@ def create_P195_collection(wikidata_id, collection_number):
 
 
 def create_P180_depict(wikidata_id):
+    if not wikidata_id:
+        return None
+
     claim_target = pywikibot.ItemPage(wikidata_site, wikidata_id)
     claim = pywikibot.Claim(wikidata_site, 'P180')
     claim.setTarget(claim_target)
@@ -213,11 +222,11 @@ def get_source_of_file_claim(finna_image):
     instlist = list()
     for institution in finna_image.institutions.all():
         try:
-            wikidata_id = institution.get_wikidata_id()
+            institution_wikidata_id = get_institution_wikidata_id(institution.translated)
+            instlist.append(institution_wikidata_id)
         except:
             print(institution)
             exit(1)
-        instlist.append(wikidata_id)
 
     if (len(instlist) != 1):
         # TODO: check that create_P7482_source_of_file()
@@ -296,8 +305,15 @@ def get_claims_for_image_upload(finna_image):
 
         #if (author.is_photographer() or author.is_architect() or author.is_illustrator() or author.is_creator()):
         role = get_role_qcode_for_author(author)
-        wikidata_id = author.get_wikidata_id()
-        claim = create_P170_author(wikidata_id, role)
+        #wikidata_id = author.get_wikidata_id()
+        #author.wikidata_id = wikidata_id
+        if (not author.wikidata_id):
+            #wikidata_id = get_author_wikidata_id(author.name)
+            #author.set_wikidata_id(wikidata_id)
+            print("wikdiata id missing for author: ", author.name)
+            exit()
+
+        claim = create_P170_author(author.wikidata_id, role)
         claims.append(claim)
 
 
@@ -307,24 +323,39 @@ def get_claims_for_image_upload(finna_image):
     identifier = finna_image.identifier_string
 
     for collection in collections:
-        wikidata_id = collection.get_wikidata_id()
-        claim = create_P195_collection(wikidata_id, identifier)
+        #wikidata_id = collection.get_wikidata_id()
+        #collection.wikidata_id = wikidata_id
+        if (not collection.wikidata_id):
+            wikidata_id = get_collection_wikidata_id(collection.name)
+            collection.set_wikidata_id(wikidata_id)
+        
+        claim = create_P195_collection(collection.wikidata_id, identifier)
         claims.append(claim)
 
     # Handle subject actors
 
     subject_actors = finna_image.subject_actors.all()
     for subject_actor in subject_actors:
-        wikidata_id = subject_actor.get_wikidata_id()
-        if wikidata_id:
-            claim = create_P180_depict(wikidata_id)
+        #wikidata_id = subject_actor.get_wikidata_id()
+        #subject_actor.wikidata_id = wikidata_id
+        if (not subject_actor.wikidata_id):
+            wikidata_id = get_subject_actors_wikidata_id(subject_actor.name)
+            subject_actor.set_wikidata_id(wikidata_id)
+
+        if subject_actor.wikidata_id:
+            claim = create_P180_depict(subject_actor.wikidata_id)
             claims.append(claim)
 
     # Handle local subjects
 
     for add_depict in finna_image.add_depicts.all():
-        wikidata_id = add_depict.get_wikidata_id()
-        claim = create_P180_depict(wikidata_id)
+        #wikidata_id = add_depict.get_wikidata_id()
+        #add_depict.wikidata_id = wikidata_id
+        if (not add_depict.wikidata_id):
+            wikidata_id = get_wikidata_id_from_url(add_depict.value)
+            add_depict.set_wikidata_id(wikidata_id)
+
+        claim = create_P180_depict(add_depict.wikidata_id)
         claims.append(claim)
 
     p1771_location_claims = create_P1071_location(finna_image)

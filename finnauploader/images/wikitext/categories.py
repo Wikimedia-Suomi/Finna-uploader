@@ -484,6 +484,8 @@ def get_category_for_subject_in_country(subject_name):
         # retkeilyalueet, retkeilyvarusteet
         'retkeily' : 'Camping in',
         'keittiöt' : 'Kitchens in',
+        'ruokasalit' : 'Dining rooms in',
+        'ruokailutilat' : 'Dining rooms in',
         'ruoanvalmistus' : 'Cooking in',
         'kylpyhuoneet' : 'Bathrooms in',
         'näyttelyt' : 'Exhibitions in',
@@ -601,6 +603,57 @@ def get_category_for_institution(institution_name):
 
     return None
 
+def get_categories_for_authors(finna_image):
+    categories = set()
+    authors = finna_image.non_presenter_authors.all()
+    for author in authors:
+        if (author.is_photographer()):
+            if (not author.wikidata_id):
+                #wikidata_id = get_author_wikidata_id(author.name)
+                #author.set_wikidata_id(wikidata_id)
+                print("wikidata id missing for author: ", author.name)
+                exit()
+            
+            # "photographs by" category under photographer
+            category = get_photography_category_by_photographer_id(author.wikidata_id)
+            if (category != None):
+                categories.add(category)
+
+        if (author.is_architect()):
+            # is image about a building?
+            if (finna_image.is_entry_in_subjects("rakennukset") or finna_image.is_entry_in_subjects("kirkkorakennukset")):
+                # "buildings by" category under architect
+                if (not author.wikidata_id):
+                    #wikidata_id = get_author_wikidata_id(author.name)
+                    #author.set_wikidata_id(wikidata_id)
+                    print("wikidata id missing for author: ", author.name)
+                    exit()
+
+                category = get_building_category_by_architect_id(author.wikidata_id)
+                if (category != None):
+                    categories.add(category)
+
+        # other creator (such as illustrator)
+        if (author.is_illustrator()):
+            # Q644687 # illustrator, kuvittaja
+            # Q15296811 # piirtäjä
+            if (not author.wikidata_id):
+                #wikidata_id = get_author_wikidata_id(author.name)
+                #author.set_wikidata_id(wikidata_id)
+                print("wikidata id missing for author: ", author.name)
+                exit()
+            category = get_works_category_by_creator_id(author.wikidata_id)
+            if (category != None):
+                categories.add(category)
+
+        # skip claim where author role is "tekijä"?
+        #if (author.is_creator()):
+        #    continue
+         
+        # category for manufacturer of object
+        #if (author.is_manufacturer()):
+    return categories
+
 # filter some possible errors in names:
 # extra spaces, commas etc.
 def places_cleaner(finna_image):
@@ -667,44 +720,23 @@ def create_categories_new(finna_image):
     categories = set()
 
     for subject_actor in finna_image.subject_actors.all():
-        wikidata_id = subject_actor.get_wikidata_id()
-        category = get_category_by_wikidata_id(wikidata_id)
+        # there is bug in some cases: skip if no valid name
+        if (subject_actor.name == None or subject_actor.name == "" or subject_actor.name == "null"):
+            continue
+        if (not subject_actor.wikidata_id):
+            wikidata_id = get_subject_actors_wikidata_id(subject_actor.name)
+            subject_actor.set_wikidata_id(wikidata_id)
+
+        category = get_category_by_wikidata_id(subject_actor.wikidata_id)
         if category:
             categories.add(category)
 
-    authors = finna_image.non_presenter_authors.all()
-    for author in authors:
-        if (author.is_photographer()):
-            # "photographs by" category under photographer
-            wikidata_id = author.get_wikidata_id()
-            category = get_photography_category_by_photographer_id(wikidata_id)
-            if (category != None):
-                categories.add(category)
-
-        if (author.is_architect()):
-            # is image about a building?
-            if (finna_image.is_entry_in_subjects("rakennukset") or finna_image.is_entry_in_subjects("kirkkorakennukset")):
-                # "buildings by" category under architect
-                wikidata_id = author.get_wikidata_id()
-                category = get_building_category_by_architect_id(wikidata_id)
-                if (category != None):
-                    categories.add(category)
-
-        # other creator (such as illustrator)
-        if (author.is_illustrator()):
-            # Q644687 # illustrator, kuvittaja
-            # Q15296811 # piirtäjä
-            wikidata_id = author.get_wikidata_id()
-            category = get_works_category_by_creator_id(wikidata_id)
-            if (category != None):
-                categories.add(category)
-
-        # skip claim where author role is "tekijä"?
-        #if (author.is_creator()):
-        #    continue
-         
-        # category for manufacturer of object
-        #if (author.is_manufacturer()):
+    authorcategories = get_categories_for_authors(finna_image)
+    for ac in authorcategories:
+        if ac:
+            if ac not in categories:
+                categories.add(ac)
+    
 
     # categories from 
     for best_wikidata_location in best_wikidata_locations.all():
@@ -861,9 +893,15 @@ def create_categories_new(finna_image):
         if (category is not None):
             categories.add(category)
 
+    # these are "local subjects" again?
+    # this is never used?
     for add_category in finna_image.add_categories.all():
-        wikidata_id = finna_subject.get_wikidata_id()
-        category_name = get_category_by_wikidata_id(wikidata_id)
+        #wikidata_id = finna_subject.get_wikidata_id() # ??
+        if (not add_category.wikidata_id):
+            wikidata_id = get_wikidata_id_from_url(add_category.value)
+            add_category.set_wikidata_id(wikidata_id)
+
+        category_name = get_category_by_wikidata_id(add_category.wikidata_id)
         if category_name:
             categories.add(category_name)
 

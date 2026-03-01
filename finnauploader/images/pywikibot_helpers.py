@@ -7,7 +7,7 @@ from pywikibot.data.sparql import SparqlQuery
 
 
 # should do this here instead of in wikidata_helpers.py ?
-pywikibot.config.socket_timeout = 120
+pywikibot.config.socket_timeout = 240
 
 dtstart = datetime.now()
 

@@ -159,8 +159,8 @@ class FinnaNonPresenterAuthor(models.Model):
     def __str__(self):
         return self.name
 
-    def get_wikidata_id(self):
-        return get_author_wikidata_id(self.name)
+    #def get_wikidata_id(self):
+    #    return wikidata_id
 
     def is_photographer(self):
         # note: SLS uses "pht"
@@ -261,9 +261,14 @@ class FinnaSubjectActor(models.Model):
     def __str__(self):
         return self.name
 
-    def get_wikidata_id(self):
-        wikidata_id = get_subject_actors_wikidata_id(self.name)
-        return wikidata_id
+    #def get_wikidata_id(self):
+    #    wikidata_id = wikidata_id
+    #    return wikidata_id
+
+    def set_wikidata_id(self, wikidata_id):
+        if (self.wikidata_id != wikidata_id):
+            self.wikidata_id = wikidata_id
+            self.save(update_fields=['wikidata_id'])
 
 
 class FinnaSubjectDetail(models.Model):
@@ -279,9 +284,14 @@ class FinnaCollection(models.Model):
     def __str__(self):
         return self.name
 
-    def get_wikidata_id(self):
-        wikidata_id = get_collection_wikidata_id(self.name)
-        return wikidata_id
+    #def get_wikidata_id(self):
+    #    wikidata_id = wikidata_id
+    #    return wikidata_id
+
+    def set_wikidata_id(self, wikidata_id):
+        if (self.wikidata_id != wikidata_id):
+            self.wikidata_id = wikidata_id
+            self.save(update_fields=['wikidata_id'])
 
 
 class FinnaInstitution(models.Model):
@@ -290,10 +300,6 @@ class FinnaInstitution(models.Model):
 
     def __str__(self):
         return self.value
-
-    def get_wikidata_id(self):
-        wikidata_id = get_institution_wikidata_id(self.translated)
-        return wikidata_id
 
 
 # Dynamic subjects based on wiki categories / wikidata items
@@ -304,8 +310,13 @@ class FinnaLocalSubject(models.Model):
     def __str__(self):
         return self.value
 
-    def get_wikidata_id(self):
-        return get_wikidata_id_from_url(self.value)
+    #def get_wikidata_id(self):
+    #    return get_wikidata_id_from_url(self.value)
+
+    def set_wikidata_id(self, wikidata_id):
+        if (self.wikidata_id != wikidata_id):
+            self.wikidata_id = wikidata_id
+            self.save(update_fields=['wikidata_id'])
 
 
 # Managers
@@ -315,20 +326,20 @@ class FinnaRecordManager(models.Manager):
         authors = FinnaNonPresenterAuthor.objects.all()
         for author in authors:
             try:
-                wikidata_id = author.get_wikidata_id()
-                if author.wikidata_id != wikidata_id:
-                    author.wikidata_id = wikidata_id
-                    author.save(update_fields=['wikidata_id'])
+                wikidata_id = get_author_wikidata_id(author.name)
+                author.set_wikidata_id(wikidata_id)
             except:
                 pass
 
         actors = FinnaSubjectActor.objects.all()
         for actor in actors:
+            # there is bug in some data
+            if (actor.name == None or actor.name == "" or actor.name == "null"):
+                continue
+            
             try:
-                wikidata_id = actor.get_wikidata_id()
-                if actor.wikidata_id != wikidata_id:
-                    actor.wikidata_id = wikidata_id
-                    actor.save(update_fields=['wikidata_id'])
+                wikidata_id = get_subject_actors_wikidata_id(actor.name)
+                actor.set_wikidata_id(wikidata_id)
             except:
                 pass
 
@@ -366,10 +377,8 @@ class FinnaRecordManager(models.Manager):
                 )[0]
             try:
                 # Update wikidata id
-                wikidata_id = author.get_wikidata_id()
-                if author.wikidata_id != wikidata_id:
-                    author.wikidata_id = wikidata_id
-                    author.save(update_fields=['wikidata_id'])
+                wikidata_id = get_author_wikidata_id(author.name)
+                author.set_wikidata_id(wikidata_id)
             except:
                 pass
 
@@ -424,12 +433,14 @@ class FinnaRecordManager(models.Manager):
         subject_actors = [FinnaSubjectActor.objects.get_or_create(name=subject_actor_name)[0] for subject_actor_name in subject_actors_data]
         for subject_actor in subject_actors:
             if (subject_actor != None):
+                # there is bug in some data
+                if (subject_actor.name == None or subject_actor.name == "" or subject_actor.name == "null"):
+                    continue
+                
                 try:
                     # Update wikidata id
-                    wikidata_id = subject_actor.get_wikidata_id()
-                    if subject_actor.wikidata_id != wikidata_id:
-                        subject_actor.wikidata_id = wikidata_id
-                        subject_actor.save(update_fields=['wikidata_id'])
+                    wikidata_id = get_subject_actors_wikidata_id(subject_actor.name)
+                    subject_actor.set_wikidata_id(wikidata_id)
                 except:
                     pass
 
@@ -727,8 +738,8 @@ class FinnaImage(models.Model):
     buildings = models.ManyToManyField(FinnaBuilding)
     institutions = models.ManyToManyField(FinnaInstitution)
     image_right = models.ForeignKey(FinnaImageRight, on_delete=models.RESTRICT)
-    add_categories = models.ManyToManyField(FinnaLocalSubject, related_name="category_images")
-    add_depicts = models.ManyToManyField(FinnaLocalSubject, related_name="depict_images")
+    add_categories = models.ManyToManyField(FinnaLocalSubject, related_name="category_images") # rename to "local subjects" or something..
+    add_depicts = models.ManyToManyField(FinnaLocalSubject, related_name="depict_images") # rename to "local subjects" or something..
     best_wikidata_location = models.ManyToManyField(FinnaSubjectWikidataPlace)
     commons_images = models.ManyToManyField(WikimediaCommonsImage)
     already_in_commons = models.BooleanField(default=False)

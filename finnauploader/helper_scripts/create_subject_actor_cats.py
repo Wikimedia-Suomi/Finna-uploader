@@ -50,6 +50,9 @@ def create_commons_category(name):
 
 # Function to update the list on Wikimedia Commons
 def update_commons_list(name, wikidata_id):
+    # TODO: find last page from multiple numbered,
+    # add to smallest instead of first?
+    
     page_title = "User:FinnaUploadBot/data/subjectActors"
     page = pywikibot.Page(commons_site, page_title)
     target_text = f"\n* {name} : {{{{Q|{wikidata_id}}}}}"

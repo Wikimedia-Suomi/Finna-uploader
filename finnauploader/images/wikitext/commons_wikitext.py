@@ -6,7 +6,8 @@ from images.wikitext.timestamps import parse_timestamp_string
 from images.wikitext.categories import create_categories_new
 
 from images.wikitext.wikidata_helpers import get_creator_nane_by_wikidata_id, \
-                                      get_institution_name_by_wikidata_id, striprepeatespaces
+                                        get_institution_wikidata_id, \
+                                        get_institution_name_by_wikidata_id, striprepeatespaces
 
 
 #def lang_template(lang, text):
@@ -45,8 +46,10 @@ def get_creator_templates_for_photographers(finna_image):
     creator_templates = []
     for creator in finna_image.non_presenter_authors.all():
         if (creator.is_photographer()):
-            wikidata_id = creator.get_wikidata_id()
-            creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
+            if (not creator.wikidata_id):
+                print("wikidata id missing for creator: ", creator.name)
+                exit()
+            creatorName = get_creator_nane_by_wikidata_id(creator.wikidata_id)
             if (creatorName is not None):
                 template = '{{Creator:' + creatorName + '}}'
                 # don't add duplicates (error in source)
@@ -61,8 +64,10 @@ def get_creator_templates_for_authors(finna_image):
     for creator in finna_image.non_presenter_authors.all():
         creatorName = None
         if (creator.is_architect() or creator.is_illustrator()):
-            wikidata_id = creator.get_wikidata_id()
-            creatorName = get_creator_nane_by_wikidata_id(wikidata_id)
+            if (not creator.wikidata_id):
+                print("wikidata id missing for creator: ", creator.name)
+                exit()
+            creatorName = get_creator_nane_by_wikidata_id(creator.wikidata_id)
             if (creatorName is not None):
                 template = '{{Creator:' + creatorName + '}}'
                 # don't add duplicates (error in source)
@@ -83,8 +88,9 @@ def get_creator_templates_for_authors(finna_image):
 def get_institution_templates(finna_image):
     institution_templates = []
     for institution in finna_image.institutions.all():
-        wikidata_id = institution.get_wikidata_id()
-        institutionName = get_institution_name_by_wikidata_id(wikidata_id)
+        #wikidata_id = institution.get_wikidata_id()
+        institution_wikidata_id = get_institution_wikidata_id(institution.translated)
+        institutionName = get_institution_name_by_wikidata_id(institution_wikidata_id)
         if (institutionName is not None):
             template = '{{Institution:' + institutionName + '}}'
             institution_templates.append(template)
