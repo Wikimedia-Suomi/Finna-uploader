@@ -562,13 +562,16 @@ def get_category_for_building_by_place(subject_name, subject_places):
 
     return None
 
-def get_category_for_collection(collection_name):
+def get_category_for_collection(collection):
+
 
     # there may be preceding or trailing space -> remove it
+    collection_name = collection.name
     collection_name = collection_name.lstrip()
     collection_name = collection_name.rstrip()
     
     collection_names = {
+        'JOKA Journalistinen kuva-arkisto' : 'JOKA Press Photo Archive',
         'FÅA - SILJA LINE' : 'Effoa',
         'FÅA - SILJA LINE' : 'Effoa',
         'Suomen merimuseon kuvakokoelma': 'Media by The Maritime Museum of Finland'
@@ -580,15 +583,13 @@ def get_category_for_collection(collection_name):
 
 # TODO:
 # categories for institutions like Sibelius museum, Helsinki City museum or Theater museum
-def get_category_for_institution(institution_name):
+def get_category_for_institution(institution):
     
     # use mapping via qcode to category name?
 
-    instname = ""
-    if (institution_name.find("\n") > 0 or institution_name.find("\t") > 0):
-        instname = get_clean_institution_name(institution_name)
-    else:
-        instname = institution_name
+    instname = institution.value
+    if (instname.find("\n") > 0 or instname.find("\t") > 0):
+        instname = get_clean_institution_name(instname)
 
     if (instname.find("Teatterimuseo") >= 0):
         return "Theatre Museum (Helsinki)"
@@ -874,12 +875,12 @@ def create_categories_new(finna_image):
                 categories.add(cattext)
 
     for collection in finna_image.collections.all():
-        category = get_category_for_collection(collection.name)
+        category = get_category_for_collection(collection)
         if (category is not None):
             categories.add(category)
 
     for institution in finna_image.institutions.all():
-        category = get_category_for_institution(institution.value)
+        category = get_category_for_institution(institution)
         if (category is not None):
             categories.add(category)
 
