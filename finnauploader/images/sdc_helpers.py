@@ -308,9 +308,12 @@ def get_claims_for_image_upload(finna_image):
         #wikidata_id = author.get_wikidata_id()
         #author.wikidata_id = wikidata_id
         if (not author.wikidata_id):
-            #wikidata_id = get_author_wikidata_id(author.name)
-            #author.set_wikidata_id(wikidata_id)
-            print("wikdiata id missing for author: ", author.name)
+            wikidata_id = get_author_wikidata_id(author.name)
+            author.set_wikidata_id(wikidata_id)
+
+        # recheck after fetching and saving
+        if (not author.wikidata_id):
+            print("wikidata id missing for author: ", author.name)
             exit()
 
         claim = create_P170_author(author.wikidata_id, role)
@@ -325,13 +328,13 @@ def get_claims_for_image_upload(finna_image):
     for collection in collections:
         #wikidata_id = collection.get_wikidata_id()
         #collection.wikidata_id = wikidata_id
-        if (not collection.wikidata_id):
-            wikidata_id = get_collection_wikidata_id(collection.name)
-            collection.set_wikidata_id(wikidata_id)
-            #print("wikdiata id missing for collection: ", collection.name)
-            #exit()
+        #if (not collection.wikidata_id):
+        wikidata_id = get_collection_wikidata_id(collection.name)
+        if (not wikidata_id):
+            print("wikidata id missing for collection: ", collection.name)
+            exit()
         
-        claim = create_P195_collection(collection.wikidata_id, identifier)
+        claim = create_P195_collection(wikidata_id, identifier)
         claims.append(claim)
 
     # Handle subject actors

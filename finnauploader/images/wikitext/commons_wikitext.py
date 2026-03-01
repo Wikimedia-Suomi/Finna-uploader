@@ -92,6 +92,7 @@ def get_institution_templates(finna_image):
         institution_wikidata_id = get_institution_wikidata_id(institution.translated)
         institutionName = get_institution_name_by_wikidata_id(institution_wikidata_id)
         if (institutionName is not None):
+            print("using name", institutionName, " for institution ", institution.translated)
             template = '{{Institution:' + institutionName + '}}'
             institution_templates.append(template)
     return "".join(institution_templates)

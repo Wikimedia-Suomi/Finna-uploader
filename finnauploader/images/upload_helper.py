@@ -12,6 +12,9 @@ from images.wikitext.commons_wikitext import get_wikitext_for_new_image, \
                                       get_comment_text
 
 
+# TODO: before starting upload, recheck wikidata ids if they were not updated earlier:
+# mapping may be added for authors/creators/subjects after data was fetched originally
+
 # bad name due to existing methods, rename later
 # called from views.py on upload
 #

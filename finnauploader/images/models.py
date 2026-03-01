@@ -162,6 +162,11 @@ class FinnaNonPresenterAuthor(models.Model):
     #def get_wikidata_id(self):
     #    return wikidata_id
 
+    def set_wikidata_id(self, wikidata_id):
+        if (self.wikidata_id != wikidata_id):
+            self.wikidata_id = wikidata_id
+            self.save(update_fields=['wikidata_id'])
+
     def is_photographer(self):
         # note: SLS uses "pht"
         # also: "valokuvaamo" for studios
@@ -288,10 +293,10 @@ class FinnaCollection(models.Model):
     #    wikidata_id = wikidata_id
     #    return wikidata_id
 
-    def set_wikidata_id(self, wikidata_id):
-        if (self.wikidata_id != wikidata_id):
-            self.wikidata_id = wikidata_id
-            self.save(update_fields=['wikidata_id'])
+    #def set_wikidata_id(self, wikidata_id):
+    #    if (self.wikidata_id != wikidata_id):
+    #        self.wikidata_id = wikidata_id
+    #        self.save(update_fields=['wikidata_id'])
 
 
 class FinnaInstitution(models.Model):
