@@ -322,6 +322,11 @@ class FinnaLocalSubject(models.Model):
 # Managers
 class FinnaRecordManager(models.Manager):
 
+    # when and where is this called?
+    # only case is from finna_search?
+    # potentially we should update ids when mapping information changes in commons/wikidata
+    # in the data-pages, not just when searching..
+    #
     def update_wikidata_ids(self):
         authors = FinnaNonPresenterAuthor.objects.all()
         for author in authors:

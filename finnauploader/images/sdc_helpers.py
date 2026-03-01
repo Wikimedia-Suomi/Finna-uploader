@@ -328,6 +328,8 @@ def get_claims_for_image_upload(finna_image):
         if (not collection.wikidata_id):
             wikidata_id = get_collection_wikidata_id(collection.name)
             collection.set_wikidata_id(wikidata_id)
+            #print("wikdiata id missing for collection: ", collection.name)
+            #exit()
         
         claim = create_P195_collection(collection.wikidata_id, identifier)
         claims.append(claim)
