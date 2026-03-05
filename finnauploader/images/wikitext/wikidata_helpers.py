@@ -72,6 +72,9 @@ def get_subject_place_wikidata_id(location_string):
         return None
 
 
+# TODO: search with institution since collection names are not unique
+#def get_collection_wikidata_id(institution, name):
+
 # use mapping from Finna-string to qcode
 def get_collection_wikidata_id(name):
 

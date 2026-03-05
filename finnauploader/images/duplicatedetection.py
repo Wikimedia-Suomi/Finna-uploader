@@ -2,16 +2,6 @@ import requests
 import pywikibot
 from pywikibot.data import sparql
 
-class UploadCache:
-    def load_duplicates(self):
-        self.uploadsummary = self.get_upload_summary(1000)
-        self.sparql_finna_ids_data = self.get_existing_finna_ids_from_sparql()
-        self.sparql_finna_ids = str(self.sparql_finna_ids_data)
-
-
-s = requests.Session()
-s.headers.update({'User-Agent': 'FinnaUploader 0.2 (https://commons.wikimedia.org/wiki/User:FinnaUploadBot)'}) # noqa
-
 
 # finna id query results: reduce queries
 toolforgeFinnaId = {}
@@ -27,11 +17,18 @@ def isToolforgeFinnaId(finna_id):
     return False
 
 # try to search from server:
-# also use cache if possible
+# also use cache if possible.
+# this is only used for "slow" search?
 def toolforge_finnasearch(finna_id):
     # use cache if possible
     if (isToolforgeFinnaId(finna_id) == True):
         return True
+    
+    # TODO: import whole dump instead?
+    #url = 'https://imagehash.toolforge.org/static/commons_finna_imagehashes.json.gz'
+
+    s = requests.Session()
+    s.headers.update({'User-Agent': 'FinnaUploader 0.2 (https://commons.wikimedia.org/wiki/User:FinnaUploadBot)'}) # noqa
     
     url = f'https://imagehash.toolforge.org/finnasearch?finna_id={finna_id}'
     response = s.get(url)
@@ -61,6 +58,9 @@ def get_existing_finna_ids_from_sparql():
 
     # Create a SparqlQuery object
     query_object = sparql.SparqlQuery(endpoint=endpoint, entity_url=entity_url)
+
+    # TODO: can we simplify to a set with unique instances only?
+    # there are duplicates for various reasons
 
     # Execute the SPARQL query and retrieve the data
     data = query_object.select(query, full_data=True)
@@ -105,7 +105,6 @@ def is_already_in_commons(finna_id, fast=False):
     #print("DEBUG: searching for existing finna id: ", finna_id)
     
     # Check if image is already uploaded
-    #if finna_id in sparql_finna_ids:
     if finna_id in sparql_finna_ids_data:
         print(f'Skipping 1: {finna_id} already uploaded based on sparql')
         return True
@@ -133,11 +132,8 @@ def search_from_sparql_finna_ids(needle):
         return True
     return False
 
-def get_sparql_finna_id_list():
-    return sparql_finna_ids
-
 # main ()
 print("Loading 1000 most recent edit summaries for skipping uploaded files")
 uploadsummary = get_upload_summary(1000)
 sparql_finna_ids_data = get_existing_finna_ids_from_sparql()
-sparql_finna_ids = str(sparql_finna_ids_data)
+
