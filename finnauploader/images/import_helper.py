@@ -26,17 +26,31 @@ def do_finna_import(opt_lookfor, opt_type, opt_collection):
     #if (collection == None and aliases != None):
     #    collection = aliases
 
+    print("fetching with search..")
+
     for page in range(1, 301):
 
         # images.finna.do_finna_search() will look again for a collection
-        data = do_finna_search(page, opt_lookfor, opt_type, opt_collection)
-        if (FinnaImage.objects.create_from_finna_record(data) == False):
+        finna_records = do_finna_search(page, opt_lookfor, opt_type, opt_collection)
+        if not finna_records:
             return False
+        if not 'records' in finna_records:
+            return False
+
+        for record in finna_records['records']:
+            print(" -- -- -- ") # add a simple separator
+
+            if (FinnaImage.objects.create_from_finna_record(record) == False):
+                print("could not store record")
+                return False
 
         # Prevent looping too fast for Finna server
         time.sleep(1)
 
+    print("updating ids..")
     update_wikidata_ids()
+
+    print("import done")
     
 # when and where is this called?
 # only case is from finna_search?

@@ -666,30 +666,23 @@ class FinnaRecordManager(models.Manager):
     # try to improve debuggability at least a bit
     # called from finna_search.py
     # where is that local_data supposed to come from?
-    def create_from_finna_record(self, finna_records, local_data={}):
-        if not finna_records:
-            return False
-        if not 'records' in finna_records:
-            return False
-
-        for record in finna_records['records']:
-            print(" -- -- -- ") # add a simple separator
+    def create_from_finna_record(self, record, local_data={}):
             
-            # TODO: parse and validate first before trying to store it..
+        # TODO: parse and validate first before trying to store it..
 
-            with transaction.atomic():
-                try:
-                    ret = self.create_from_data(record, local_data)
-                    if (ret != None):
-                        print(f'{ret.id} {ret.finna_id} {ret.title} saved')
-                    else:
-                        print("record was skipped ")
-                        
-                except:
-                    print("ERROR saving record: ")
-                    print(record)
-                    # just skip for now
-                    #return False
+        with transaction.atomic():
+            try:
+                ret = self.create_from_data(record, local_data)
+                if (ret != None):
+                    print(f'{ret.id} {ret.finna_id} {ret.title} saved')
+                else:
+                    print("record was skipped ")
+                    
+            except:
+                print("ERROR saving record: ")
+                print(record)
+                # just skip for now
+                #return False
         return True
 
 
