@@ -34,10 +34,10 @@ def do_finna_import(opt_lookfor, opt_type, opt_collection):
         finna_records = do_finna_search(page, opt_lookfor, opt_type, opt_collection)
         if not finna_records:
             print("no result from search, stopping")
-            return False
+            break
         if not 'records' in finna_records:
             print("no records in search results, stopping")
-            return False
+            break
 
         for record in finna_records['records']:
             print(" -- -- -- ") # add a simple separator
@@ -52,8 +52,8 @@ def do_finna_import(opt_lookfor, opt_type, opt_collection):
     # this is actually pointless here since the record creation should use current configuration,
     # user(s) have to change the mapping first to make sense with running this,
     # but we can check the ids just before upload too..
-    print("updating ids..")
-    update_imported_wikidata_ids()
+    #print("updating ids..")
+    #update_imported_wikidata_ids()
 
     print("updating uploaded images..")
     update_uploaded_images()
@@ -72,7 +72,7 @@ def update_imported_wikidata_ids():
     # TODO: should only check for new items that were imported instead of everything..
     # currently creating items tries to fetch id already
 
-    institutions = finna_image.institutions.all()
+    institutions = FinnaImage.institutions
     for institution in institutions:
         if institution.wikidata_id: 
             continue
@@ -84,7 +84,7 @@ def update_imported_wikidata_ids():
 
     # try to update collections in case new ones were added
     #collections = FinnaCollection.objects.all()
-    collections = FinnaImage.collections.all()
+    collections = FinnaImage.collections
     for collection in collections:
         if collection.wikidata_id: 
             continue
@@ -95,7 +95,7 @@ def update_imported_wikidata_ids():
             pass
     
     #authors = FinnaNonPresenterAuthor.objects.all()
-    authors = FinnaImage.non_presenter_authors.all()
+    authors = FinnaImage.non_presenter_authors
     for author in authors:
         if author.wikidata_id: 
             continue
@@ -106,7 +106,7 @@ def update_imported_wikidata_ids():
             pass
 
     #actors = FinnaSubjectActor.objects.all()
-    actors = FinnaImage.subject_actors.all()
+    actors = FinnaImage.subject_actors
     for actor in actors:
         # there is bug in some data
         if (actor.name == None or actor.name == "" or actor.name == "null"):

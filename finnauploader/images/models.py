@@ -408,23 +408,6 @@ class FinnaRecordManager(models.Manager):
         subject_details_data = data.pop('subjectDetails', [])
         subject_details = [FinnaSubjectDetail.objects.get_or_create(name=subject_detail_name)[0] for subject_detail_name in subject_details_data]
 
-        #print("parsing collections")
-
-        # Extract and handle collections data
-        # TODO: check for duplicates
-
-        collections_data = data.pop('collections', [])
-        collections = [FinnaCollection.objects.get_or_create(name=collection_name)[0] for collection_name in collections_data]
-        for collection in collections:
-            try:
-                # Update wikidata id
-                wikidata_id = get_collection_wikidata_id(collection.name)
-                collection.set_wikidata_id(wikidata_id)
-                #print("keeping collection id for", collection.name)
-            except:
-                pass
-
-
         #print("parsing institutions")
 
         # Extract and handle institutions data
@@ -444,6 +427,27 @@ class FinnaRecordManager(models.Manager):
                 institution.set_wikidata_id(wikidata_id)
             except:
                 pass
+
+        #print("parsing collections")
+
+        # Extract and handle collections data
+        # TODO: check for duplicates
+
+        collections_data = data.pop('collections', [])
+        collections = [FinnaCollection.objects.get_or_create(name=collection_name)[0] for collection_name in collections_data]
+        for collection in collections:
+            try:
+                # TODO: search collection with institution
+                # since collection names are not unique
+                #wikidata_id = get_collection_wikidata_id(institution.wikidata_id, collection.name)
+                
+                # Update wikidata id
+                wikidata_id = get_collection_wikidata_id(collection.name)
+                collection.set_wikidata_id(wikidata_id)
+                #print("keeping collection id for", collection.name)
+            except:
+                pass
+
 
         #print("parsing imagerights")
 
