@@ -5,6 +5,7 @@ from images.models import FinnaSubjectPlace, \
                           FinnaSubjectWikidataPlace
 from django.db.models import Count
 from images.locations import is_location_within_administrative_entity
+from images.finna_record_api import get_finna_record_url
 
 
 class Command(BaseCommand):
@@ -101,7 +102,8 @@ class Command(BaseCommand):
             for image in images_with_multiple_subject_places:
                 msg = f'\nFinnaImage ID: {image.id}, Finna ID: {image.finna_id}, Title: {image.title}'
                 self.stdout.write(msg)
-                print(image.finna_json_url)
+                f_url = get_finna_record_url(image.finna_id, True)
+                print(f_url)
                 print(image.best_wikidata_location)
                 wikidata_ids = set()
                 for subject_place in image.subject_places.all():

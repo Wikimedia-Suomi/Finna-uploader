@@ -10,11 +10,7 @@ import json
 import urllib
 from datetime import datetime
 # from images.locations import parse_subject_place_string
-from images.finna_record_api import get_finna_record_url, parse_full_record
-from images.pywikibot_helpers import get_wikidata_id_from_url
-#from images.wikitext.timestamps import parse_timestamp
-#from images.duplicatedetection import is_already_in_commons
-# import images.models_mappingcache
+from images.finna_record_api import parse_full_record
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_institution_wikidata_id, \
@@ -300,9 +296,6 @@ class FinnaLocalSubject(models.Model):
 
     def __str__(self):
         return self.value
-
-    #def get_wikidata_id(self):
-    #    return get_wikidata_id_from_url(self.value)
 
     def set_wikidata_id(self, wikidata_id):
         if (self.wikidata_id != wikidata_id):
@@ -595,7 +588,7 @@ class FinnaRecordManager(models.Manager):
         try:
             record.date_string = data['events']['valmistus'][0]['date']
         except:
-            print(record.finna_json_url)
+            print(record.finna_id)
             print('Skipping date_string')
 #            exit(1)
 
@@ -741,11 +734,6 @@ class FinnaImage(models.Model):
     @property
     def url(self):
         url = f'https://finna.fi/Record/{self.finna_id}'
-        return url
-
-    @property
-    def finna_json_url(self):
-        url = get_finna_record_url(self.finna_id, True)
         return url
 
     @property

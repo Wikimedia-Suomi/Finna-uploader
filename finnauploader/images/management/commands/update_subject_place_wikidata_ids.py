@@ -10,6 +10,7 @@ from images.locations import update_yso_places, \
                       test_property_value, get_p31_values, \
                       get_wikidata_items_using_yso
 from images.wikitext.wikidata_helpers import get_subject_place_wikidata_id
+from images.finna_record_api import get_finna_record_url
 
 
 def location_test(row, key1, key2, slow_mode=False):
@@ -571,13 +572,15 @@ def get_wikidata_from_subject_extented(place):
             else:
                 sample_finna_id = None
 
+            f_url = get_finna_record_url(sample_finna_image.finna_id, True)
+
             print(f'Heading: {subject.heading}')
             print(f'Type: {subject.type}')
             print(f'Record ID: {subject.record_id}')
             print(f'IDs: {subject.ids}')
             print(f'Detail: {subject.detail}')
             print(f'Finna id: {sample_finna_id}')
-            print(f'Data: {sample_finna_image.finna_json_url}')
+            print(f'Data: {f_url}')
             print('')
         print(subjects)
         print(place)

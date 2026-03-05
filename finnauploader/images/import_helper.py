@@ -33,8 +33,10 @@ def do_finna_import(opt_lookfor, opt_type, opt_collection):
         # images.finna.do_finna_search() will look again for a collection
         finna_records = do_finna_search(page, opt_lookfor, opt_type, opt_collection)
         if not finna_records:
+            print("no result from search, stopping")
             return False
         if not 'records' in finna_records:
+            print("no records in search results, stopping")
             return False
 
         for record in finna_records['records']:
@@ -47,26 +49,56 @@ def do_finna_import(opt_lookfor, opt_type, opt_collection):
         # Prevent looping too fast for Finna server
         time.sleep(1)
 
+    # this is actually pointless here since the record creation should use current configuration,
+    # user(s) have to change the mapping first to make sense with running this,
+    # but we can check the ids just before upload too..
     print("updating ids..")
-    update_wikidata_ids()
+    update_imported_wikidata_ids()
 
+    print("updating uploaded images..")
+    update_uploaded_images()
+    
     print("import done")
     
-# when and where is this called?
-# only case is from finna_search?
+# only case used is from finna_search
 # potentially we should update ids when mapping information changes in commons/wikidata
 # in the data-pages, not just when searching..
-# FinnaRecordManager is a member of FinnaImage (objects)
-# and it also contains these other objects..
-# this lookup therefore calls back to parent to fetch the list it has
 #
-def update_wikidata_ids():
-    
-    #FinnaImage.objects.update_wikidata_ids()
+# note that before uploading we need to recheck ids anyway 
+# since mapping configuration from string to qcode is in commons instead of local/finna..
+#
+def update_imported_wikidata_ids():
+
+    # TODO: should only check for new items that were imported instead of everything..
+    # currently creating items tries to fetch id already
+
+    institutions = finna_image.institutions.all()
+    for institution in institutions:
+        if institution.wikidata_id: 
+            continue
+        try:
+            wikidata_id = get_institution_wikidata_id(institution.translated)
+            institution.set_wikidata_id(wikidata_id)
+        except:
+            pass
+
+    # try to update collections in case new ones were added
+    #collections = FinnaCollection.objects.all()
+    collections = FinnaImage.collections.all()
+    for collection in collections:
+        if collection.wikidata_id: 
+            continue
+        try:
+            wikidata_id = get_collection_wikidata_id(collection.name)
+            collection.set_wikidata_id(wikidata_id)
+        except:
+            pass
     
     #authors = FinnaNonPresenterAuthor.objects.all()
     authors = FinnaImage.non_presenter_authors.all()
     for author in authors:
+        if author.wikidata_id: 
+            continue
         try:
             wikidata_id = get_author_wikidata_id(author.name)
             author.set_wikidata_id(wikidata_id)
@@ -80,21 +112,15 @@ def update_wikidata_ids():
         if (actor.name == None or actor.name == "" or actor.name == "null"):
             continue
         
+        if actor.wikidata_id: 
+            continue
         try:
             wikidata_id = get_subject_actors_wikidata_id(actor.name)
             actor.set_wikidata_id(wikidata_id)
         except:
             pass
 
-    # try to update collections in case new ones were added
-    #collections = FinnaCollection.objects.all()
-    collections = FinnaImage.collections.all()
-    for collection in collections:
-        try:
-            wikidata_id = get_collection_wikidata_id(collection.name)
-            collection.set_wikidata_id(wikidata_id)
-        except:
-            pass
+def update_uploaded_images():
 
     images = FinnaImage.objects.filter(already_in_commons=False)
     for image in images:

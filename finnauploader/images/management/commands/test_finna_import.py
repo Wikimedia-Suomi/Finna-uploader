@@ -3,7 +3,7 @@ from images.models import FinnaImage, CacheSparqlBool, FintoYsoLabel, \
                           FinnaSubjectWikidataPlace
 import pywikibot
 import time
-from images.finna_record_api import do_finna_search, get_collection_names
+from images.finna_record_api import do_finna_search, get_collection_names, get_finna_record_url
 from images.locations import is_location_within_administrative_entity, \
                              parse_subject_place_string, \
                              update_yso_places, test_property_value, \
@@ -432,7 +432,8 @@ class Command(BaseCommand):
 
         if r.best_wikidata_location.exists():
             print("Skipping: best_wikidata_location.exists()")
-        print(r.finna_json_url)
+        f_url = get_finna_record_url(r.finna_id, True)
+        print(f_url)
 
         print("parsed_subject_places")
         parsed_subject_places = parse_subject_place_string(r)
@@ -463,28 +464,27 @@ class Command(BaseCommand):
         for page in range(1, 201):
             # Prevent looping too fast for Finna server
             time.sleep(1)
-            data = do_finna_search(page, lookfor, type, collection)
-            if 'records' in data:
-                for record in data['records']:
-                    n += 1
-                    if seek and seek != record['id']:
-                        print(f'{n} skipping ' + str(record['id']))
-                        continue
-                    seek = ''
-                    if 'Oulujoki' in str(record):
-                        continue
-                    if 'Salpausselkä' in str(record):
-                        continue
-                    if 'Tyris' in str(record):
-                        continue
-                    if 'Tammela' in str(record):
-                        continue
-                    if 'Siperia' in str(record):
-                        continue
-
-                    self.process_finna_record(record)
-            else:
+            finna_records = do_finna_search(page, lookfor, type, collection)
+            if 'records' not in finna_records:
                 print("XXX")
                 break
+            for record in finna_records['records']:
+                n += 1
+                if seek and seek != record['id']:
+                    print(f'{n} skipping ' + str(record['id']))
+                    continue
+                seek = ''
+                if 'Oulujoki' in str(record):
+                    continue
+                if 'Salpausselkä' in str(record):
+                    continue
+                if 'Tyris' in str(record):
+                    continue
+                if 'Tammela' in str(record):
+                    continue
+                if 'Siperia' in str(record):
+                    continue
+
+                self.process_finna_record(record)
 
         self.stdout.write(self.style.SUCCESS('Images counted succesfully!'))
