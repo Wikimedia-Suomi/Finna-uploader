@@ -478,6 +478,7 @@ def get_category_for_subject_in_country(subject_name):
         'pilkintä' : 'Ice fishing in',
         'kalanviljely' : 'Fish farming in',
         'kalanviljelylaitokset' : 'Fish farming in',
+        'leirintäalueet' : 'Camping in',
         'luonnonmaisema' : 'Landscapes of',
         #'maisemavalokuvaus' : '',
         # retkeilyalueet, retkeilyvarusteet

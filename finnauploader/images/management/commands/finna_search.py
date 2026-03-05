@@ -1,10 +1,9 @@
 from django.core.management.base import BaseCommand
 import time
-from images.models import FinnaImage
-from images.finna_record_api import do_finna_search, get_supported_collections, \
+from images.finna_record_api import get_supported_collections, \
                                     get_collection_name_from_alias, \
                                     get_collection_aliases
-
+from images.import_helper import do_finna_import
 
 class Command(BaseCommand):
     help = 'Import records from Finna search result to the database'
@@ -57,16 +56,6 @@ class Command(BaseCommand):
         
         #if (collection == None and aliases != None):
         #    collection = aliases
+        do_finna_import(lookfor, type, collection)
 
-        for page in range(1, 301):
-
-            # images.finna.do_finna_search() will look again for a collection
-            data = do_finna_search(page, lookfor, type, collection)
-            if (FinnaImage.objects.create_from_finna_record(data) == False):
-                return False
-
-            # Prevent looping too fast for Finna server
-            time.sleep(1)
-
-        FinnaImage.objects.update_wikidata_ids()
         self.stdout.write(self.style.SUCCESS('Images saved succesfully!'))

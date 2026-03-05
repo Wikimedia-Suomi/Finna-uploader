@@ -129,7 +129,10 @@ def get_collection_aliases():
              'Kymenlaakso' : '0/Kymenlaakson museo/',
              'Lahdenmuseo' : '0/LAHTIMUSEO/', # Lahden museot, myös 1\/LAHTIMUSEO\/Kuvakokoelmat kuva-arkisto\/
              'Varkauden' : '0/VARKAUDENMUSEOT/', # Varkauden museot
+             'Kainuun' : '0/KainuunMuseo/',
+             'Oulun' : '0/OULUNMUSEO/',
              'Lappeenrannan museot' : '0/LPRMUSEOT/', # myös 1\/LPRMUSEOT\/Wolkoffin museo\/
+             'HML' : '0/HMLMUSEO/', # Hämeenlinnan kaupunginmuseo
              'KHM' : '0/KHM/', # Kemin historiallinen museo
              'FMP': '0/FMP/', # Suomen valokuvataiteen museo
              'JOKA': 'JOKA Journalistinen kuva-arkisto',
@@ -170,7 +173,10 @@ def is_building_collection(name):
                     '1/SATMUSEO/Kuvakokoelma/',
                     '0/LAHTIMUSEO/',
                     '0/VARKAUDENMUSEOT/',
+                    '0/KainuunMuseo/',
+                    '0/OULUNMUSEO/',
                     '0/LPRMUSEOT/',
+                    '0/HMLMUSEO/',
                     '0/KHM/',
                     '0/FMP/',
                     '0/SibeliusmuseumsArkiv/',

@@ -12,35 +12,14 @@ from datetime import datetime
 # from images.locations import parse_subject_place_string
 from images.finna_record_api import get_finna_record_url, parse_full_record
 from images.pywikibot_helpers import get_wikidata_id_from_url
-from images.wikitext.timestamps import parse_timestamp
-from images.duplicatedetection import is_already_in_commons
+#from images.wikitext.timestamps import parse_timestamp
+#from images.duplicatedetection import is_already_in_commons
 # import images.models_mappingcache
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_institution_wikidata_id, \
                                     get_collection_wikidata_id, get_clean_institution_name
 
-
-def update_dates_in_filename(input_str):
-    # Regular expression to find the date in the format d.m.yyyy
-    date_pattern = r"\d{1,2}\.\d{1,2}\.\d{4}"
-    found_date = re.search(date_pattern, input_str)
-
-    if found_date:
-        # Extract the date
-        date_str = found_date.group()
-
-        # Parse the date
-        date_obj = datetime.strptime(date_str, "%d.%m.%Y")
-
-        # Format the date into the desired format
-        formatted_date = date_obj.strftime("%Y-%m-%d")
-
-        # Replace the old date in the string with the new formatted date
-        output_str = input_str.replace(date_str, formatted_date)
-    else:
-        output_str = input_str
-    return output_str
 
 
 # Create your models here.
@@ -334,51 +313,10 @@ class FinnaLocalSubject(models.Model):
 # Managers
 class FinnaRecordManager(models.Manager):
 
-    # when and where is this called?
-    # only case is from finna_search?
-    # potentially we should update ids when mapping information changes in commons/wikidata
-    # in the data-pages, not just when searching..
-    #
-    def update_wikidata_ids(self):
-        authors = FinnaNonPresenterAuthor.objects.all()
-        for author in authors:
-            try:
-                wikidata_id = get_author_wikidata_id(author.name)
-                author.set_wikidata_id(wikidata_id)
-            except:
-                pass
-
-        actors = FinnaSubjectActor.objects.all()
-        for actor in actors:
-            # there is bug in some data
-            if (actor.name == None or actor.name == "" or actor.name == "null"):
-                continue
-            
-            try:
-                wikidata_id = get_subject_actors_wikidata_id(actor.name)
-                actor.set_wikidata_id(wikidata_id)
-            except:
-                pass
-
-        # try to update collections in case new ones were added
-        collections = FinnaCollection.objects.all()
-        for collection in collections:
-            try:
-                wikidata_id = get_collection_wikidata_id(collection.name)
-                collection.set_wikidata_id(wikidata_id)
-            except:
-                pass
-
-        images = FinnaImage.objects.filter(already_in_commons=False)
-        for image in images:
-            uploaded = is_already_in_commons(image.finna_id, fast=True)
-            if uploaded:
-                image.already_in_commons = uploaded
-                image.save(update_fields=['already_in_commons'])
-
     # First try
     # where is that local_data supposed to come from?
     # this is called (indirectly) from finna_search and directly from views.py as well
+    # see create_from_finna_record() after this
     def create_from_data(self, data, local_data={}):
 
         def clean_subject_name(subject):
@@ -393,6 +331,7 @@ class FinnaRecordManager(models.Manager):
 
         #print("parsing nonprepsenters")
 
+        # TODO: check for duplicates
         # Extract and handle non_presenter_authors data
         non_presenter_authors_data = data.pop('nonPresenterAuthors', [])
         non_presenter_authors = []
@@ -479,6 +418,8 @@ class FinnaRecordManager(models.Manager):
         #print("parsing collections")
 
         # Extract and handle collections data
+        # TODO: check for duplicates
+
         collections_data = data.pop('collections', [])
         collections = [FinnaCollection.objects.get_or_create(name=collection_name)[0] for collection_name in collections_data]
         for collection in collections:
@@ -733,6 +674,8 @@ class FinnaRecordManager(models.Manager):
 
         for record in finna_records['records']:
             print(" -- -- -- ") # add a simple separator
+            
+            # TODO: parse and validate first before trying to store it..
 
             with transaction.atomic():
                 try:
@@ -834,117 +777,6 @@ class FinnaImage(models.Model):
             print(f'Unknown format: {self.master_format}')
             exit(1)
 
-    @property
-    def pseudo_filename(self):
-        filename_extension = self.filename_extension
-        summaries_name = self.summaries.filter(lang='en').first()
-        alt_title_name = self.alternative_titles.filter(lang='en').first()
-
-        name = None
-        if summaries_name and alt_title_name:
-            if len(str(summaries_name)) > len(str(alt_title_name)):
-                name = alt_title_name.text
-            else:
-                name = summaries_name.text
-
-        if not name:
-            name = self.short_title
-
-        # filename in commons can't exceed 240 bytes:
-        # let's assume we have narrow ASCII only..
-        if (len(name) > 240):
-            if (self.short_title is not None and len(self.short_title) < 240):
-                print("using short title name")
-                name = self.short_title
-            elif (alt_title_name is not None and len(str(alt_title_name)) < 240):
-                print("using alt title name")
-                name = alt_title_name.text
-            elif (summaries_name is not None and len(str(summaries_name)) < 240):
-                print("using summaries name")
-                name = summaries_name.text
-            else:
-                print("unable to find name shorter than maximum for filename")
-
-        name = update_dates_in_filename(name)
-        name = name.replace('content description: ', '')
-        name = name.replace(".", "_")
-        name = name.replace(" ", "_")
-        name = name.replace(":", "_")
-        name = name.replace("_", " ").strip()
-
-        if self.year and str(self.year) not in name:
-            year = f'{self.year}'
-        else:
-            year = ''
-
-        # if there is large difference in year don't add it to name:
-        # year in different fields can vary a lot
-        if (self.date_string is not None):
-            timestamp, precision = parse_timestamp(self.date_string)
-            if (timestamp is not None):
-                if (year != str(timestamp.year)):
-                    print("year " + year + " does not match date string " + str(timestamp.year) + ", ignoring it")
-                    year = ''
-
-        # some images don't have identifier to be used
-        if (self.identifier_string is not None):
-            identifier = self.identifier_string.replace(":", "-")
-            identifier = identifier.replace("/", "_")
-        else:
-            identifier = ''
-
-        name = name.replace(" ", "_")
-        name = name.replace("/", "_")   # don't allow slash in names
-        name = name.replace("\n", " ")  # don't allow newline in names
-        name = name.replace("\t", " ")  # don't allow tabulator in names
-        name = name.replace("\r", " ")  # don't allow carriage return in names
-
-        # try to remove soft-hyphens from name while we can
-        # note: 0xC2 0xAD in utf-8, 0x00AD in utf-16, which one is used?
-        name = name.replace(u"\u00A0", "")
-        name = name.replace("\xc2\xa0", "")
-
-        lenident = len(year) +1 + len(identifier)+2 + len(filename_extension)+1
-
-        quoted_name = urllib.parse.quote_plus(name)
-
-        # wiki doesn't allow soft hyphen in names:
-        # normal replace() does not work on silent characters for some reason?
-        # -> kludge around it
-        quoted_name = quoted_name.replace("%C2%AD", "")
-
-        # each character with umlaut becomes at least three in HTML-encoding..
-        if ((len(quoted_name) + lenident) >=  200):
-            print("WARN: quoted filename is becoming too long, limiting it")
-            
-            newnamelen = (220 - lenident)
-            if (newnamelen > 200):
-                newnamelen = 200
-            
-            quoted_name = quoted_name[:newnamelen] + "__"
-            print("new name: ", quoted_name)
-
-        # unquote again..
-        name = urllib.parse.unquote(quoted_name)
-
-        if (len(year) > 0):
-            year = year + '_'
-        if (len(identifier) > 0):
-            file_name = f'{name}_{year}({identifier}).{filename_extension}'
-        else:
-            # in some odd cases there is no identifier (accession number) for the file
-            file_name = f'{name}_{year}.{filename_extension}'
-
-        # replace non-breakable spaces with normal spaces
-        # 0xC2 0xA0 in utf-8, 0x00A0 in utf-16
-        file_name = file_name.replace(u"\u00A0", " ")
-
-        # wiki doesn't allow non-breakable spaces or soft-hyphens
-        quoted_name = urllib.parse.quote_plus(file_name)
-        quoted_name = quoted_name.replace("%C2%A0", " ")
-        file_name = urllib.parse.unquote(quoted_name)
-
-        return file_name
 
     def __str__(self):
         return self.finna_id
