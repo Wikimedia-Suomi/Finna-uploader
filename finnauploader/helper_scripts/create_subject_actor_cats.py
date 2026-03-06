@@ -94,19 +94,19 @@ def main(wikidata_id):
 
     if not wikidata_item.exists():
         print("Item does not exist.")
-        return
+        return False
 
     # Check if the item is a human
     if not is_human(wikidata_item):
         print("Item is not a human.")
-        return
+        return False
 
     # Get the actual name from the Wikidata item
     actual_name = get_name_from_label(wikidata_item)
     if (actual_name == None):
         # wikidata item needs fixing first
         print("There is no Finnish label in Wikidata for:", wikidata_id )
-        return
+        return False
         
     print(f"Actual name on Wikidata: {actual_name}")
 
@@ -141,7 +141,7 @@ def main(wikidata_id):
 
     if confirmation == 'n':
         print("Operation cancelled.")
-        return
+        return False
 
     # Check for Commons category (P373)
     if 'P373' not in wikidata_item.claims:
@@ -157,6 +157,7 @@ def main(wikidata_id):
 
         print("Property saved")
 
+    return True
     #return wikidata_id
 
 
@@ -181,8 +182,8 @@ if __name__ == "__main__":
         wikidata_id = sys.argv[1]
         expected_name = sys.argv[2]
         print(f"Expected name from parameter: {expected_name}")
-        main(wikidata_id)
-        update_commons_list(expected_name, wikidata_id)
+        if (main(wikidata_id) == True):
+            update_commons_list(expected_name, wikidata_id)
     else:
         print("Script creates commons category for person defined by wikidata item.")  # noqa
         print("Usage: python3 create_subject_actor_cats.py <Wikidata_ID> \"<Lastname, Firstname>\"")  # noqa
