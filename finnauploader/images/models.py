@@ -583,11 +583,14 @@ class FinnaRecordManager(models.Manager):
             print("finna id exceeds maximum length", record.finna_id)
             #print("maximum length currently", record.finna_id.Length())
             return None # skip
-        # identifier string may have list of accession numbers
-        if (len(record.identifier_string) > 500):
-            print("finna identifier_string exceeds maximum length", record.identifier_string)
-            #print("maximum length currently", record.identifier_string.Length())
-            return None # skip
+        
+        # some images don't have accession numbers (mainly SA-kuva)
+        if (record.identifier_string != None):
+            # identifier string may have list of accession numbers
+            if (len(record.identifier_string) > 500):
+                print("finna identifier_string exceeds maximum length", record.identifier_string)
+                #print("maximum length currently", record.identifier_string.Length())
+                return None # skip
 
         try:
             record.date_string = data['events']['valmistus'][0]['date']
