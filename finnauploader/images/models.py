@@ -14,7 +14,7 @@ from images.finna_record_api import parse_full_record
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_institution_wikidata_id, \
-                                    get_collection_wikidata_id, get_clean_institution_name
+                                    get_collection_wikidata_id, striprepeatespaces
 
 
 
@@ -422,7 +422,7 @@ class FinnaRecordManager(models.Manager):
             # sanitize data: newlines and tabulators into regular spaces at least
             instval = institution['value']
             if (instval.find("\n") > 0 or instval.find("\t") > 0):
-                instval = get_clean_institution_name(instval)
+                instval = striprepeatespaces(instval)
 
             itranslated = ""
             if ('translated' in institution):
@@ -453,7 +453,7 @@ class FinnaRecordManager(models.Manager):
         for collection_name in collections_data:
             
             # cleanup name
-            collection_name = collection_name.strip()
+            collection_name = striprepeatespaces(collection_name)
             
             print("using collection", collection_name)
             r, created = FinnaCollection.objects.get_or_create(name=collection_name)
@@ -613,6 +613,7 @@ class FinnaRecordManager(models.Manager):
         
         # some images don't have accession numbers (mainly SA-kuva)
         if (record.identifier_string != None):
+            record.identifier_string = record.identifier_string.strip()
             # identifier string may have list of accession numbers
             if (len(record.identifier_string) > 500):
                 print("finna identifier_string exceeds maximum length", record.identifier_string)
@@ -633,10 +634,8 @@ class FinnaRecordManager(models.Manager):
                     if ('date' in valm):
                         # remove extra whitespaces if any:
                         # cleanup the data a bit
-                        vdate = valm['date'].strip()
                         # also cleanup newlines and tabulators within (if any)
-                        #if (vdate.find("\n") > 0 or vdate.find("\t") > 0):
-                        #    vdate = get_clean_institution_name(vdate)
+                        vdate = striprepeatespaces(valm['date'])
 
                         if (len(vdate) > 0):
                             record.date_string = vdate

@@ -109,7 +109,17 @@ def findnonspc(text, begin, end):
         i += 1
     return -1
 
+# remove repeated newlines and tabulators within string:
+# normalize things like institution names to single whitespace only
 def striprepeatespaces(text):
+    if (text == None):
+        return text
+    if (text == ""):
+        return text
+    
+    # start by removing spaces before and after (if any)
+    text = text.strip()
+    
     # if there is carriage return replace it with normal newline
     # and clean up duplications below
     #text = text.replace("\r", "\n")
@@ -134,7 +144,7 @@ def striprepeatespaces(text):
     return text
 
 def get_clean_institution_name(institution_name):
-    return striprepeatespaces(institution_name.strip())
+    return striprepeatespaces(institution_nam)
 
 # use mapping from Finna-string to qcode
 def get_institution_wikidata_id(institution_name):
