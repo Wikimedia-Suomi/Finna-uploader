@@ -387,20 +387,23 @@ class FinnaRecordManager(models.Manager):
         #print("parsing subjectactors")
 
         # Extract and handle subjectActors data
+        subject_actors = []
         subject_actors_data = data.pop('subjectActors', [])
-        subject_actors = [FinnaSubjectActor.objects.get_or_create(name=subject_actor_name)[0] for subject_actor_name in subject_actors_data]
-        for subject_actor in subject_actors:
-            if (subject_actor != None):
-                # there is bug in some data
-                if (subject_actor.name == None or subject_actor.name == "" or subject_actor.name == "null"):
-                    continue
-                
-                try:
-                    # Update wikidata id
-                    wikidata_id = get_subject_actors_wikidata_id(subject_actor.name)
-                    subject_actor.set_wikidata_id(wikidata_id)
-                except:
-                    pass
+        for subject_actor_name in subject_actors_data:
+            
+            # there is bug in some data: cleanup to avoid further problems
+            if (subject_actor_name == None or subject_actor_name == "" or subject_actor_name == "null"):
+                continue
+            
+            act, created = FinnaSubjectActor.objects.get_or_create(name=subject_actor_name)
+            subject_actors.append(act)
+            try:
+                # Update wikidata id
+                wikidata_id = get_subject_actors_wikidata_id(subject_actor_name)
+                act.set_wikidata_id(wikidata_id)
+            except:
+                pass
+
 
         #print("parsing subjectdetails")
 
@@ -411,46 +414,70 @@ class FinnaRecordManager(models.Manager):
         #print("parsing institutions")
 
         # Extract and handle institutions data
+        institutions = []
         institutions_data = data.pop('institutions', [])
-        institutions = [FinnaInstitution.objects.get_or_create(value=institution_data['value'], 
-                                                               defaults={'translated': institution_data['translated']})[0] for institution_data in institutions_data]
-        for institution in institutions:
+        for institution in institutions_data:
+            #print("DEBUG: institution: ", str(institution))
 
             # sanitize data: newlines and tabulators into regular spaces at least
-            instval = institution.value
+            instval = institution['value']
             if (instval.find("\n") > 0 or instval.find("\t") > 0):
-                institution.value = get_clean_institution_name(instval)
+                instval = get_clean_institution_name(instval)
+
+            itranslated = ""
+            if ('translated' in institution):
+                itranslated = institution['translated']
+
+            print("using institution", instval, " - ", itranslated)
+
+            r, created = FinnaInstitution.objects.get_or_create(value=instval, 
+                                                               defaults={'translated': itranslated})
+            institutions.append(r)
+            #print("institution saved", instval)
             
             try:
                 # Update wikidata id
-                wikidata_id = get_institution_wikidata_id(institution.translated)
-                institution.set_wikidata_id(wikidata_id)
+                wikidata_id = get_institution_wikidata_id(itranslated)
+                r.set_wikidata_id(wikidata_id)
+                print("using wikidata id ", wikidata_id, " for institution ", itranslated)
             except:
                 pass
 
         #print("parsing collections")
 
         # Extract and handle collections data
-        # TODO: check for duplicates
+        # TODO: check for duplicates?
 
+        collections = []
         collections_data = data.pop('collections', [])
-        collections = [FinnaCollection.objects.get_or_create(name=collection_name)[0] for collection_name in collections_data]
-        for collection in collections:
+        for collection_name in collections_data:
+            
+            # cleanup name
+            collection_name = collection_name.strip()
+            
+            print("using collection", collection_name)
+            r, created = FinnaCollection.objects.get_or_create(name=collection_name)
+            collections.append(r)
+            #print("collection saved", collection_name)
+        
             try:
                 # TODO: search collection with institution
                 # since collection names are not unique
                 #wikidata_id = get_collection_wikidata_id(institution.wikidata_id, collection.name)
                 
                 # Update wikidata id
-                wikidata_id = get_collection_wikidata_id(collection.name)
-                collection.set_wikidata_id(wikidata_id)
-                #print("keeping collection id for", collection.name)
+                wikidata_id = get_collection_wikidata_id(collection_name)
+                r.set_wikidata_id(wikidata_id)
+                print("using wikidata id ", wikidata_id, " for collection ", collection_name)
             except:
                 pass
 
 
         #print("parsing imagerights")
 
+        # TODO:
+        # there might be creditLine for some physical objects in some cases
+        
         # Extract and handle image_right data
         image_rights_data = data.pop('imageRights', {})
         try:
@@ -592,12 +619,31 @@ class FinnaRecordManager(models.Manager):
                 #print("maximum length currently", record.identifier_string.Length())
                 return None # skip
 
-        try:
-            record.date_string = data['events']['valmistus'][0]['date']
-        except:
-            print(record.finna_id)
-            print('Skipping date_string')
-#            exit(1)
+        # TODO: we'll want to check some other fields in this section 
+        # so prepare for further changes.. 
+        if 'events' in data:
+            if 'valmistus' in data['events']:
+                
+                # TODO: there may be multiple sections like this in same record,
+                # that might happen when there are multiple images in same record
+                if (len(data['events']['valmistus']) > 0):
+                    
+                    #for v in data['events']['valmistus']:
+                    valm = data['events']['valmistus'][0]
+                    if ('date' in valm):
+                        # remove extra whitespaces if any:
+                        # cleanup the data a bit
+                        vdate = valm['date'].strip()
+                        # also cleanup newlines and tabulators within (if any)
+                        #if (vdate.find("\n") > 0 or vdate.find("\t") > 0):
+                        #    vdate = get_clean_institution_name(vdate)
+
+                        if (len(vdate) > 0):
+                            record.date_string = vdate
+                            print('keeping date_string ', vdate)
+                    
+        if (record.date_string == None):
+            print('Note: no date_string in ', record.finna_id)
 
         record.summaries.clear()
         for summary in summaries:
