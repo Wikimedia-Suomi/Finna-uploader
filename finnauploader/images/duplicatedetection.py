@@ -59,14 +59,14 @@ def get_existing_finna_ids_from_sparql():
     # Create a SparqlQuery object
     query_object = sparql.SparqlQuery(endpoint=endpoint, entity_url=entity_url)
 
-    # TODO: can we simplify to a set with unique instances only?
-    # there are duplicates for various reasons
-
     # Execute the SPARQL query and retrieve the data
     data = query_object.select(query, full_data=True)
     if not data:
         print("SPARQL Failed. login BUG?")
         exit(1)
+
+    # TODO: can we simplify to a set with unique instances only?
+    # there are duplicates for various reasons
 
     #print("DEBUG: existing ids from sparql: ", str(data))
     return data
@@ -99,7 +99,7 @@ def get_upload_summary(limit=1000):
 
 
 def is_already_in_commons(finna_id, fast=False):
-    if (sparql_finna_ids == None):
+    if (sparql_finna_ids_data == None):
         return False
 
     #print("DEBUG: searching for existing finna id: ", finna_id)
@@ -126,9 +126,8 @@ def is_already_in_commons(finna_id, fast=False):
             return True
     return False
 
-
 def search_from_sparql_finna_ids(needle):
-    if needle in sparql_finna_ids:
+    if needle in sparql_finna_ids_data:
         return True
     return False
 
