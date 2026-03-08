@@ -5,6 +5,7 @@ from pywikibot.data import sparql
 
 # finna id query results: reduce queries
 toolforgeFinnaId = {}
+sparql_finna_ids_data = None
 
 # set into cache
 def setToolforgeFinnaId(finna_id, exists):
@@ -97,10 +98,10 @@ def get_upload_summary(limit=1000):
 
     return uploadsummary
 
-
+# only used from import helper during import
 def is_already_in_commons(finna_id, fast=False):
     if (sparql_finna_ids_data == None):
-        return False
+        sparql_finna_ids_data = get_existing_finna_ids_from_sparql()
 
     #print("DEBUG: searching for existing finna id: ", finna_id)
     
@@ -126,13 +127,7 @@ def is_already_in_commons(finna_id, fast=False):
             return True
     return False
 
-def search_from_sparql_finna_ids(needle):
-    if needle in sparql_finna_ids_data:
-        return True
-    return False
-
 # main ()
 print("Loading 1000 most recent edit summaries for skipping uploaded files")
 uploadsummary = get_upload_summary(1000)
-sparql_finna_ids_data = get_existing_finna_ids_from_sparql()
 

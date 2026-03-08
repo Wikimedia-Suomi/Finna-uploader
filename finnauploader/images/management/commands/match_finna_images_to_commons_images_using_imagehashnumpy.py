@@ -6,7 +6,7 @@ import pywikibot
 from images.finna_record_api import get_finna_image_urls
 from images.imagehash_helpers import compare_finna_hash, get_imagehashes
 import numpy as np
-from images.duplicatedetection import search_from_sparql_finna_ids
+from images.duplicatedetection import get_existing_finna_ids_from_sparql
 
 phashes_signed = ToolforgeImageHashCache.objects.values_list('phash',
                                                              flat=True)
@@ -52,6 +52,10 @@ class Command(BaseCommand):
         commons_site = pywikibot.Site("commons", "commons")
         wikidata_site = pywikibot.Site("wikidata", "wikidata")
 
+        # make explicit load of the data first in this case:
+        # this will simplify the normal uses
+        sparql_finna_ids_data = get_existing_finna_ids_from_sparql()
+
         imagehashes = FinnaImageHash.objects.all()
         print(len(imagehashes))
 
@@ -79,7 +83,7 @@ class Command(BaseCommand):
                         data = item.get()
                     except:
                         continue
-                    if search_from_sparql_finna_ids(f'M{photo}'):
+                    if f'M{photo}' in sparql_finna_ids_data:
                         print('SKIPPING')
                         continue
 
