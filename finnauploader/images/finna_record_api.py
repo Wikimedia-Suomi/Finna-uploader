@@ -1,7 +1,6 @@
 import requests
 import urllib
 import re
-import xml.etree.ElementTree as ET
 import html
 
 from images.wikitext.wikidata_helpers import get_collection_names
@@ -130,8 +129,10 @@ def get_collection_aliases():
              'Lahdenmuseo' : '0/LAHTIMUSEO/', # Lahden museot, myös 1\/LAHTIMUSEO\/Kuvakokoelmat kuva-arkisto\/
              'Varkauden' : '0/VARKAUDENMUSEOT/', # Varkauden museot
              'Kainuun' : '0/KainuunMuseo/',
+             'Lapin' : '0/LMM/', # Lapin maakuntamuseo
              'Oulun' : '0/OULUNMUSEO/',
              'Lappeenrannan museot' : '0/LPRMUSEOT/', # myös 1\/LPRMUSEOT\/Wolkoffin museo\/
+             'Mikkelin' : '0/mikkelinmuseot/',
              'HML' : '0/HMLMUSEO/', # Hämeenlinnan kaupunginmuseo
              'KHM' : '0/KHM/', # Kemin historiallinen museo
              'FMP': '0/FMP/', # Suomen valokuvataiteen museo
@@ -143,6 +144,7 @@ def get_collection_aliases():
              'Yomuseo' : '0/yo-museo/', # Tiedemuseo Liekki
              'Tekniikanmuseo' : '0/tekniikan_museo/', # Tekniikan museo
              'Metsästysmuseo' : '0/Metsastysmuseo/', # Suomen Metsästysmuseo
+             'Lottamuseo' : '0/Lottamuseo/', 
              'Siiri': '0/Siiri/', # Tampereen historialliset museot
              'Satmuseo0' : "0/SATMUSEO/", # Satakunnan Museo
              'Satmuseo1' : "1/SATMUSEO/Kuvakokoelma/", # Kuvakokoelma
@@ -174,8 +176,10 @@ def is_building_collection(name):
                     '0/LAHTIMUSEO/',
                     '0/VARKAUDENMUSEOT/',
                     '0/KainuunMuseo/',
+                    '0/LMM/',
                     '0/OULUNMUSEO/',
                     '0/LPRMUSEOT/',
+                    '0/mikkelinmuseot/',
                     '0/HMLMUSEO/',
                     '0/KHM/',
                     '0/FMP/',
@@ -185,6 +189,7 @@ def is_building_collection(name):
                     '0/yo-museo/',
                     '0/tekniikan_museo/',
                     '0/Metsastysmuseo/',
+                    '0/Lottamuseo/',
                     '0/kansan_arkisto/'
                     '0/Werstas/',
                     #'0/AALTOARKISTO/', # errors in saving, debug this
@@ -402,130 +407,3 @@ def get_finna_id_from_url(url):
                 return id
 
 
-# # # #
-# xml record parsing below (embedded in json data)
-
-# descriptive may have some summary text?
-def parsexml_descriptions(xml_root):
-
-    # Find all 'descriptiveNoteValue' elements
-    # and extract their text and attributes
-    descriptive_notes = xml_root.findall(".//descriptiveNoteValue")
-    descriptive_note_values = [
-        {
-            'text': html.unescape(note.text) if note.text else '',
-            'attributes': note.attrib
-        }
-        for note in descriptive_notes
-    ]
-    return descriptive_note_values
-
-
-# "apellations" may have title text?
-def parsexml_appellations(xml_root):
-
-    # Find all 'appellationValue' elements
-    # and extract their text and attributes
-    appellations = xml_root.findall(".//appellationValue")
-    appellation_values = [
-        {
-        'text': html.unescape(appellation.text) if appellation.text else '',
-        'attributes': appellation.attrib
-        }
-        for appellation in appellations
-    ]
-    return appellation_values
-
-
-# TODO: parse original publication (newspaper, date, page):
-# <relatedWorkSet><relatedWork><displayObject>Hufvudstadsbladet 16.6.1940, s. 4</displayObject>
-#
-def parsexml_related_display(xml_root):
-    if (xml_root == None):
-        return None
-
-    # we want to get those that have <displayObject label=\"julkaisu\">
-    # since <displayObject lang=\"fi\"> has collections which we get already
-    # <relatedWorkSet><relatedWork><displayObject>Hufvudstadsbladet 16.6.1940, s. 4</displayObject>
-
-    # item may have been in multiple publications
-    publications = list()
-
-    # note: for better safety, use longer path where possible
-    related_works = xml_root.findall(".//relatedWork/displayObject")
-    for work in related_works:
-        foundMatchingAttrib = False
-        #lang = ""
-        if (work.attrib != None):
-            # TODO: use direct lookup if possible (when defined)
-            #a = work.attrib.get("label")
-            
-            for k, v in work.attrib.items():
-                key = html.unescape(k)
-                value = html.unescape(v)
-                #print("DEBUG: related work key ", key, " value ", value )
-                # ok, this tag has what we want
-                if (key == "label" and value == "julkaisu"):
-                    foundMatchingAttrib = True
-                #if (key == "lang"):
-                #    lang = value
-            
-        if (work.text != None and foundMatchingAttrib == True):
-            julkaisu = html.unescape(work.text)
-
-            publications.append(julkaisu)
-    
-    return publications
-
-
-# TODO: for categories, parse additional categories from the full record xml:
-# classificationWrap><classification><term lang="fi" label="luokitus">
-#
-# TODO: parse classification><term lang="fi" label="luokitus"
-# has information like >mustavalkoinen  negatiivi< that we can further categorize with later
-#
-#def parsexml_classifications(xml_root):
-    # classificationWrap><classification><term lang="fi" label="luokitus">
-    #classifications = root.findall(".//term")
-
-
-# TODO: parse inscriptions:
-# <inscriptionsWrap><inscriptions><inscriptionDescription><descriptiveNoteValue>Kirjoitus..
-#
-#def parsexml_inscriptions(xml_root):
-
-def parse_full_record(xml_data):
-    # Parse the XML data
-    root = ET.fromstring(xml_data)
-
-    try:
-        # Find all 'descriptiveNoteValue' elements
-        # and extract their text and attributes
-        descriptive_notes = root.findall(".//descriptiveNoteValue")
-        descriptive_note_values = [
-            {
-                'text': html.unescape(note.text) if note.text else '',
-                'attributes': note.attrib
-            }
-            for note in descriptive_notes
-        ]
-
-        # Find all 'appellationValue' elements
-        # and extract their text and attributes
-        appellations = root.findall(".//appellationValue")
-        appellation_values = [
-            {
-            'text': html.unescape(appellation.text) if appellation.text else '',
-            'attributes': appellation.attrib
-            }
-            for appellation in appellations
-        ]
-
-
-        return {'summary': descriptive_note_values, 'title': appellation_values}
-
-    except:
-        # give information where problem occurred
-        print('Failed parsing full record XML')
-        print(xml_data)
-        pass

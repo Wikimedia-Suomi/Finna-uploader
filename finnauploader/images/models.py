@@ -9,8 +9,10 @@ import re
 import json
 import urllib
 from datetime import datetime
+
+import xml.etree.ElementTree as XEltree
+
 # from images.locations import parse_subject_place_string
-from images.finna_record_api import parse_full_record
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_institution_wikidata_id, \
@@ -412,7 +414,7 @@ class FinnaRecordManager(models.Manager):
             building_value = building['value'].strip()
             building_translated = building['translated'].strip()
             
-            r, created = FinnaBuilding.objects.get_or_create(value=building_value, defaults={'translated': building_translated})
+            r, created = FinnaBuilding.objects.get_or_create(value = building_value, defaults={'translated': building_translated})
             buildings.append(r)
 
 
@@ -544,61 +546,57 @@ class FinnaRecordManager(models.Manager):
 
         #print("parsing full record")
 
+        summaries = []
+        alternative_titles = []
+
         # Extract the Summary
         # Data which is stored to separate tables
-        # try to rationalize this..
         fullrecord = data['fullRecord']
-        full_record_data = parse_full_record(fullrecord)
+        xml_root = XEltree.fromstring(fullrecord)
+        if (xml_root != None):
+            fsobj = FinnaSummary.objects
+            descriptive_notes = xml_root.findall(".//inscriptionDescription/descriptiveNoteValue")
+            for note in descriptive_notes:
+                notelang = note.get("lang") 
+                notetext = note.text
+                if (notelang == None):
+                    continue
+                print("DEBUG: found descnote:", notetext)
+                summary, created = fsobj.get_or_create(
+                                                 text = notetext,
+                                                 lang = notelang,
+                                                 defaults = {'order': 1})
+                summaries.append(summary)
+            
 
-        summaries = []
-        obj = FinnaSummary.objects
-        for s in full_record_data['summary']:
-            if 'text' not in s:
-                continue
-            if not s['text']:
-                continue
+            fatobj = FinnaAlternativeTitle.objects
+            appellations = xml_root.findall(".//appellationValue")
+            for app in appellations:
+                applang = app.get("lang") 
+                applabel = app.get("label") 
+                apppref = app.get("pref") 
+                apptext = app.text
+                if (applang == None or applabel == None or apppref == None):
+                    continue
+                print("DEBUG: found appellation:", apptext)
+                alt_title, created = fatobj.get_or_create(text = apptext,
+                                                    lang = applang,
+                                                    pref = apppref)
+                alternative_titles.append(alt_title)
 
-            # note: if there is no language specified, we should have a placeholder?
-            # currently following handling does not support it
-            if 'lang' not in s['attributes']:
-                continue
-
-            try:
-                summary, created = obj.get_or_create(
-                                                 text=s['text'],
-                                                 lang=s['attributes']['lang'],
-                                                 defaults={'order': 1})
-            except:
-                print('Error saving summary:', s)
-                exit(1)
-            summaries.append(summary)
-
-        alternative_titles = []
-        obj = FinnaAlternativeTitle.objects
-        for s in full_record_data['title']:
-            if 'text' not in s:
-                continue
-            if not s['text']:
-                continue
-            if 'attributes' not in s:
-                continue
-            if 'label' not in s['attributes']:
-                continue
-            if 'lang' not in s['attributes']:
-                continue
-            # data from certain collections does not have "pref" in the full record
-            if 'pref' not in s['attributes']:
-                continue
-
-            # tag appellationValue ?
-            alt_title, created = obj.get_or_create(text=s['text'],
-                                                   lang=s['attributes']['lang'],
-                                                   pref=s['attributes']['pref'])
-
+                
             # TODO: parse classification><term lang="fi" label="luokitus"
             # has information like >mustavalkoinen  negatiivi< that we can further categorize with later
 
-            alternative_titles.append(alt_title)
+            # related work: publications of the item such as newspapre or magazine
+            related_works = xml_root.findall(".//relatedWork/displayObject")
+            for work in related_works:
+                worklabel = work.get("label") 
+                workjulkaisu = work.get("julkaisu")
+                worktext = work.text
+                if (worklabel == None or workjulkaisu == None):
+                    continue
+                print("DEBUG: found related work:", worktext)
 
         # classification
 
