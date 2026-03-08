@@ -557,6 +557,7 @@ class FinnaRecordManager(models.Manager):
             # note: should use "inscriptions" in commons template?
             fsobj = FinnaSummary.objects
             # should use more precise path..
+            # // objectDescriptionSet, label = "description" or type = "description"
             #descriptive_notes = xml_root.findall(".//inscriptionDescription/descriptiveNoteValue")
             descriptive_notes = xml_root.findall(".//descriptiveNoteValue")
             for note in descriptive_notes:
@@ -573,10 +574,11 @@ class FinnaRecordManager(models.Manager):
                 #record.summaries.add(summary) # <- could use directly here?
 
             fatobj = FinnaAlternativeTitle.objects
+            # shoud use //titleSet/appellationValue for this purpose ?
             appellations = xml_root.findall(".//appellationValue")
             for app in appellations:
                 applang = app.get("lang") 
-                applabel = app.get("label") 
+                applabel = app.get("label") # "nimi"
                 apppref = app.get("pref") 
                 apptext = app.text
                 if (applang == None or applabel == None or apppref == None):
