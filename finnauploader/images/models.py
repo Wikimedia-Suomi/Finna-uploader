@@ -563,7 +563,8 @@ class FinnaRecordManager(models.Manager):
             for note in descriptive_notes:
                 notelang = note.get("lang") 
                 notetext = note.text
-                if (notelang == None):
+                if (notelang == None or notetext == None):
+                    print("DEBUG: skipping descriptive note as null")
                     continue
                 print("DEBUG: found descnote:", notetext)
                 summary, created = fsobj.get_or_create(
@@ -581,7 +582,8 @@ class FinnaRecordManager(models.Manager):
                 applabel = app.get("label") # "nimi"
                 apppref = app.get("pref") 
                 apptext = app.text
-                if (applang == None or applabel == None or apppref == None):
+                if (applang == None or applabel == None or apppref == None or apptext == None):
+                    print("DEBUG: skipping appellation as null")
                     continue
                 print("DEBUG: found appellation:", apptext)
                 alt_title, created = fatobj.get_or_create(text = apptext,
@@ -601,7 +603,8 @@ class FinnaRecordManager(models.Manager):
                 worklabel = work.get("label") 
                 workjulkaisu = work.get("julkaisu")
                 worktext = work.text
-                if (worklabel == None or workjulkaisu == None):
+                if (worklabel == None or workjulkaisu == None or worktext == None):
+                    print("DEBUG: skipping related work as null")
                     continue
                 print("DEBUG: found related work:", worktext)
 
