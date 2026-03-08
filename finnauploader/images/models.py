@@ -554,8 +554,11 @@ class FinnaRecordManager(models.Manager):
         fullrecord = data['fullRecord']
         xml_root = XEltree.fromstring(fullrecord)
         if (xml_root != None):
+            # note: should use "inscriptions" in commons template?
             fsobj = FinnaSummary.objects
-            descriptive_notes = xml_root.findall(".//inscriptionDescription/descriptiveNoteValue")
+            # should use more precise path..
+            #descriptive_notes = xml_root.findall(".//inscriptionDescription/descriptiveNoteValue")
+            descriptive_notes = xml_root.findall(".//descriptiveNoteValue")
             for note in descriptive_notes:
                 notelang = note.get("lang") 
                 notetext = note.text
@@ -567,7 +570,7 @@ class FinnaRecordManager(models.Manager):
                                                  lang = notelang,
                                                  defaults = {'order': 1})
                 summaries.append(summary)
-            
+                #record.summaries.add(summary) # <- could use directly here?
 
             fatobj = FinnaAlternativeTitle.objects
             appellations = xml_root.findall(".//appellationValue")
@@ -583,12 +586,14 @@ class FinnaRecordManager(models.Manager):
                                                     lang = applang,
                                                     pref = apppref)
                 alternative_titles.append(alt_title)
+                #record.alternative_titles.add(alt_title) # <- could use directly here?
 
                 
             # TODO: parse classification><term lang="fi" label="luokitus"
             # has information like >mustavalkoinen  negatiivi< that we can further categorize with later
 
             # related work: publications of the item such as newspapre or magazine
+            # should use "exhibition history" in commons template
             related_works = xml_root.findall(".//relatedWork/displayObject")
             for work in related_works:
                 worklabel = work.get("label") 

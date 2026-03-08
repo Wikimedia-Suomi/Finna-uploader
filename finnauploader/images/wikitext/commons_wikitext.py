@@ -271,9 +271,9 @@ def create_photograph_template(finna_image):
     template.add('department', make_lang_template(joinedcollections, lang))  # noqa
     template.add('references', '')
     template.add('object history', '')
-    template.add('exhibition history', '')
-    template.add('credit line', '')
-    template.add('inscriptions', '')
+    template.add('exhibition history', '') # relatedWork/displayObject from xml record
+    template.add('credit line', '') # image rights/creditline ?
+    template.add('inscriptions', '') # inscriptionDescription/descriptiveNoteValue from xml record
     template.add('notes', '')
     template.add('accession number', finna_image.identifier_string)
     template.add('source', finna_image.url)
