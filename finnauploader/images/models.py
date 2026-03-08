@@ -340,8 +340,7 @@ class FinnaRecordManager(models.Manager):
                 itranslated = institution['translated']
 
             print("using institution", instval, " - ", itranslated)
-
-            r, created = FinnaInstitution.objects.get_or_create(value=instval, 
+            r, created = FinnaInstitution.objects.get_or_create(value = instval, 
                                                                defaults={'translated': itranslated})
             institutions.append(r)
             #print("institution saved", instval)
@@ -367,7 +366,7 @@ class FinnaRecordManager(models.Manager):
             collection_name = striprepeatespaces(collection_name)
             
             print("using collection", collection_name)
-            r, created = FinnaCollection.objects.get_or_create(name=collection_name)
+            r, created = FinnaCollection.objects.get_or_create(name = collection_name)
             collections.append(r)
             #print("collection saved", collection_name)
         
@@ -388,39 +387,56 @@ class FinnaRecordManager(models.Manager):
 
         # TODO: check for duplicates
         # Extract and handle non_presenter_authors data
-        non_presenter_authors_data = data.pop('nonPresenterAuthors', [])
         non_presenter_authors = []
-        for non_presenter_author_data in non_presenter_authors_data:
-            author = FinnaNonPresenterAuthor.objects.get_or_create(
-                name=non_presenter_author_data['name'],
-                role=non_presenter_author_data['role']
-                )[0]
+        non_presenter_authors_data = data.pop('nonPresenterAuthors', [])
+        for np_author in non_presenter_authors_data:
+            authname = np_author['name'].strip()
+            authrole = np_author['role'].strip()
+            
+            r, created = FinnaNonPresenterAuthor.objects.get_or_create(name = authname, role = authrole)
+            non_presenter_authors.append(r)
             try:
                 # Update wikidata id
-                wikidata_id = get_author_wikidata_id(author.name)
-                author.set_wikidata_id(wikidata_id)
+                wikidata_id = get_author_wikidata_id(authname)
+                r.set_wikidata_id(wikidata_id)
             except:
                 pass
-
-            non_presenter_authors.append(author)
 
         #print("parsing buildings")
 
         # Extract and handle buildings data
+        buildings = []
         buildings_data = data.pop('buildings', [])
-        buildings = [FinnaBuilding.objects.get_or_create(value=building_data['value'], defaults={'translated': building_data['translated']})[0] for building_data in buildings_data]
+        for building in buildings_data:
+            
+            building_value = building['value'].strip()
+            building_translated = building['translated'].strip()
+            
+            r, created = FinnaBuilding.objects.get_or_create(value=building_value, defaults={'translated': building_translated})
+            buildings.append(r)
 
-        #print("parsing subjects")
 
         # Extract and handle subjects data
+        subjects = []
         subjects_data = data.pop('subjects', [])
-        subjects = [FinnaSubject.objects.get_or_create(name=clean_subject_name(subject_name))[0] for subject_name in subjects_data]
+        for subject_name in subjects_data:
+            
+            subject_name = clean_subject_name(subject_name)
+            
+            r, created = FinnaSubject.objects.get_or_create(name = subject_name.strip())
+            subjects.append(r)
 
-        #print("parsing subjectsplaces")
 
         # Extract and handle subjectPlaces data
+        subject_places = []
         subject_places_data = data.pop('subjectPlaces', [])
-        subject_places = [FinnaSubjectPlace.objects.get_or_create(name=subject_place_name.strip())[0] for subject_place_name in subject_places_data]
+        for subject_place_name in subject_places_data:
+            
+            subject_place_name = subject_place_name.strip()
+            
+            r, created = FinnaSubjectPlace.objects.get_or_create(name = subject_place_name)
+            subject_places.append(r)
+
 
         #print("parsing subjectsextended")
 
@@ -446,8 +462,6 @@ class FinnaRecordManager(models.Manager):
             r, created = FinnaSubjectExtented.objects.get_or_create(heading=heading, type=se['type'], record_id=se['id'], ids=se['ids'], detail=se['detail'])
             subject_extented.append(r)
 
-        #print("parsing subjectactors")
-
         # Extract and handle subjectActors data
         subject_actors = []
         subject_actors_data = data.pop('subjectActors', [])
@@ -456,8 +470,10 @@ class FinnaRecordManager(models.Manager):
             # there is bug in some data: cleanup to avoid further problems
             if (subject_actor_name == None or subject_actor_name == "" or subject_actor_name == "null"):
                 continue
+
+            subject_actor_name = subject_actor_name.strip()
             
-            act, created = FinnaSubjectActor.objects.get_or_create(name=subject_actor_name)
+            act, created = FinnaSubjectActor.objects.get_or_create(name = subject_actor_name)
             subject_actors.append(act)
             try:
                 # Update wikidata id
@@ -466,12 +482,15 @@ class FinnaRecordManager(models.Manager):
             except:
                 pass
 
-
-        #print("parsing subjectdetails")
-
         # Extract and handle subjectDetails data
+        subject_details = []
         subject_details_data = data.pop('subjectDetails', [])
-        subject_details = [FinnaSubjectDetail.objects.get_or_create(name=subject_detail_name)[0] for subject_detail_name in subject_details_data]
+        for subject_detail_name in subject_details_data:
+            
+            subject_detail_name = subject_detail_name.strip()
+            
+            r, created = FinnaSubjectDetail.objects.get_or_create(name = subject_detail_name)
+            subject_details.append(r)
 
 
         #print("parsing imagerights")
