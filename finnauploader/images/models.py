@@ -322,6 +322,68 @@ class FinnaRecordManager(models.Manager):
                     exit(1)
             return subject
 
+        #print("parsing institutions")
+
+        # Extract and handle institutions data
+        institutions = []
+        institutions_data = data.pop('institutions', [])
+        for institution in institutions_data:
+            #print("DEBUG: institution: ", str(institution))
+
+            # sanitize data: newlines and tabulators into regular spaces at least
+            instval = institution['value']
+            if (instval.find("\n") > 0 or instval.find("\t") > 0):
+                instval = striprepeatespaces(instval)
+
+            itranslated = ""
+            if ('translated' in institution):
+                itranslated = institution['translated']
+
+            print("using institution", instval, " - ", itranslated)
+
+            r, created = FinnaInstitution.objects.get_or_create(value=instval, 
+                                                               defaults={'translated': itranslated})
+            institutions.append(r)
+            #print("institution saved", instval)
+            
+            try:
+                # Update wikidata id
+                wikidata_id = get_institution_wikidata_id(itranslated)
+                r.set_wikidata_id(wikidata_id)
+                print("using wikidata id ", wikidata_id, " for institution ", itranslated)
+            except:
+                pass
+
+        #print("parsing collections")
+
+        # Extract and handle collections data
+        # TODO: check for duplicates?
+
+        collections = []
+        collections_data = data.pop('collections', [])
+        for collection_name in collections_data:
+            
+            # cleanup name
+            collection_name = striprepeatespaces(collection_name)
+            
+            print("using collection", collection_name)
+            r, created = FinnaCollection.objects.get_or_create(name=collection_name)
+            collections.append(r)
+            #print("collection saved", collection_name)
+        
+            try:
+                # TODO: search collection with institution
+                # since collection names are not unique
+                #wikidata_id = get_collection_wikidata_id(institution.wikidata_id, collection.name)
+                
+                # Update wikidata id
+                wikidata_id = get_collection_wikidata_id(collection_name)
+                r.set_wikidata_id(wikidata_id)
+                print("using wikidata id ", wikidata_id, " for collection ", collection_name)
+            except:
+                pass
+
+
         #print("parsing nonprepsenters")
 
         # TODO: check for duplicates
@@ -410,67 +472,6 @@ class FinnaRecordManager(models.Manager):
         # Extract and handle subjectDetails data
         subject_details_data = data.pop('subjectDetails', [])
         subject_details = [FinnaSubjectDetail.objects.get_or_create(name=subject_detail_name)[0] for subject_detail_name in subject_details_data]
-
-        #print("parsing institutions")
-
-        # Extract and handle institutions data
-        institutions = []
-        institutions_data = data.pop('institutions', [])
-        for institution in institutions_data:
-            #print("DEBUG: institution: ", str(institution))
-
-            # sanitize data: newlines and tabulators into regular spaces at least
-            instval = institution['value']
-            if (instval.find("\n") > 0 or instval.find("\t") > 0):
-                instval = striprepeatespaces(instval)
-
-            itranslated = ""
-            if ('translated' in institution):
-                itranslated = institution['translated']
-
-            print("using institution", instval, " - ", itranslated)
-
-            r, created = FinnaInstitution.objects.get_or_create(value=instval, 
-                                                               defaults={'translated': itranslated})
-            institutions.append(r)
-            #print("institution saved", instval)
-            
-            try:
-                # Update wikidata id
-                wikidata_id = get_institution_wikidata_id(itranslated)
-                r.set_wikidata_id(wikidata_id)
-                print("using wikidata id ", wikidata_id, " for institution ", itranslated)
-            except:
-                pass
-
-        #print("parsing collections")
-
-        # Extract and handle collections data
-        # TODO: check for duplicates?
-
-        collections = []
-        collections_data = data.pop('collections', [])
-        for collection_name in collections_data:
-            
-            # cleanup name
-            collection_name = striprepeatespaces(collection_name)
-            
-            print("using collection", collection_name)
-            r, created = FinnaCollection.objects.get_or_create(name=collection_name)
-            collections.append(r)
-            #print("collection saved", collection_name)
-        
-            try:
-                # TODO: search collection with institution
-                # since collection names are not unique
-                #wikidata_id = get_collection_wikidata_id(institution.wikidata_id, collection.name)
-                
-                # Update wikidata id
-                wikidata_id = get_collection_wikidata_id(collection_name)
-                r.set_wikidata_id(wikidata_id)
-                print("using wikidata id ", wikidata_id, " for collection ", collection_name)
-            except:
-                pass
 
 
         #print("parsing imagerights")
