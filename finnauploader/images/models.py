@@ -461,7 +461,11 @@ class FinnaRecordManager(models.Manager):
             if 'detail' not in se:
                 se['detail'] = ''
 
-            r, created = FinnaSubjectExtented.objects.get_or_create(heading=heading, type=se['type'], record_id=se['id'], ids=se['ids'], detail=se['detail'])
+            r, created = FinnaSubjectExtented.objects.get_or_create(heading=heading, 
+                                                                    type=se['type'], 
+                                                                    record_id=se['id'], 
+                                                                    ids=se['ids'], 
+                                                                    detail=se['detail'])
             subject_extented.append(r)
 
         # Extract and handle subjectActors data
@@ -554,25 +558,37 @@ class FinnaRecordManager(models.Manager):
         fullrecord = data['fullRecord']
         xml_root = XEltree.fromstring(fullrecord)
         if (xml_root != None):
+
             # note: should use "inscriptions" in commons template?
+            inscriptions = xml_root.findall(".//inscriptionDescription/descriptiveNoteValue")
+            for ins in inscriptions:
+                inslang = ins.get("lang") 
+                instext = ins.text
+                if (inslang == None or instext == None):
+                    print("DEBUG: skipping inscriptions as null")
+                    continue
+                print("DEBUG: found inscriptions:", instext)
+                # TODO: save..
+            
             fsobj = FinnaSummary.objects
             # should use more precise path..
             # // objectDescriptionSet, label = "description" or type = "description"
-            #descriptive_notes = xml_root.findall(".//inscriptionDescription/descriptiveNoteValue")
             descriptive_notes = xml_root.findall(".//descriptiveNoteValue")
             for note in descriptive_notes:
                 notelang = note.get("lang") 
+                #notelabel = note.get("label") # "ominaisuudet"
                 notetext = note.text
                 if (notelang == None or notetext == None):
                     print("DEBUG: skipping descriptive note as null")
                     continue
+                #if (notelabel != "ominaisuudet"):
+                # something else..
                 print("DEBUG: found descnote:", notetext)
                 summary, created = fsobj.get_or_create(
                                                  text = notetext,
                                                  lang = notelang,
                                                  defaults = {'order': 1})
                 summaries.append(summary)
-                #record.summaries.add(summary) # <- could use directly here?
 
             fatobj = FinnaAlternativeTitle.objects
             # shoud use //titleSet/appellationValue for this purpose ?
@@ -585,30 +601,48 @@ class FinnaRecordManager(models.Manager):
                 if (applang == None or applabel == None or apppref == None or apptext == None):
                     print("DEBUG: skipping appellation as null")
                     continue
+                #if (apppref != "alternate" or applabel != "nimi"):
+                # something else..
                 print("DEBUG: found appellation:", apptext)
                 alt_title, created = fatobj.get_or_create(text = apptext,
                                                     lang = applang,
                                                     pref = apppref)
                 alternative_titles.append(alt_title)
-                #record.alternative_titles.add(alt_title) # <- could use directly here?
 
                 
             # TODO: parse classification><term lang="fi" label="luokitus"
             # has information like >mustavalkoinen  negatiivi< that we can further categorize with later
+            classifications = xml_root.findall(".//classification/term")
+            for cls in classifications:
+                clslang = cls.get("lang") 
+                clslabel = cls.get("label") # "luokitus" or "classification"
+                clstext = cls.text
+                if (clslabel == None or clstext == None):
+                    print("DEBUG: skipping classification as null")
+                    continue
+                if (clslabel != "luokitus"):
+                    # something else
+                    continue
+                # in this case, should have two separate terms with values like "lasinegatiivi" and ">mustavalkoinen  negatiivi"
+                print("DEBUG: found classification:", clstext)
+                # TODO: save..
 
             # related work: publications of the item such as newspapre or magazine
             # should use "exhibition history" in commons template
             related_works = xml_root.findall(".//relatedWork/displayObject")
             for work in related_works:
+                #worklang = work.get("lang") # note: does not exist usually where we want it..
                 worklabel = work.get("label") 
-                workjulkaisu = work.get("julkaisu")
                 worktext = work.text
-                if (worklabel == None or workjulkaisu == None or worktext == None):
+                if (worklabel == None or worktext == None):
                     print("DEBUG: skipping related work as null")
                     continue
+                if (worklabel != "julkaisu"):
+                    # something else
+                    continue
                 print("DEBUG: found related work:", worktext)
+                # TODO: save..
 
-        # classification
 
         # Extract local add_categories data
         # TODO: why is this using "local_data" instead of record? where is local_data filled?
