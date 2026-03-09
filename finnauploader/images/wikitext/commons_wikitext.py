@@ -205,6 +205,28 @@ def get_descriptions_from_summaries(finna_image):
 
     return '\n'.join(descriptions)
 
+def get_inscriptions(finna_image):
+    inscriptions = []
+
+    for ins in finna_image.inscriptions.all():
+        if (ins):
+            text = str(ins.value)
+            
+            inscriptions.append(text)
+
+    return '\n'.join(inscriptions)
+
+def get_exhibition_history(finna_image):
+    exhibitions = []
+
+    for ex in finna_image.exhibition_history.all():
+        if (ex):
+            text = str(ex.value)
+            
+            exhibitions.append(text)
+
+    return '\n'.join(exhibitions)
+
 def get_titles_from_image(finna_image):
     langs = ['fi', 'sv', 'en']
     titles = []
@@ -214,6 +236,8 @@ def get_titles_from_image(finna_image):
         else:
             text = finna_image.alternative_titles.filter(lang=lang).first()
         if text:
+            # wikimedia templates will break if there are equal signs in text
+            text = text.replace("=", "&equals;")
             title = make_lang_template(text, lang)
             titles.append(str(title))
             
@@ -237,6 +261,9 @@ def create_photograph_template(finna_image):
     # Create a new WikiCode object
     wikicode = mwparserfromhell.parse("")
 
+    # TODO: check object type, if "WorkOfArt" use "Artwork" template,
+    # otherwise parameters largely similar
+    
     # Create the template
     template = mwparserfromhell.nodes.Template(name='Photograph')
 
@@ -265,15 +292,15 @@ def create_photograph_template(finna_image):
     template.add('depicted people', make_lang_template(joinedactors, lang))
     template.add('depicted place', make_lang_template(joinedplaces, lang))
     template.add('date', get_timestamp_string(finna_image))
-    template.add('medium', '')
+    template.add('medium', '') # physical descriptions? ("lasinegatiivi" etc.)
     template.add('dimensions', str(finna_image.measurements))
     template.add('institution', get_institution_templates(finna_image))
     template.add('department', make_lang_template(joinedcollections, lang))  # noqa
     template.add('references', '')
     template.add('object history', '')
-    template.add('exhibition history', '') # relatedWork/displayObject from xml record
+    template.add('exhibition history', get_exhibition_history(finna_image)) # relatedWork/displayObject from xml record
     template.add('credit line', '') # image rights/creditline ?
-    template.add('inscriptions', '') # inscriptionDescription/descriptiveNoteValue from xml record
+    template.add('inscriptions', get_inscriptions(finna_image)) # inscriptionDescription/descriptiveNoteValue from xml record
     template.add('notes', '')
     template.add('accession number', finna_image.identifier_string)
     template.add('source', finna_image.url)
