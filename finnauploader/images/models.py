@@ -384,7 +384,6 @@ class FinnaRecordManager(models.Manager):
         #print("parsing collections")
 
         # Extract and handle collections data
-        # TODO: check for duplicates?
 
         collections = []
         collections_data = data.pop('collections', [])
@@ -392,6 +391,11 @@ class FinnaRecordManager(models.Manager):
             
             # cleanup name
             collection_name = striprepeatespaces(collection_name)
+
+            # TODO:
+            # there may be duplicates in some cases?
+            #if (collection_name in collections):
+            #    continue
             
             print("using collection", collection_name)
             r, created = FinnaCollection.objects.get_or_create(name = collection_name)
@@ -465,6 +469,7 @@ class FinnaRecordManager(models.Manager):
             r, created = FinnaSubjectPlace.objects.get_or_create(name = subject_place_name)
             subject_places.append(r)
 
+        
 
         #print("parsing subjectsextended")
 
@@ -718,7 +723,14 @@ class FinnaRecordManager(models.Manager):
         record.number_of_images = len(images_data)
         record.master_url = master_url
         record.master_format = master_format
-        record.measurements = "\n".join(data['measurements'])
+
+        measurementlist = []
+        measurements = data['measurements']
+        for m in measurements:
+            m = striprepeatespaces(m)
+            measurementlist.append(m)
+
+        record.measurements = "\n".join(measurementlist)
         
         if (len(record.finna_id) >= 128):
             print("finna id exceeds maximum length", record.finna_id)
@@ -754,10 +766,17 @@ class FinnaRecordManager(models.Manager):
                         if (len(vdate) > 0):
                             record.date_string = vdate
                             print('keeping date_string ', vdate)
-                    
+
+                    if ('places' in valm):
+                        for place in valm['places']:
+                            place = striprepeatespaces(place)
+                            
+                            # TODO: where do we push this? subject places?
+
         if (record.date_string == None):
             print('Note: no date_string in ', record.finna_id)
 
+                
         record.summaries.clear()
         for summary in summarieslist:
             record.summaries.add(summary)
