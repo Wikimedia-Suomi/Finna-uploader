@@ -304,6 +304,32 @@ class FinnaLocalSubject(models.Model):
             self.wikidata_id = wikidata_id
             self.save(update_fields=['wikidata_id'])
 
+class FinnaClassifications(models.Model):
+    value = models.TextField()
+    lang = models.CharField(max_length=6)
+
+    def __str__(self):
+        return self.value
+
+class FinnaInscription(models.Model):
+    value = models.TextField()
+
+    def __str__(self):
+        return self.value
+
+class FinnaExhibitionHistory(models.Model):
+    value = models.TextField()
+
+    def __str__(self):
+        return self.value
+
+#class FinnaPhysicalDescription(models.Model):
+#    value = models.TextField()
+#    lang = models.CharField(max_length=6)
+#
+#    def __str__(self):
+#        return self.value
+
 
 # Managers
 class FinnaRecordManager(models.Manager):
@@ -550,8 +576,12 @@ class FinnaRecordManager(models.Manager):
 
         #print("parsing full record")
 
-        summaries = []
+        inscriptionlist = []
+        exhibitionlist = []
+        classificationlist = []
+        summarieslist = []
         alternative_titles = []
+        #physical_description_list = []
 
         # Extract the Summary
         # Data which is stored to separate tables
@@ -560,43 +590,48 @@ class FinnaRecordManager(models.Manager):
         if (xml_root != None):
 
             # note: should use "inscriptions" in commons template?
+            fiobj = FinnaInscription.objects
             inscriptions = xml_root.findall(".//inscriptionDescription/descriptiveNoteValue")
             for ins in inscriptions:
-                inslang = ins.get("lang") 
+                #inslang = ins.get("lang") 
                 instext = ins.text
-                if (inslang == None or instext == None):
+                if (instext == None):
                     print("DEBUG: skipping inscriptions as null")
                     continue
                 print("DEBUG: found inscriptions:", instext)
-                # TODO: save..
-            
+                r, created = fiobj.get_or_create(value = instext)
+                inscriptionlist.append(r)
+
+            # some of these might be better in physical descriptions?
+            # <objectDescriptionSet type="description"><descriptiveNoteValue lang="fi" label="kuvaus">fyysinen kuvaus: vaaka
             fsobj = FinnaSummary.objects
             # should use more precise path..
             # // objectDescriptionSet, label = "description" or type = "description"
-            descriptive_notes = xml_root.findall(".//descriptiveNoteValue")
+            descriptive_notes = xml_root.findall(".//objectDescriptionSet/descriptiveNoteValue")
             for note in descriptive_notes:
                 notelang = note.get("lang") 
-                #notelabel = note.get("label") # "ominaisuudet"
+                notelabel = note.get("label") # "kuvaus"
                 notetext = note.text
                 if (notelang == None or notetext == None):
                     print("DEBUG: skipping descriptive note as null")
                     continue
-                #if (notelabel != "ominaisuudet"):
+                #if (notelabel != "kuvaus"):
                 # something else..
                 print("DEBUG: found descnote:", notetext)
                 summary, created = fsobj.get_or_create(
                                                  text = notetext,
                                                  lang = notelang,
                                                  defaults = {'order': 1})
-                summaries.append(summary)
+                summarieslist.append(summary)
 
             fatobj = FinnaAlternativeTitle.objects
-            # shoud use //titleSet/appellationValue for this purpose ?
-            appellations = xml_root.findall(".//appellationValue")
+            # shoud use //titleSet/appellationValue for this purpose 
+            # there is also ex. nameActorSet/appellationValue, legalBodyName/appellationValue etc.
+            appellations = xml_root.findall(".//titleSet/appellationValue")
             for app in appellations:
                 applang = app.get("lang") 
                 applabel = app.get("label") # "nimi"
-                apppref = app.get("pref") 
+                apppref = app.get("pref") # "alternate"
                 apptext = app.text
                 if (applang == None or applabel == None or apppref == None or apptext == None):
                     print("DEBUG: skipping appellation as null")
@@ -609,24 +644,7 @@ class FinnaRecordManager(models.Manager):
                                                     pref = apppref)
                 alternative_titles.append(alt_title)
 
-                
-            # TODO: parse classification><term lang="fi" label="luokitus"
-            # has information like >mustavalkoinen  negatiivi< that we can further categorize with later
-            classifications = xml_root.findall(".//classification/term")
-            for cls in classifications:
-                clslang = cls.get("lang") 
-                clslabel = cls.get("label") # "luokitus" or "classification"
-                clstext = cls.text
-                if (clslabel == None or clstext == None):
-                    print("DEBUG: skipping classification as null")
-                    continue
-                if (clslabel != "luokitus"):
-                    # something else
-                    continue
-                # in this case, should have two separate terms with values like "lasinegatiivi" and ">mustavalkoinen  negatiivi"
-                print("DEBUG: found classification:", clstext)
-                # TODO: save..
-
+            fehobj = FinnaExhibitionHistory.objects
             # related work: publications of the item such as newspapre or magazine
             # should use "exhibition history" in commons template
             related_works = xml_root.findall(".//relatedWork/displayObject")
@@ -641,7 +659,41 @@ class FinnaRecordManager(models.Manager):
                     # something else
                     continue
                 print("DEBUG: found related work:", worktext)
-                # TODO: save..
+                r, created = fehobj.get_or_create(value = instext)
+                exhibitionlist.append(r)
+
+            fclobj = FinnaClassifications.objects
+            # TODO: parse classification><term lang="fi" label="luokitus"
+            # has information like >mustavalkoinen  negatiivi< that we can further categorize with later
+            # some of same information may be in objectDescriptionSet><descriptiveNoteValue with "ominaisuudet" 
+            classifications = xml_root.findall(".//classification/term")
+            for cls in classifications:
+                clslang = cls.get("lang") 
+                clslabel = cls.get("label") # "luokitus" or "classification"
+                clstext = cls.text
+                if (clslabel == None or clstext == None):
+                    print("DEBUG: skipping classification as null")
+                    continue
+                if (clslabel != "luokitus"):
+                    # something else
+                    continue
+                # in this case, should have two separate terms with values like "lasinegatiivi" and ">mustavalkoinen  negatiivi"
+                print("DEBUG: found classification:", clstext)
+                r, created = fclobj.get_or_create(value = clstext, lang = clslang)
+                classificationlist.append(r)
+                
+            # objectMeasurementsSet><displayObjectMeasurements
+            #fpdobj = FinnaPhysicalDescription.objects
+            #omeasurements = xml_root.findall(".//objectMeasurementsSet/displayObjectMeasurements")
+            #for oms in omeasurements:
+            #    omslang = oms.get("lang") 
+            #    omstext = oms.text
+            #    if (omslang == None or omstext == None):
+            #        print("DEBUG: skipping object measurement as null")
+            #        continue
+            #    print("DEBUG: found object measurement:", omstext)
+            #    r, created = fpdobj.get_or_create(value = omstext, lang = omslang)
+            #    physical_description_list.append(r)
 
 
         # Extract local add_categories data
@@ -656,7 +708,8 @@ class FinnaRecordManager(models.Manager):
 
         print("creating record instance")
 
-        # Create the book instance
+        # TODO: move this earlier so we can do away with temporary holders..
+        # Create the record instance
         record, created = self.get_or_create(finna_id=data['id'], defaults={'image_right': image_right})
         record.title = data.get('title', '')
         record.short_title = data.get('shortTitle', '')
@@ -666,7 +719,6 @@ class FinnaRecordManager(models.Manager):
         record.master_url = master_url
         record.master_format = master_format
         record.measurements = "\n".join(data['measurements'])
-        #record.physical_descriptions = "\n".join(data['physicalDescriptions'])
         
         if (len(record.finna_id) >= 128):
             print("finna id exceeds maximum length", record.finna_id)
@@ -707,8 +759,24 @@ class FinnaRecordManager(models.Manager):
             print('Note: no date_string in ', record.finna_id)
 
         record.summaries.clear()
-        for summary in summaries:
+        for summary in summarieslist:
             record.summaries.add(summary)
+
+        record.classifications.clear()
+        for i in classificationlist:
+            record.classifications.add(i)
+
+        record.inscriptions.clear()
+        for i in inscriptionlist:
+            record.inscriptions.add(i)
+            
+        record.exhibition_history.clear()
+        for i in exhibitionlist:
+            record.exhibition_history.add(i)
+
+        #record.physical_descriptions.clear()
+        #for i in physical_description_list:
+        #    record.physical_descriptions.add(i)
 
         record.alternative_titles.clear()
         for alternative_title in alternative_titles:
@@ -809,7 +877,6 @@ class FinnaImage(models.Model):
     master_url = models.URLField(max_length=500)
     master_format = models.TextField()
     measurements = models.TextField()
-    #physical_descriptions = models.TextField() # mostly empty anyway
     non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor)
     summaries = models.ManyToManyField(FinnaSummary)
     subjects = models.ManyToManyField(FinnaSubject)
@@ -817,6 +884,10 @@ class FinnaImage(models.Model):
     subject_places = models.ManyToManyField(FinnaSubjectPlace)
     subject_actors = models.ManyToManyField(FinnaSubjectActor)
     subject_details = models.ManyToManyField(FinnaSubjectDetail)
+    classifications = models.ManyToManyField(FinnaClassifications)
+    inscriptions = models.ManyToManyField(FinnaInscription)
+    exhibition_history = models.ManyToManyField(FinnaExhibitionHistory)
+    #physical_descriptions = models.ManyToManyField(FinnaPhysicalDescription)
     collections = models.ManyToManyField(FinnaCollection)
     buildings = models.ManyToManyField(FinnaBuilding)
     institutions = models.ManyToManyField(FinnaInstitution)
