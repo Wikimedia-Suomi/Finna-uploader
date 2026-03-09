@@ -659,7 +659,7 @@ class FinnaRecordManager(models.Manager):
                     # something else
                     continue
                 print("DEBUG: found related work:", worktext)
-                r, created = fehobj.get_or_create(value = instext)
+                r, created = fehobj.get_or_create(value = worktext)
                 exhibitionlist.append(r)
 
             fclobj = FinnaClassifications.objects

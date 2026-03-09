@@ -237,7 +237,7 @@ def get_titles_from_image(finna_image):
             text = finna_image.alternative_titles.filter(lang=lang).first()
         if text:
             # wikimedia templates will break if there are equal signs in text
-            text = text.replace("=", "&equals;")
+            text = str(text).replace("=", "&equals;")
             title = make_lang_template(text, lang)
             titles.append(str(title))
             
