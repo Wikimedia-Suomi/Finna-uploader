@@ -323,6 +323,13 @@ class FinnaExhibitionHistory(models.Model):
     def __str__(self):
         return self.value
 
+class FinnaMaterials(models.Model):
+    value = models.TextField()
+    lang = models.CharField(max_length=6, null=True, blank=True)
+
+    def __str__(self):
+        return self.value
+
 #class FinnaPhysicalDescription(models.Model):
 #    value = models.TextField()
 #    lang = models.CharField(max_length=6)
@@ -333,12 +340,29 @@ class FinnaExhibitionHistory(models.Model):
 
 # Managers
 class FinnaRecordManager(models.Manager):
+    
+    # some necessary checks before doing anything else with the record
+    def isRecordOk(self, data):
+        if ('imageRights' not in data):
+            print("ERROR: cannot determine image rights, essential part missing")
+            return False
+        if 'institutions' not in data:
+            print("DEBUG: institution missing, skipping")
+            return False
+        if ('images' not in data):
+            print("no images in the record")
+            return False
+        if ('imagesExtended' not in data):
+            print("no images extended in the record")
+            return False
+        return True
 
     # First try
     # where is that local_data supposed to come from?
     # this is called (indirectly) from finna_search and directly from views.py as well
     # see create_from_finna_record() after this
-    def create_from_data(self, data, local_data={}):
+    #def create_from_data(self, data, local_data={}):
+    def create_from_data(self, data):
 
         def clean_subject_name(subject):
             if isinstance(subject, list):
@@ -350,11 +374,13 @@ class FinnaRecordManager(models.Manager):
                     exit(1)
             return subject
 
-        #print("parsing institutions")
+        if (self.isRecordOk(data) == False):
+            print("DEBUG: record is not ok, skipping")
+            return None
 
         # Extract and handle institutions data
         institutions = []
-        institutions_data = data.pop('institutions', [])
+        institutions_data = data['institutions']
         for institution in institutions_data:
             #print("DEBUG: institution: ", str(institution))
 
@@ -399,42 +425,74 @@ class FinnaRecordManager(models.Manager):
                     continue
                 collectionlist.append(collection_name)
 
-        #print("parsing nonprepsenters")
+        #print("parsing imagerights")
+
+        # Extract and handle image_right data
+        if ('imageRights' not in data):
+            print("ERROR: cannot determine image rights, essential part missing")
+            print(json.dumps(data))
+            exit(1)
+        image_rights_data = data['imageRights']
+        if ('copyright' not in image_rights_data):
+            print("ERROR: cannot determine image rights, essential part missing")
+            print(json.dumps(image_rights_data))
+            exit(1)
+        image_rights_copyright = image_rights_data['copyright']
+
+        image_rights_link = image_rights_data['link']
+        image_rights_description = image_rights_data.get('description', '')
+        print("DEBUG: found copyright:", image_rights_copyright)
+
+        # TODO:
+        # there might be creditLine for some physical objects in some cases
+        # this seems to be optional information
+        #image_creditline = image_rights_data['creditLine']
+        
+        # TODO : if description has link to creative commons, replace http:// by https://
+        image_right, created = FinnaImageRight.objects.get_or_create(copyright=image_rights_copyright,
+                                                                     link=image_rights_link,
+                                                                     description=image_rights_description)
+
+
+
+        #print("parsing nonpresenters")
 
         # TODO: check for duplicates
         # Extract and handle non_presenter_authors data
         non_presenter_authors = []
-        non_presenter_authors_data = data.pop('nonPresenterAuthors', [])
-        for np_author in non_presenter_authors_data:
-            authname = np_author['name'].strip()
-            authrole = np_author['role'].strip()
-            
-            r, created = FinnaNonPresenterAuthor.objects.get_or_create(name = authname, role = authrole)
-            non_presenter_authors.append(r)
-            try:
-                # Update wikidata id
-                wikidata_id = get_author_wikidata_id(authname)
-                r.set_wikidata_id(wikidata_id)
-            except:
-                pass
+        if ('nonPresenterAuthors' in data):
+            non_presenter_authors_data = data['nonPresenterAuthors']
+            for np_author in non_presenter_authors_data:
+                authname = np_author['name'].strip()
+                authrole = np_author['role'].strip()
+                
+                r, created = FinnaNonPresenterAuthor.objects.get_or_create(name = authname, role = authrole)
+                non_presenter_authors.append(r)
+                try:
+                    # Update wikidata id
+                    wikidata_id = get_author_wikidata_id(authname)
+                    r.set_wikidata_id(wikidata_id)
+                except:
+                    pass
 
         #print("parsing buildings")
 
         # Extract and handle buildings data
-        buildings = []
-        buildings_data = data.pop('buildings', [])
-        for building in buildings_data:
-            
-            building_value = building['value'].strip()
-            building_translated = building['translated'].strip()
-            
-            r, created = FinnaBuilding.objects.get_or_create(value = building_value, defaults={'translated': building_translated})
-            buildings.append(r)
+        buildingslist = []
+        if ('buildings' in data):
+            buildings_data = data['buildings']
+            for building in buildings_data:
+                
+                building_value = building['value'].strip()
+                building_translated = building['translated'].strip()
+                
+                r, created = FinnaBuilding.objects.get_or_create(value = building_value, defaults={'translated': building_translated})
+                buildingslist.append(r)
 
 
         # Extract and handle subjects data
         subjectslist = []
-        if 'subjects' in data:
+        if ('subjects' in data):
             for subject_name in data['subjects']:
             
                 subject_name = clean_subject_name(subject_name)
@@ -443,7 +501,7 @@ class FinnaRecordManager(models.Manager):
 
         # Extract and handle subjectPlaces data
         subject_placeslist = []
-        if 'subjectPlaces' in data:
+        if ('subjectPlaces' in data):
             for subject_place_name in data['subjectPlaces']:
                 
                 subject_place_name = subject_place_name.strip()
@@ -454,30 +512,31 @@ class FinnaRecordManager(models.Manager):
         #print("parsing subjectsextended")
 
         # Extract and handle subjectExtented data
-        subject_extented_data = data.pop('subjectsExtended', [])
-        subject_extented = []
-        for se in subject_extented_data:
-            heading = se['heading'][0].strip()
-            if 'type' not in se:
-                # skip if not included?
-                #continue
-                se['type'] = ''
-            
-            if 'id' not in se:
-                se['id'] = ''
+        subjects_extendedlist = []
+        if ('subjectsExtended' in data):
+            subject_extented_data = data['subjectsExtended']
+            for se in subject_extented_data:
+                heading = se['heading'][0].strip()
+                if 'type' not in se:
+                    # skip if not included?
+                    #continue
+                    se['type'] = ''
+                
+                if 'id' not in se:
+                    se['id'] = ''
 
-            if 'ids' not in se:
-                se['ids'] = []
+                if 'ids' not in se:
+                    se['ids'] = []
 
-            if 'detail' not in se:
-                se['detail'] = ''
+                if 'detail' not in se:
+                    se['detail'] = ''
 
-            r, created = FinnaSubjectExtented.objects.get_or_create(heading=heading, 
-                                                                    type=se['type'], 
-                                                                    record_id=se['id'], 
-                                                                    ids=se['ids'], 
-                                                                    detail=se['detail'])
-            subject_extented.append(r)
+                r, created = FinnaSubjectExtented.objects.get_or_create(heading=heading, 
+                                                                        type=se['type'], 
+                                                                        record_id=se['id'], 
+                                                                        ids=se['ids'], 
+                                                                        detail=se['detail'])
+                subjects_extendedlist.append(r)
 
         # Extract and handle subjectActors data
         subject_actorlist = []
@@ -495,42 +554,18 @@ class FinnaRecordManager(models.Manager):
 
         # Extract and handle subjectDetails data
         subject_detailslist = []
-        if 'subjectDetails' in data:
+        if ('subjectDetails' in data):
             for subject_detail_name in data['subjectDetails']:
                 subject_detail_name = subject_detail_name.strip()
                 if (subject_detail_name not in subject_detailslist):
                     subject_detailslist.append(subject_detail_name)
 
-
-        #print("parsing imagerights")
-
-       
-        # Extract and handle image_right data
-        image_rights_data = data.pop('imageRights', {})
-        try:
-            image_rights_copyright = image_rights_data['copyright']
-        except:
-            print("ERROR saving copyright ----")
-            print(json.dumps(data))
-            print("ERROR ----")
-            exit(1)
-
-        # TODO:
-        # there might be creditLine for some physical objects in some cases
-        image_rights_link = image_rights_data['link']
-        image_rights_description = image_rights_data.get('description', '')
-        # TODO : if description has link to creative commons, replace http:// by https://
-        image_right, created = FinnaImageRight.objects.get_or_create(copyright=image_rights_copyright,
-                                                                     link=image_rights_link,
-                                                                     description=image_rights_description)
-
-        # Extract images data
-        images_data = data.pop('images', [])
-
         #print("parsing imagesextended")
 
         # Extract imagesExtended data
-        images_extended_data = data.pop('imagesExtended', None)
+        master_url = ""
+        master_format = ""
+        images_extended_data = data['imagesExtended']
         if images_extended_data:
             try:
                 master_url = images_extended_data[0]['highResolution']['original'][0]['url']
@@ -539,9 +574,6 @@ class FinnaRecordManager(models.Manager):
                 # If no highResolution or original image
                 master_url = images_extended_data[0]['urls']['large']
                 master_format = 'image/jpeg'
-        else:
-            print("Error: imagesExtended missing")
-            exit(1)
 
         # in some cases, url is not complete:
         # protocol and domain are not stored in the record, which we need later
@@ -550,7 +582,9 @@ class FinnaRecordManager(models.Manager):
                 master_url = "https://finna.fi" + master_url
             else:
                 # might be another museovirasto link, but in different domain
-                print("Warn: not a Finna url and not complete url? ", master_url)
+                print("WARN: not a Finna url and not complete url? ", master_url)
+        if (master_url == ""):
+            print("WARN: did not find master url ")
 
         #print("parsing full record")
 
@@ -559,6 +593,7 @@ class FinnaRecordManager(models.Manager):
         classificationlist = []
         summarieslist = []
         alternative_titles = []
+        #materiallist = []
         #physical_description_list = []
 
         # Extract the Summary
@@ -659,7 +694,13 @@ class FinnaRecordManager(models.Manager):
                 print("DEBUG: found classification:", clstext)
                 r, created = fclobj.get_or_create(value = clstext, lang = clslang)
                 classificationlist.append(r)
-                
+            
+            # termMaterialsTech/term
+            # materialsTech/termMaterialsTech/conceptID/term
+            # or FinnaMaterials..create()
+            # or materiallist.append() ?
+            #materials = xml_root.findall(".//materialsTech/termMaterialsTech")
+            
             # objectMeasurementsSet><displayObjectMeasurements
             #fpdobj = FinnaPhysicalDescription.objects
             #omeasurements = xml_root.findall(".//objectMeasurementsSet/displayObjectMeasurements")
@@ -676,48 +717,61 @@ class FinnaRecordManager(models.Manager):
 
         # Extract local add_categories data
         # TODO: why is this using "local_data" instead of record? where is local_data filled?
-        add_categories_data = local_data.pop('add_categories', [])
-        add_categories = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_categories_data]
+        #add_categories_data = local_data.pop('add_categories', [])
+        #add_categories = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_categories_data]
 
 
         # TODO: why is this using "local_data" instead of record? where is local_data filled?
-        add_depicts_data = local_data.pop('add_depicts', [])
-        add_depicts = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_depicts_data]
+        #add_depicts_data = local_data.pop('add_depicts', [])
+        #add_depicts = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_depicts_data]
+
 
         print("creating record instance")
+
+        images_data = data['images']
 
         # TODO: move this earlier so we can do away with temporary holders..
         # Create the record instance
         record, created = self.get_or_create(finna_id=data['id'], defaults={'image_right': image_right})
+        record.image_right = image_right
         record.title = data.get('title', '')
         record.short_title = data.get('shortTitle', '')
-        record.identifier_string = data.pop('identifierString', None)
-        record.year = data.pop('year', None)
         record.number_of_images = len(images_data)
         record.master_url = master_url
         record.master_format = master_format
 
-        measurementlist = []
-        measurements = data['measurements']
-        for m in measurements:
-            m = striprepeatespaces(m)
-            measurementlist.append(m)
+        # TODO: if there is no 'year' to get it from 'events',
+        # see record.date_string
+        if ('year' in data):
+            record.year = data['year']
+        else:
+            record.year = None
 
-        record.measurements = "\n".join(measurementlist)
+        # some images don't have accession numbers (mainly SA-kuva)
+        if ('identifierString' in data):
+            record.identifier_string = data['identifierString'].strip()
+
+            # identifier string may have list of accession numbers
+            if (len(record.identifier_string) > 500):
+                print("finna identifier_string exceeds maximum length", record.identifier_string)
+                #print("maximum length currently", record.identifier_string.Length())
+                return None # skip
+        else:
+            record.identifier_string = None
+
+        if ('measurements' in data):
+            measurements = data['measurements']
+            measurementlist = []
+            for m in measurements:
+                m = striprepeatespaces(m)
+                measurementlist.append(m)
+            record.measurements = "\n".join(measurementlist)
         
         if (len(record.finna_id) >= 128):
             print("finna id exceeds maximum length", record.finna_id)
             #print("maximum length currently", record.finna_id.Length())
             return None # skip
         
-        # some images don't have accession numbers (mainly SA-kuva)
-        if (record.identifier_string != None):
-            record.identifier_string = record.identifier_string.strip()
-            # identifier string may have list of accession numbers
-            if (len(record.identifier_string) > 500):
-                print("finna identifier_string exceeds maximum length", record.identifier_string)
-                #print("maximum length currently", record.identifier_string.Length())
-                return None # skip
 
         # TODO: we'll want to check some other fields in this section 
         # so prepare for further changes.. 
@@ -742,9 +796,16 @@ class FinnaRecordManager(models.Manager):
 
                     if ('places' in valm):
                         for place in valm['places']:
+                            # TODO: check, might be a dict() instead of plain string
+                            
                             place = striprepeatespaces(place)
                             if (place not in subject_placeslist):
                                 subject_placeslist.append(place)
+
+                    #if ('materials' in valm):
+                    #    for material in valm['materials']:
+                    #        material = striprepeatespaces(material)
+                    #        materiallist.append(material)
                             
 
         if (record.date_string == None):
@@ -767,6 +828,12 @@ class FinnaRecordManager(models.Manager):
         for i in exhibitionlist:
             record.exhibition_history.add(i)
 
+        # materials and physical object descriptions might use same..
+        #record.materials.clear()
+        #for material in materiallist:
+        #    r, created = FinnaMaterials.objects.get_or_create(value = material)
+        #    record.materials.add(r)
+
         #record.physical_descriptions.clear()
         #for i in physical_description_list:
         #    record.physical_descriptions.add(i)
@@ -778,7 +845,7 @@ class FinnaRecordManager(models.Manager):
         for non_presenter_author in non_presenter_authors:
             record.non_presenter_authors.add(non_presenter_author)
 
-        for building in buildings:
+        for building in buildingslist:
             record.buildings.add(building)
 
         for subject_name in subjectslist:
@@ -790,7 +857,7 @@ class FinnaRecordManager(models.Manager):
             r, created = FinnaSubjectPlace.objects.get_or_create(name = subject_place_name)
             record.subject_places.add(r)
 
-        for se in subject_extented:
+        for se in subjects_extendedlist:
             record.subject_extented.add(se)
 
         for subject_actor_name in subject_actorlist:
@@ -831,15 +898,13 @@ class FinnaRecordManager(models.Manager):
         for institution in institutions:
             record.institutions.add(institution)
 
-        record.add_categories.clear()
-        for add_category in add_categories:
-            record.add_categories.add(add_category)
+        #record.add_categories.clear()
+        #for add_category in add_categories:
+        #    record.add_categories.add(add_category)
 
-        record.add_depicts.clear()
-        for add_depict in add_depicts:
-            record.add_depicts.add(add_depict)
-
-        record.image_right = image_right
+        #record.add_depicts.clear()
+        #for add_depict in add_depicts:
+        #    record.add_depicts.add(add_depict)
 
         try:
             print("creating search index")
@@ -859,15 +924,21 @@ class FinnaRecordManager(models.Manager):
         return record
 
     # try to improve debuggability at least a bit
-    # called from finna_search.py
+    # called from finna_search.py/import_helper.py
     # where is that local_data supposed to come from?
-    def create_from_finna_record(self, record, local_data={}):
+    #def create_from_finna_record(self, record, local_data={}):
+    def create_from_finna_record(self, record):
             
         # TODO: parse and validate first before trying to store it..
+        if (self.isRecordOk(record) == False):
+            print("DEBUG: record is not ok, skipping")
+            return False
 
         with transaction.atomic():
+
             try:
-                ret = self.create_from_data(record, local_data)
+                #ret = self.create_from_data(record, local_data)
+                ret = self.create_from_data(record)
                 if (ret != None):
                     print(f'{ret.id} {ret.finna_id} {ret.title} saved')
                 else:
@@ -897,6 +968,7 @@ class FinnaImage(models.Model):
     master_url = models.URLField(max_length=500)
     master_format = models.TextField()
     measurements = models.TextField()
+    materials = models.ManyToManyField(FinnaMaterials)
     non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor)
     summaries = models.ManyToManyField(FinnaSummary)
     subjects = models.ManyToManyField(FinnaSubject)

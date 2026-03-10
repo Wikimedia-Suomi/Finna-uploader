@@ -205,6 +205,20 @@ def get_descriptions_from_summaries(finna_image):
 
     return '\n'.join(descriptions)
 
+def get_materials(finna_image):
+    materials = []
+
+    for mat in finna_image.materials.all():
+        if (mat):
+            if (mat.lang):
+                text = make_lang_template(mat.value, mat.lang)
+                materials.append(text)
+            else:
+                text = str(mat.value)
+                materials.append(text)
+
+    return '\n'.join(materials)
+
 def get_inscriptions(finna_image):
     inscriptions = []
 
@@ -292,7 +306,7 @@ def create_photograph_template(finna_image):
     template.add('depicted people', make_lang_template(joinedactors, lang))
     template.add('depicted place', make_lang_template(joinedplaces, lang))
     template.add('date', get_timestamp_string(finna_image))
-    template.add('medium', '') # physical descriptions? ("lasinegatiivi" etc.)
+    template.add('medium', get_materials(finna_image)) # physical descriptions? ("lasinegatiivi" etc.)
     template.add('dimensions', str(finna_image.measurements))
     template.add('institution', get_institution_templates(finna_image))
     template.add('department', make_lang_template(joinedcollections, lang))  # noqa
