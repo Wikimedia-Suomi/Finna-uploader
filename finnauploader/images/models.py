@@ -785,11 +785,22 @@ class FinnaRecordManager(models.Manager):
 
                     if ('places' in valm):
                         for place in valm['places']:
-                            # TODO: check, might be a dict() instead of plain string
+                            # check the data, might be a dict() instead of plain string
+                            # as there might be some data structure in some cases
+
+                            ptmp = ""
+                            if isinstance(place, dict):
+                                print("DEBUG: place is dict", str(place))
+                                if ("placeName" in place):
+                                    print("DEBUG: found placename", str(place["placeName"]))
+                                    ptmp = place["placeName"].strip()
+                            else:
+                                print("DEBUG: found place string", str(place))
+                                ptmp = place.strip()
                             
-                            place = striprepeatespaces(place)
-                            if (place not in subject_placeslist):
-                                subject_placeslist.append(place)
+                            ptmp = striprepeatespaces(ptmp)
+                            if (ptmp not in subject_placeslist):
+                                subject_placeslist.append(ptmp)
 
                     #if ('materials' in valm):
                     #    for material in valm['materials']:
