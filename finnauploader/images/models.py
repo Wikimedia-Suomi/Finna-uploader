@@ -385,35 +385,19 @@ class FinnaRecordManager(models.Manager):
 
         # Extract and handle collections data
 
-        collections = []
-        collections_data = data.pop('collections', [])
-        for collection_name in collections_data:
-            
-            # cleanup name
-            collection_name = striprepeatespaces(collection_name)
-
-            # TODO:
-            # there may be duplicates in some cases?
-            #if (collection_name in collections):
-            #    continue
-            
-            print("using collection", collection_name)
-            r, created = FinnaCollection.objects.get_or_create(name = collection_name)
-            collections.append(r)
-            #print("collection saved", collection_name)
-        
-            try:
-                # TODO: search collection with institution
-                # since collection names are not unique
-                #wikidata_id = get_collection_wikidata_id(institution.wikidata_id, collection.name)
+        collectionlist = []
+        if 'collections' in data:
+            for collection_name in data['collections']:
                 
-                # Update wikidata id
-                wikidata_id = get_collection_wikidata_id(collection_name)
-                r.set_wikidata_id(wikidata_id)
-                print("using wikidata id ", wikidata_id, " for collection ", collection_name)
-            except:
-                pass
+                # cleanup name
+                collection_name = striprepeatespaces(collection_name)
+                if (len(collection_name) == 0):
+                    continue
 
+                # there may be duplicates in some cases?
+                if (collection_name in collectionlist):
+                    continue
+                collectionlist.append(collection_name)
 
         #print("parsing nonprepsenters")
 
@@ -449,26 +433,22 @@ class FinnaRecordManager(models.Manager):
 
 
         # Extract and handle subjects data
-        subjects = []
-        subjects_data = data.pop('subjects', [])
-        for subject_name in subjects_data:
+        subjectslist = []
+        if 'subjects' in data:
+            for subject_name in data['subjects']:
             
-            subject_name = clean_subject_name(subject_name)
-            
-            r, created = FinnaSubject.objects.get_or_create(name = subject_name.strip())
-            subjects.append(r)
-
+                subject_name = clean_subject_name(subject_name)
+                if (subject_name not in subjectslist):
+                    subjectslist.append(subject_name)
 
         # Extract and handle subjectPlaces data
-        subject_places = []
-        subject_places_data = data.pop('subjectPlaces', [])
-        for subject_place_name in subject_places_data:
-            
-            subject_place_name = subject_place_name.strip()
-            
-            r, created = FinnaSubjectPlace.objects.get_or_create(name = subject_place_name)
-            subject_places.append(r)
-
+        subject_placeslist = []
+        if 'subjectPlaces' in data:
+            for subject_place_name in data['subjectPlaces']:
+                
+                subject_place_name = subject_place_name.strip()
+                if (subject_place_name not in subject_placeslist):
+                    subject_placeslist.append(subject_place_name)
         
 
         #print("parsing subjectsextended")
@@ -500,41 +480,31 @@ class FinnaRecordManager(models.Manager):
             subject_extented.append(r)
 
         # Extract and handle subjectActors data
-        subject_actors = []
-        subject_actors_data = data.pop('subjectActors', [])
-        for subject_actor_name in subject_actors_data:
-            
-            # there is bug in some data: cleanup to avoid further problems
-            if (subject_actor_name == None or subject_actor_name == "" or subject_actor_name == "null"):
-                continue
+        subject_actorlist = []
+        if ('subjectActors' in data):
+            for subject_actor_name in data['subjectActors']:
+                
+                # there is bug in some data: cleanup to avoid further problems
+                if (subject_actor_name == None or subject_actor_name == "" or subject_actor_name == "null"):
+                    continue
 
-            subject_actor_name = subject_actor_name.strip()
-            
-            act, created = FinnaSubjectActor.objects.get_or_create(name = subject_actor_name)
-            subject_actors.append(act)
-            try:
-                # Update wikidata id
-                wikidata_id = get_subject_actors_wikidata_id(subject_actor_name)
-                act.set_wikidata_id(wikidata_id)
-            except:
-                pass
+                subject_actor_name = subject_actor_name.strip()
+                if (subject_actor_name not in subject_actorlist):
+                    subject_actorlist.append(subject_actor_name)
+                
 
         # Extract and handle subjectDetails data
-        subject_details = []
-        subject_details_data = data.pop('subjectDetails', [])
-        for subject_detail_name in subject_details_data:
-            
-            subject_detail_name = subject_detail_name.strip()
-            
-            r, created = FinnaSubjectDetail.objects.get_or_create(name = subject_detail_name)
-            subject_details.append(r)
+        subject_detailslist = []
+        if 'subjectDetails' in data:
+            for subject_detail_name in data['subjectDetails']:
+                subject_detail_name = subject_detail_name.strip()
+                if (subject_detail_name not in subject_detailslist):
+                    subject_detailslist.append(subject_detail_name)
 
 
         #print("parsing imagerights")
 
-        # TODO:
-        # there might be creditLine for some physical objects in some cases
-        
+       
         # Extract and handle image_right data
         image_rights_data = data.pop('imageRights', {})
         try:
@@ -544,6 +514,9 @@ class FinnaRecordManager(models.Manager):
             print(json.dumps(data))
             print("ERROR ----")
             exit(1)
+
+        # TODO:
+        # there might be creditLine for some physical objects in some cases
         image_rights_link = image_rights_data['link']
         image_rights_description = image_rights_data.get('description', '')
         # TODO : if description has link to creative commons, replace http:// by https://
@@ -770,8 +743,9 @@ class FinnaRecordManager(models.Manager):
                     if ('places' in valm):
                         for place in valm['places']:
                             place = striprepeatespaces(place)
+                            if (place not in subject_placeslist):
+                                subject_placeslist.append(place)
                             
-                            # TODO: where do we push this? subject places?
 
         if (record.date_string == None):
             print('Note: no date_string in ', record.finna_id)
@@ -807,25 +781,52 @@ class FinnaRecordManager(models.Manager):
         for building in buildings:
             record.buildings.add(building)
 
-        for subject in subjects:
-            record.subjects.add(subject)
+        for subject_name in subjectslist:
+            r, created = FinnaSubject.objects.get_or_create(name = subject_name.strip())
+            record.subjects.add(r)
 
-        for subject_place in subject_places:
-            record.subject_places.add(subject_place)
+        for subject_place_name in subject_placeslist:
+            
+            r, created = FinnaSubjectPlace.objects.get_or_create(name = subject_place_name)
+            record.subject_places.add(r)
 
         for se in subject_extented:
             record.subject_extented.add(se)
 
-        for subject_actor in subject_actors:
-            # there are emoty entries in some cases, which end is the reason?
-            if (subject_actor != None):
-                record.subject_actors.add(subject_actor)
+        for subject_actor_name in subject_actorlist:
 
-        for subject_detail in subject_details:
-            record.subject_details.add(subject_detail)
+            r, created = FinnaSubjectActor.objects.get_or_create(name = subject_actor_name)
+            record.subject_actors.add(r)
+            try:
+                # Update wikidata id
+                wikidata_id = get_subject_actors_wikidata_id(subject_actor_name)
+                r.set_wikidata_id(wikidata_id)
+            except:
+                pass
 
-        for collection in collections:
-            record.collections.add(collection)
+
+        for subject_detail in subject_detailslist:
+            
+            r, created = FinnaSubjectDetail.objects.get_or_create(name = subject_detail)
+            record.subject_details.add(r)
+
+        for collection_name in collectionlist:
+            
+            print("using collection", collection_name)
+            r, created = FinnaCollection.objects.get_or_create(name = collection_name)
+            record.collections.add(r)
+        
+            try:
+                # TODO: search collection with institution
+                # since collection names are not unique
+                #wikidata_id = get_collection_wikidata_id(institution.wikidata_id, collection.name)
+                
+                # Update wikidata id
+                wikidata_id = get_collection_wikidata_id(collection_name)
+                r.set_wikidata_id(wikidata_id)
+                print("using wikidata id ", wikidata_id, " for collection ", collection_name)
+            except:
+                pass
 
         for institution in institutions:
             record.institutions.add(institution)
