@@ -715,17 +715,6 @@ class FinnaRecordManager(models.Manager):
             #    physical_description_list.append(r)
 
 
-        # Extract local add_categories data
-        # TODO: why is this using "local_data" instead of record? where is local_data filled?
-        #add_categories_data = local_data.pop('add_categories', [])
-        #add_categories = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_categories_data]
-
-
-        # TODO: why is this using "local_data" instead of record? where is local_data filled?
-        #add_depicts_data = local_data.pop('add_depicts', [])
-        #add_depicts = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_depicts_data]
-
-
         print("creating record instance")
 
         images_data = data['images']
@@ -898,14 +887,6 @@ class FinnaRecordManager(models.Manager):
         for institution in institutions:
             record.institutions.add(institution)
 
-        #record.add_categories.clear()
-        #for add_category in add_categories:
-        #    record.add_categories.add(add_category)
-
-        #record.add_depicts.clear()
-        #for add_depict in add_depicts:
-        #    record.add_depicts.add(add_depict)
-
         try:
             print("creating search index")
             search_index, created = FinnaRecordSearchIndex.objects.get_or_create(datatext=str(data))
@@ -950,6 +931,28 @@ class FinnaRecordManager(models.Manager):
                 # just skip for now
                 #return False
         return True
+
+    # this was part of create_record() but nothing seems to use it,
+    # move it here anyway in case there is some use for it
+    def add_local_data(self, finna_image, local_data={}):
+
+        # Extract local add_categories data
+        # TODO: why is this using "local_data" instead of record? where is local_data filled?
+        add_categories_data = local_data.pop('add_categories', [])
+        add_categories = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_categories_data]
+
+
+        # TODO: why is this using "local_data" instead of record? where is local_data filled?
+        add_depicts_data = local_data.pop('add_depicts', [])
+        add_depicts = [FinnaLocalSubject.objects.get_or_create(value=value)[0] for value in add_depicts_data]
+
+        #finna_image.add_categories.clear()
+        #for add_category in add_categories:
+        #    finna_image.add_categories.add(add_category)
+
+        #finna_image.add_depicts.clear()
+        #for add_depict in add_depicts:
+        #    finna_image.add_depicts.add(add_depict)
 
 
 class FinnaRecordSearchIndex(models.Model):
