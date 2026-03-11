@@ -96,7 +96,8 @@ def get_institution_templates(finna_image):
         if (institutionName is not None):
             print("using name", institutionName, " for institution ", institution.translated)
             template = '{{Institution:' + institutionName + '}}'
-            institution_templates.append(template)
+            if (template not in institution_templates):
+                institution_templates.append(template)
     return "".join(institution_templates)
 
 
@@ -224,7 +225,7 @@ def get_inscriptions(finna_image):
 
     for ins in finna_image.inscriptions.all():
         if (ins):
-            text = str(ins.value)
+            text = str(ins.value).strip()
             
             inscriptions.append(text)
 
@@ -235,7 +236,7 @@ def get_exhibition_history(finna_image):
 
     for ex in finna_image.exhibition_history.all():
         if (ex):
-            text = str(ex.value)
+            text = str(ex.value).strip()
             
             exhibitions.append(text)
 

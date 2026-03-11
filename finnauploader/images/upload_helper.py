@@ -290,6 +290,8 @@ def upload_file_update_metadata(finna_id):
 
     # this is supposed to reload same page to make sure id is updated?
     ret = edit_commons_mediaitem(commonssite, page_title, structured_data)
+
+    print("saving status..", page_title)
     
     # what is returned on success? what about failure?
     #if ret:
