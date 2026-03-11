@@ -144,7 +144,7 @@ def striprepeatespaces(text):
     return text
 
 def get_clean_institution_name(institution_name):
-    return striprepeatespaces(institution_nam)
+    return striprepeatespaces(institution_name)
 
 # use mapping from Finna-string to qcode
 def get_institution_wikidata_id(institution_name):
