@@ -46,7 +46,7 @@ def create_P7482_source_of_file(url, operator, publisher):
     summary = 'Adding P137 (operator) qualifier'
     claim.addQualifier(qualifier_operator, summary=summary)
 
-    # P123 "publisher" - exampe: Finnish Heritage Agency (Museovirasto)
+    # P123 "publisher" - example: Finnish Heritage Agency (Museovirasto)
     qualifier_publisher = pywikibot.Claim(wikidata_site, 'P123')
     qualifier_target = pywikibot.ItemPage(wikidata_site, publisher)
     qualifier_publisher.setTarget(qualifier_target)
@@ -152,6 +152,8 @@ def create_P195_collection(wikidata_id, collection_number):
     if not wikidata_id:
         return None
 
+    # check if same collection was added already to filter duplicates?
+
     claim_target = pywikibot.ItemPage(wikidata_site, wikidata_id)
     claim = pywikibot.Claim(wikidata_site, 'P195')
     claim.setTarget(claim_target)
@@ -213,34 +215,6 @@ def wbEditEntity(site, page, data):
     return ret
 
 
-def get_source_of_file_claim(finna_image):
-    # TODO: when using beyond JOKA-archive, fetch correct values per image
-    # publisher = 'Q3029524'  # Finnish Heritage Agency
-    operator = 'Q420747'    # National library
-    url = finna_image.url
-
-    instlist = list()
-    for institution in finna_image.institutions.all():
-
-        if (not institution.wikidata_id):
-            print("wikidata id missing for institution: ", institution.name)
-            exit()
-
-        instlist.append(institution.wikidata_id)
-        
-
-    if (len(instlist) != 1):
-        # TODO: check that create_P7482_source_of_file()
-        # can handle multiple institutions
-        print(('expected one institution, found:', str(instlist)))
-        exit(1)
-
-    # TODO: fix handling so that potentially multiple
-    # institutions can be supported
-    # (do we have a real case for that though?)
-    return create_P7482_source_of_file(url, operator, instlist[0])
-
-
 def get_inception_claim(finna_image):
     try:
         timestamp, precision = parse_timestamp(finna_image.get_date_string())
@@ -267,13 +241,57 @@ def get_role_qcode_for_author(author):
     # unknown role ("tekijä", "valmistaja", etc.)
     return None
 
+# filter out potential duplicates,
+# normally list should have only one entry
+def get_institutions_for_sdc(finna_image):
+    instlist = list()
+    for institution in finna_image.institutions.all():
 
-# this context is for sdc data in commons
+        if (not institution.wikidata_id):
+            print("wikidata id missing for institution: ", institution.name)
+            exit()
+
+        # some bug in data
+        if (institution.wikidata_id not in instlist):
+            instlist.append(institution.wikidata_id)
+    return instlist
+
+#def get_collections_for_sdc(finna_image, institution):
+def get_collections_for_sdc(finna_image):
+    colllist = list()
+
+    # TODO: collection might need a configuration hierarchy
+    # due to some ambigious names to get accurate collection
+    for collection in finna_image.collections.all():
+
+        if (not collection.wikidata_id):
+            print("wikidata id missing for collection: ", collection.name)
+            exit()
+
+        # some bug in data
+        if (collection.wikidata_id not in colllist):
+            colllist.append(collection.wikidata_id)
+    return colllist
+
+# this context is for sdc data in commons,
+# used during upload to create claims
 def get_claims_for_image_upload(finna_image):
     claims = []
+    
+    # verify there are no duplicates and get list of wikidata ids
+    institutions = get_institutions_for_sdc(finna_image)
+    if (len(institutions) == 0):
+        print("no institutions found for image ")
+        exit()
+        
+    for institution in institutions:
+        # when using beyond JOKA-archive, fetch correct values per image
+        # publisher = 'Q3029524'  # Finnish Heritage Agency
+        operator = 'Q420747'    # National library
+        url = finna_image.url
 
-    claim = get_source_of_file_claim(finna_image)
-    claims.append(claim)
+        claim = create_P7482_source_of_file(url, operator, institution)
+        claims.append(claim)
 
     claim = create_P9478_finna_id(finna_image.get_finna_id())
     claims.append(claim)
@@ -281,7 +299,7 @@ def get_claims_for_image_upload(finna_image):
     claim = get_inception_claim(finna_image)
     claims.append(claim)
 
-    # Handle image rights
+    # create claims for image rights
 
     copyright_data = finna_image.image_right.get_copyright()
     claim = create_P275_licence(copyright_data, finna_image.url)
@@ -290,7 +308,7 @@ def get_claims_for_image_upload(finna_image):
     claim = create_P6216_copyright_state(copyright_data)
     claims.append(claim)
 
-    # image authors/creators
+    # create claims for image authors/creators
 
     non_presenter_authors = finna_image.non_presenter_authors.all()
     for author in non_presenter_authors:
@@ -313,24 +331,16 @@ def get_claims_for_image_upload(finna_image):
         claims.append(claim)
 
 
-    # Handle collections
+    # create claims for collections
 
-    collections = finna_image.collections.all()
-    identifier = finna_image.identifier_string
-
-    # TODO: collection might need a configuration hierarchy
-    # due to some ambigious names to get accurate collection
+    # verify there are no duplicates and get list of wikidata ids
+    collections = get_collections_for_sdc(finna_image)
     for collection in collections:
 
-        # 
-        if (not collection.wikidata_id):
-            print("wikidata id missing for collection: ", collection.name)
-            exit()
-
-        claim = create_P195_collection(collection.wikidata_id, identifier)
+        claim = create_P195_collection(collection, finna_image.identifier_string)
         claims.append(claim)
 
-    # Handle subject actors
+    # create claims for subject actors
 
     subject_actors = finna_image.subject_actors.all()
     for subject_actor in subject_actors:

@@ -390,6 +390,7 @@ def get_category_for_subject_in_country(subject_name):
         'huonekalut' : 'Furniture in',
         'sohvat' : 'Couches in',
         'tuolit' : 'Chairs in',
+        'keinutuolit' : 'Rocking chairs in',
         'verhot' : 'Curtains in',
         'jääkaapit' : 'Refrigerators in‎',
         'sisustus' : 'Interior decoration in',

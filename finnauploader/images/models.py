@@ -765,14 +765,27 @@ class FinnaRecordManager(models.Manager):
         # TODO: we'll want to check some other fields in this section 
         # so prepare for further changes.. 
         if 'events' in data:
+            
+            # event like where image was taken
+            #if 'esitys' in data['events']:
+            
             if 'valmistus' in data['events']:
                 
                 # TODO: there may be multiple sections like this in same record,
                 # that might happen when there are multiple images in same record
                 if (len(data['events']['valmistus']) > 0):
                     
+                    # there may be multiple entries
+                    
                     #for v in data['events']['valmistus']:
                     valm = data['events']['valmistus'][0]
+                    if ('type' in valm):
+                        # may have events of different types
+                        vtype = valm['type']
+                        if (vtype != "valmistus"):
+                            print("not correct type", vtype)
+                            
+                    
                     if ('date' in valm):
                         # remove extra whitespaces if any:
                         # cleanup the data a bit
@@ -806,6 +819,12 @@ class FinnaRecordManager(models.Manager):
                     #    for material in valm['materials']:
                     #        material = striprepeatespaces(material)
                     #        materiallist.append(material)
+                    #if ('materialsExtended' in valm):
+                    #    for material in valm['materialsExtended']:
+                    #if ('methods' in valm):
+                    #    for method in valm['methods']:
+                    #if ('methodsExtended' in valm):
+                    #    for method in valm['methodsExtended']:
                             
 
         if (record.date_string == None):
