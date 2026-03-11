@@ -356,6 +356,32 @@ class FinnaRecordManager(models.Manager):
             print("no images extended in the record")
             return False
         return True
+    
+    def getEventsValmistus(self, data):
+        # TODO: we'll want to check some other fields in this section 
+        # so prepare for further changes.. 
+        if 'events' not in data:
+            return None
+            
+        # event like where image was taken
+        #if 'esitys' in data['events']:
+        if 'valmistus' not in data['events']:
+            return None
+                
+        # TODO: there may be multiple sections like this in same record,
+        # that might happen when there are multiple images in same record
+        if (len(data['events']['valmistus']) == 0):
+            return None
+
+        # there may be multiple entries here
+        # with type 'esitys' or 'valmistus'
+        #for v in data['events']["valmistus"]:
+        #    if "type" in v:
+        #        valtype = v["type"]
+        #        if (valtype == "valmistus"):
+        #            return v
+        
+        return data['events']['valmistus']
 
     # First try
     # where is that local_data supposed to come from?
@@ -762,69 +788,64 @@ class FinnaRecordManager(models.Manager):
             return None # skip
         
 
-        # TODO: we'll want to check some other fields in this section 
-        # so prepare for further changes.. 
-        if 'events' in data:
+        valmistus = self.getEventsValmistus(data)
+        if (valmistus != None):
             
             # event like where image was taken
             #if 'esitys' in data['events']:
             
-            if 'valmistus' in data['events']:
+            # there may be multiple entries
+            
+            for valm in valmistus:
+                if ('type' in valm):
+                    # may have events of different types
+                    vtype = valm['type']
+                    if (vtype == 'esitys'):
+                        continue
+                    if (vtype != "valmistus"):
+                        print("unknown type", vtype)
+                        continue
+                print("DEBUG: valmistus", str(valm))
                 
-                # TODO: there may be multiple sections like this in same record,
-                # that might happen when there are multiple images in same record
-                if (len(data['events']['valmistus']) > 0):
-                    
-                    # there may be multiple entries
-                    
-                    #for v in data['events']['valmistus']:
-                    valm = data['events']['valmistus'][0]
-                    if ('type' in valm):
-                        # may have events of different types
-                        vtype = valm['type']
-                        if (vtype != "valmistus"):
-                            print("not correct type", vtype)
-                            
-                    
-                    if ('date' in valm):
-                        # remove extra whitespaces if any:
-                        # cleanup the data a bit
-                        # also cleanup newlines and tabulators within (if any)
-                        vdate = striprepeatespaces(valm['date'])
+                if ('date' in valm):
+                    # remove extra whitespaces if any:
+                    # cleanup the data a bit
+                    # also cleanup newlines and tabulators within (if any)
+                    vdate = striprepeatespaces(valm['date'])
 
-                        if (len(vdate) > 0):
-                            record.date_string = vdate
-                            print('keeping date_string ', vdate)
+                    if (len(vdate) > 0):
+                        record.date_string = vdate
+                        print('keeping date_string ', vdate)
 
-                    if ('places' in valm):
-                        for place in valm['places']:
-                            # check the data, might be a dict() instead of plain string
-                            # as there might be some data structure in some cases
+                if ('places' in valm):
+                    for place in valm['places']:
+                        # check the data, might be a dict() instead of plain string
+                        # as there might be some data structure in some cases
 
-                            ptmp = ""
-                            if isinstance(place, dict):
-                                print("DEBUG: place is dict", str(place))
-                                if ("placeName" in place):
-                                    print("DEBUG: found placename", str(place["placeName"]))
-                                    ptmp = place["placeName"].strip()
-                            else:
-                                print("DEBUG: found place string", str(place))
-                                ptmp = place.strip()
-                            
-                            ptmp = striprepeatespaces(ptmp)
-                            if (ptmp not in subject_placeslist):
-                                subject_placeslist.append(ptmp)
+                        ptmp = ""
+                        if isinstance(place, dict):
+                            print("DEBUG: place is dict", str(place))
+                            if ("placeName" in place):
+                                print("DEBUG: found placename", str(place["placeName"]))
+                                ptmp = place["placeName"].strip()
+                        else:
+                            print("DEBUG: found place string", str(place))
+                            ptmp = place.strip()
+                        
+                        ptmp = striprepeatespaces(ptmp)
+                        if (ptmp not in subject_placeslist):
+                            subject_placeslist.append(ptmp)
 
-                    #if ('materials' in valm):
-                    #    for material in valm['materials']:
-                    #        material = striprepeatespaces(material)
-                    #        materiallist.append(material)
-                    #if ('materialsExtended' in valm):
-                    #    for material in valm['materialsExtended']:
-                    #if ('methods' in valm):
-                    #    for method in valm['methods']:
-                    #if ('methodsExtended' in valm):
-                    #    for method in valm['methodsExtended']:
+                #if ('materials' in valm):
+                #    for material in valm['materials']:
+                #        material = striprepeatespaces(material)
+                #        materiallist.append(material)
+                #if ('materialsExtended' in valm):
+                #    for material in valm['materialsExtended']:
+                #if ('methods' in valm):
+                #    for method in valm['methods']:
+                #if ('methodsExtended' in valm):
+                #    for method in valm['methodsExtended']:
                             
 
         if (record.date_string == None):
