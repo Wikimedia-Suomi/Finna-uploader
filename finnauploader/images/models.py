@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
-from django.db.utils import DataError
+from django.db.utils import Error, DataError
 import re
 import json
 import urllib
@@ -640,7 +640,9 @@ class FinnaRecordManager(models.Manager):
         master_format = ""
         images_extended_data = data['imagesExtended']
         if images_extended_data:
-            if ('highResolution' in images_extended_data[0]):
+            # highResolution may be empty
+            if ('highResolution' in images_extended_data[0]
+                and len(images_extended_data[0]['highResolution']) > 0):
                 highres = images_extended_data[0]['highResolution']
                 if ('original' in highres):
                     master_url = highres['original'][0]['url']
@@ -653,6 +655,8 @@ class FinnaRecordManager(models.Manager):
                 # If no highResolution or original image
                 master_url = images_extended_data[0]['urls']['large']
                 master_format = 'image/jpeg'
+        else:
+            print("WARN: did not find imagesExtended")
                 
         # in some cases, url is not complete:
         # protocol and domain are not stored in the record, which we need later
@@ -664,6 +668,7 @@ class FinnaRecordManager(models.Manager):
                 print("WARN: not a Finna url and not complete url? ", master_url)
         if (master_url == ""):
             print("WARN: did not find master url ")
+        # if format is not there it might be possible to determine from extension in resourceName ?
 
         record.master_url = master_url
         record.master_format = master_format
@@ -672,7 +677,7 @@ class FinnaRecordManager(models.Manager):
 
         inscriptionlist = []
         exhibitionlist = []
-        classificationlist = []
+        #classificationlist = []
         summarieslist = []
         alternative_titles = []
         #materiallist = []
@@ -914,6 +919,8 @@ class FinnaRecordManager(models.Manager):
 
         if (record.date_string == None):
             print('Note: no date_string in ', record.finna_id)
+            # should not be null?
+            #record.date_string = ""
 
         print("Setting information to record..")
 
@@ -921,9 +928,9 @@ class FinnaRecordManager(models.Manager):
         for summary in summarieslist:
             record.summaries.add(summary)
 
-        record.classifications.clear()
-        for i in classificationlist:
-            record.classifications.add(i)
+        #record.classifications.clear()
+        #for i in classificationlist:
+        #    record.classifications.add(i)
 
         record.inscriptions.clear()
         for i in inscriptionlist:
@@ -954,10 +961,15 @@ class FinnaRecordManager(models.Manager):
             record.buildings.add(building)
 
         for subject_name in subjectslist:
+            if (subject_name == None or subject_name == "" or subject_name == "null"):
+                continue
+
             r, created = FinnaSubject.objects.get_or_create(name = subject_name.strip())
             record.subjects.add(r)
 
         for subject_place_name in subject_placeslist:
+            if (subject_place_name == None or subject_place_name == "" or subject_place_name == "null"):
+                continue
             
             r, created = FinnaSubjectPlace.objects.get_or_create(name = subject_place_name)
             record.subject_places.add(r)
@@ -966,6 +978,8 @@ class FinnaRecordManager(models.Manager):
             record.subject_extented.add(se)
 
         for subject_actor_name in subject_actorlist:
+            if (subject_actor_name == None or subject_actor_name == "" or subject_actor_name == "null"):
+                continue
 
             r, created = FinnaSubjectActor.objects.get_or_create(name = subject_actor_name)
             record.subject_actors.add(r)
@@ -983,6 +997,8 @@ class FinnaRecordManager(models.Manager):
             record.subject_details.add(r)
 
         for collection_name in collectionlist:
+            if (collection_name == None or collection_name == ""):
+                continue
             
             print("using collection", collection_name)
             r, created = FinnaCollection.objects.get_or_create(name = collection_name)
@@ -1040,7 +1056,10 @@ class FinnaRecordManager(models.Manager):
                     print(f'{ret.id} {ret.finna_id} {ret.title} saved')
                 else:
                     print("record was skipped ")
-                    
+
+            except Error as e:
+                print('Error: {}'.format(e))
+                return False # stop there
             except:
                 print("ERROR saving record: ")
                 print(record)
@@ -1134,6 +1153,13 @@ class FinnaImage(models.Model):
 
     @property
     def filename_extension(self):
+        if (self.master_format == None):
+            print("format missing for file extension")
+            exit(1)
+        if (self.master_format == ""):
+            print("format missing for file extension")
+            exit(1)
+        
         format_to_extension = {
             'tif': 'tif',
             'tiff': 'tif',

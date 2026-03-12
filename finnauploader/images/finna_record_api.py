@@ -138,7 +138,9 @@ def get_collection_aliases():
              'KHM' : '0/KHM/', # Kemin historiallinen museo
              'FMP': '0/FMP/', # Suomen valokuvataiteen museo
              'JOKA': 'JOKA Journalistinen kuva-arkisto',
+             'SLS' : '0/SLS/', # Svenska litteraturs\u00e4llskapet i Finland
              'SA-kuva': '0/SA-kuva/',
+             'Taika' : '0/TAIKA/', # Hyvinkään
              'SibeliusMuseum' : '0/SibeliusmuseumsArkiv/',
              'Teatterimuseo' : '0/TEATTERIMUSEO/',
              'Lusto' : '0/Lusto/', # Suomen mestämuseo
@@ -185,6 +187,8 @@ def is_building_collection(name):
                     '0/HMLMUSEO/',
                     '0/KHM/',
                     '0/FMP/',
+                    '0/SLS/',
+                    '0/TAIKA/',
                     '0/SibeliusmuseumsArkiv/',
                     '0/TEATTERIMUSEO/',
                     '0/Lusto/',
