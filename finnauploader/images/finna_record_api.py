@@ -133,6 +133,7 @@ def get_collection_aliases():
              'Oulun' : '0/OULUNMUSEO/',
              'Lappeenrannan museot' : '0/LPRMUSEOT/', # myös 1\/LPRMUSEOT\/Wolkoffin museo\/
              'Mikkelin' : '0/mikkelinmuseot/',
+             'Ugin' : '0/Uudenkaupungin museo/',
              'HML' : '0/HMLMUSEO/', # Hämeenlinnan kaupunginmuseo
              'KHM' : '0/KHM/', # Kemin historiallinen museo
              'FMP': '0/FMP/', # Suomen valokuvataiteen museo
@@ -180,6 +181,7 @@ def is_building_collection(name):
                     '0/OULUNMUSEO/',
                     '0/LPRMUSEOT/',
                     '0/mikkelinmuseot/',
+                    '0/Uudenkaupungin museo/',
                     '0/HMLMUSEO/',
                     '0/KHM/',
                     '0/FMP/',

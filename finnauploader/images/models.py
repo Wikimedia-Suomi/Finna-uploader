@@ -343,6 +343,10 @@ class FinnaRecordManager(models.Manager):
     
     # some necessary checks before doing anything else with the record
     def isRecordOk(self, data):
+
+        if ('id' not in data):
+            print("ERROR: finna id is missing from data")
+            return False
         if ('imageRights' not in data):
             print("ERROR: cannot determine image rights, essential part missing")
             return False
@@ -479,9 +483,33 @@ class FinnaRecordManager(models.Manager):
                                                                      link=image_rights_link,
                                                                      description=image_rights_description)
 
+        print("imageright added")
 
+        print("creating record instance")
+        
+        images_data = data['images']
+        finna_id = data['id']
+        record, created = self.get_or_create(finna_id = finna_id, defaults={'image_right': image_right})
+        record.image_right = image_right
+        record.number_of_images = len(images_data)
 
-        #print("parsing nonpresenters")
+        if ('title' in data):
+            record.title = data['title']
+        else:
+            print("title is missing from data")
+            record.title = ""
+        if ('shortTitle' in data):
+            record.short_title = data['shortTitle']
+        else:
+            print("short title is missing from data")
+            record.short_title = ""
+        if ('year' in data):
+            record.year = data['year']
+        else:
+            print("no year given in data")
+            record.year = None
+
+        print("parsing nonpresenters")
 
         # TODO: check for duplicates
         # Extract and handle non_presenter_authors data
@@ -489,6 +517,14 @@ class FinnaRecordManager(models.Manager):
         if ('nonPresenterAuthors' in data):
             non_presenter_authors_data = data['nonPresenterAuthors']
             for np_author in non_presenter_authors_data:
+                # empty name?
+                if ('name' not in np_author):
+                    print("name is missing from nonpresenters")
+                    continue
+                if ('role' not in np_author):
+                    print("role is missing from nonpresenters")
+                    continue
+
                 authname = np_author['name'].strip()
                 authrole = np_author['role'].strip()
                 
@@ -508,6 +544,13 @@ class FinnaRecordManager(models.Manager):
         if ('buildings' in data):
             buildings_data = data['buildings']
             for building in buildings_data:
+
+                if ('value' not in building):
+                    print("value is missing from building")
+                    continue
+                if ('translated' not in building):
+                    print("translated is missing from building")
+                    continue
                 
                 building_value = building['value'].strip()
                 building_translated = building['translated'].strip()
@@ -612,7 +655,10 @@ class FinnaRecordManager(models.Manager):
         if (master_url == ""):
             print("WARN: did not find master url ")
 
-        #print("parsing full record")
+        record.master_url = master_url
+        record.master_format = master_format
+
+        print("parsing full record")
 
         inscriptionlist = []
         exhibitionlist = []
@@ -624,9 +670,13 @@ class FinnaRecordManager(models.Manager):
 
         # Extract the Summary
         # Data which is stored to separate tables
+        if ('fullRecord' not in data):
+            print("full record is not given in data")
+            
         fullrecord = data['fullRecord']
         xml_root = XEltree.fromstring(fullrecord)
         if (xml_root != None):
+            print("found xml in full record")
 
             # note: should use "inscriptions" in commons template?
             fiobj = FinnaInscription.objects
@@ -701,25 +751,25 @@ class FinnaRecordManager(models.Manager):
                 r, created = fehobj.get_or_create(value = worktext)
                 exhibitionlist.append(r)
 
-            fclobj = FinnaClassifications.objects
+            #fclobj = FinnaClassifications.objects
             # TODO: parse classification><term lang="fi" label="luokitus"
             # has information like >mustavalkoinen  negatiivi< that we can further categorize with later
             # some of same information may be in objectDescriptionSet><descriptiveNoteValue with "ominaisuudet" 
-            classifications = xml_root.findall(".//classification/term")
-            for cls in classifications:
-                clslang = cls.get("lang") 
-                clslabel = cls.get("label") # "luokitus" or "classification"
-                clstext = cls.text
-                if (clslabel == None or clstext == None):
-                    print("DEBUG: skipping classification as null")
-                    continue
-                if (clslabel != "luokitus"):
+            #classifications = xml_root.findall(".//classification/term")
+            #for cls in classifications:
+            #    clslang = cls.get("lang") 
+            #    clslabel = cls.get("label") # "luokitus" or "classification"
+            #    clstext = cls.text
+            #    if (clslabel == None or clstext == None):
+            #        print("DEBUG: skipping classification as null")
+            #        continue
+            #    if (clslabel != "luokitus"):
                     # something else
-                    continue
+            #        continue
                 # in this case, should have two separate terms with values like "lasinegatiivi" and ">mustavalkoinen  negatiivi"
-                print("DEBUG: found classification:", clstext)
-                r, created = fclobj.get_or_create(value = clstext, lang = clslang)
-                classificationlist.append(r)
+            #    print("DEBUG: found classification:", clstext)
+            #    r, created = fclobj.get_or_create(value = clstext, lang = clslang)
+            #    classificationlist.append(r)
             
             # termMaterialsTech/term
             # materialsTech/termMaterialsTech/conceptID/term
@@ -740,27 +790,31 @@ class FinnaRecordManager(models.Manager):
             #    r, created = fpdobj.get_or_create(value = omstext, lang = omslang)
             #    physical_description_list.append(r)
 
+            print("done with xml in full record")
+        else:
+            print("could not parse xml full record")
 
-        print("creating record instance")
-
-        images_data = data['images']
+        #print("creating record instance")
+        #images_data = data['images']
+        #record.number_of_images = len(images_data)
 
         # TODO: move this earlier so we can do away with temporary holders..
         # Create the record instance
-        record, created = self.get_or_create(finna_id=data['id'], defaults={'image_right': image_right})
-        record.image_right = image_right
-        record.title = data.get('title', '')
-        record.short_title = data.get('shortTitle', '')
-        record.number_of_images = len(images_data)
-        record.master_url = master_url
-        record.master_format = master_format
+        #record, created = self.get_or_create(finna_id=data['id'], defaults={'image_right': image_right})
+        #record.image_right = image_right
+        #record.number_of_images = len(images_data)
+        #record.title = data.get('title', '')
+        #record.short_title = data.get('shortTitle', '')
+        #record.master_url = master_url
+        #record.master_format = master_format
 
         # TODO: if there is no 'year' to get it from 'events',
         # see record.date_string
-        if ('year' in data):
-            record.year = data['year']
-        else:
-            record.year = None
+        #if ('year' in data):
+        #    record.year = data['year']
+        #else:
+        #    print("no year given in data")
+        #    record.year = None
 
         # some images don't have accession numbers (mainly SA-kuva)
         if ('identifierString' in data):
@@ -851,7 +905,8 @@ class FinnaRecordManager(models.Manager):
         if (record.date_string == None):
             print('Note: no date_string in ', record.finna_id)
 
-                
+        print("Setting information to record..")
+
         record.summaries.clear()
         for summary in summarieslist:
             record.summaries.add(summary)
@@ -980,7 +1035,7 @@ class FinnaRecordManager(models.Manager):
                 print("ERROR saving record: ")
                 print(record)
                 # just skip for now
-                #return False
+                return False # stop there
         return True
 
     # this was part of create_record() but nothing seems to use it,

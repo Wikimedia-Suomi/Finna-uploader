@@ -21,6 +21,7 @@ import pywikibot
 institutionNames = {}
 creatorNames = {}
 subjectCategories = {}
+collectionCategories = {}
 
 
 # if there is update, just invalidate all
@@ -28,6 +29,7 @@ def invalidateWikidataCaches():
     institutionNames.clear()
     creatorNames.clear()
     subjectCategories.clear()
+    collectionCategories.clear()
 
 
 def get_institution_name(institutions):
@@ -63,15 +65,6 @@ def get_collection_names():
     collection_names = [collection.name for collection in collections]
     return collection_names if collection_names else default_collections
 
-
-def get_subject_place_wikidata_id(location_string):
-    try:
-        place = SubjectPlacesCache.objects.get(name=location_string)
-        return place.wikidata_id
-    except:
-        return None
-
-
 # TODO: search with institution since collection names are not unique
 #def get_collection_wikidata_id(institution, name):
 
@@ -88,7 +81,75 @@ def get_collection_wikidata_id(name):
     print(f'Unknown collection: "{name}"')
     exit(1)
 
+# if collection has commons-category linked to it in wikidata
+#def get_category_for_collection():
+    #collectionCategories
 
+def setCollectionCategory(wikidata_id, name):
+    collectionCategories[wikidata_id] = name
+
+def getCollectionCategory(wikidata_id):
+    if (wikidata_id in collectionCategories):
+        return collectionCategories[wikidata_id]
+    return None
+
+def isCollectionCategory(wikidata_id):
+    if (wikidata_id in collectionCategories):
+        return True
+    return False
+
+# Commons-category associated with wikidata-entry
+# Commons-luokka (P373)
+def get_collection_image_category_from_wikidata_id(wikidata_id):
+
+    # reduce repeated queries a bit
+    if (isCollectionCategory(wikidata_id) is True):
+        return getCollectionCategory(wikidata_id)
+
+    # Connect to Wikidata
+    site = pywikibot.Site("wikidata", "wikidata")
+    # commons_site = pywikibot.Site("commons", "commons")
+    repo = site.data_repository()
+
+    item = None
+    try:
+        # Access the Wikidata item using the provided ID
+        item = pywikibot.ItemPage(repo, wikidata_id)
+    except:
+        # at least try to tell what is missing
+        print(f'Item for Wikidata ID {wikidata_id} is missing')
+        raise
+
+    # If the item doesn't exist, return None
+    if not item.exists():
+        print(f"Item {wikidata_id} does not exist!")
+        return None
+
+    # Try to fetch the value of the property P373 (Commons category)
+    claims = item.get().get('claims')
+
+    if 'P373' in claims:
+        commons_category_claim = claims['P373'][0]
+        category_name = commons_category_claim.getTarget()
+        print(category_name)
+
+        # reduce repeated queries a bit
+        setCollectionCategory(wikidata_id, category_name)
+        return category_name
+
+    print("No Commons P373 category for ", wikidata_id) # noqa
+    return None
+    
+
+def get_subject_place_wikidata_id(location_string):
+    try:
+        place = SubjectPlacesCache.objects.get(name=location_string)
+        return place.wikidata_id
+    except:
+        return None
+
+
+# cleanup helper
 def findspc(text, begin, end):
     i = begin
     while (i < end):
@@ -152,7 +213,7 @@ def get_institution_wikidata_id(institution_name):
     if (institution_name.find("\n") > 0 or institution_name.find("\t") > 0):
         # cleanup some garbage in names
         # this ugly hack
-        instname = striprepeatespaces(institution_name.strip())
+        instname = striprepeatespaces(institution_name)
         #print("DEBUG: searching institution with [", instname, "] instead of [", institution_name, "]")
         
         obj = InstitutionsCache.objects.get(name=instname)

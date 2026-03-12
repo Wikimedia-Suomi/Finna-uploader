@@ -4,7 +4,8 @@
 import mwparserfromhell
 
 from images.wikitext.wikidata_helpers import get_subject_image_category_from_wikidata_id, \
-                                    get_creator_nane_by_wikidata_id, get_clean_institution_name
+                                    get_collection_image_category_from_wikidata_id, \
+                                    get_creator_nane_by_wikidata_id, striprepeatespaces
 
 
 def get_category_by_wikidata_id(wikidata_id):
@@ -566,11 +567,9 @@ def get_category_for_building_by_place(subject_name, subject_places):
 
 def get_category_for_collection(collection):
 
-
     # there may be preceding or trailing space -> remove it
-    collection_name = collection.name
-    collection_name = collection_name.lstrip()
-    collection_name = collection_name.rstrip()
+    # in some cases there are tabulators or newlines in between..
+    collection_name = striprepeatespaces(collection.name)
     
     collection_names = {
         'JOKA Journalistinen kuva-arkisto' : 'JOKA Press Photo Archive',
@@ -581,6 +580,12 @@ def get_category_for_collection(collection):
     if (collection_name in collection_names):
         category = collection_names[collection_name]
         return category
+    
+    # this list should be temporary for testing:
+    # some are not compatible yet
+    wikidata_id_list = ["Q123308681", "Q123358672", "Q107388072", "Q113292201"]
+    if collection.wikidata_id in wikidata_id_list:
+        return get_collection_image_category_from_wikidata_id(collection.wikidata_id)
     return None
 
 # TODO:
@@ -591,7 +596,7 @@ def get_category_for_institution(institution):
 
     instname = institution.value
     if (instname.find("\n") > 0 or instname.find("\t") > 0):
-        instname = get_clean_institution_name(instname)
+        instname = striprepeatespaces(instname)
 
     if (instname.find("Teatterimuseo") >= 0):
         return "Theatre Museum (Helsinki)"
@@ -878,12 +883,12 @@ def create_categories_new(finna_image):
 
     for collection in finna_image.collections.all():
         category = get_category_for_collection(collection)
-        if (category is not None):
+        if (category is not None and category not in categories):
             categories.add(category)
 
     for institution in finna_image.institutions.all():
         category = get_category_for_institution(institution)
-        if (category is not None):
+        if (category is not None and category not in categories):
             categories.add(category)
 
     # these are "local subjects" again?

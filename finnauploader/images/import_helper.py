@@ -11,7 +11,7 @@ import json
 import re
 from datetime import datetime
 import time
-from images.duplicatedetection import is_already_in_commons
+from images.duplicatedetection import is_already_in_commons, get_existing_finna_ids_from_sparql, get_upload_summary, isToolforgeFinnaId
 from images.finna_record_api import do_finna_search
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
@@ -121,11 +121,28 @@ def update_imported_wikidata_ids():
             pass
 
 def update_uploaded_images():
+    
+    print("Loading existing ids by sparql")
+    sparql_finna_ids_data = get_existing_finna_ids_from_sparql()
 
+    print("Loading 1000 most recent edit summaries for skipping uploaded files")
+    uploadsummary = get_upload_summary(1000)
+
+    print("Searching for existing images..")
     images = FinnaImage.objects.filter(already_in_commons=False)
     for image in images:
-        uploaded = is_already_in_commons(image.finna_id, fast=True)
+
+        uploaded = False
+        if image.finna_id in sparql_finna_ids_data:
+            uploaded = True
+        elif image.finna_id in uploadsummary:
+            uploaded = True
+        elif (isToolforgeFinnaId(image.finna_id) == True):
+            uploaded = True
+        
         if uploaded:
             image.already_in_commons = uploaded
             image.save(update_fields=['already_in_commons'])
+
+    print("Update done.")
 
