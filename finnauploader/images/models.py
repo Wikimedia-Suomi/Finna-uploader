@@ -521,12 +521,16 @@ class FinnaRecordManager(models.Manager):
                 if ('name' not in np_author):
                     print("name is missing from nonpresenters")
                     continue
-                if ('role' not in np_author):
-                    print("role is missing from nonpresenters")
-                    continue
+                #if ('role' not in np_author):
+                #    print("role is missing from nonpresenters")
+                #    continue
 
                 authname = np_author['name'].strip()
-                authrole = np_author['role'].strip()
+                authrole = ""
+                if ('role' in np_author):
+                    authrole = np_author['role'].strip()
+                else:
+                    print("role is missing from nonpresenters")
                 
                 r, created = FinnaNonPresenterAuthor.objects.get_or_create(name = authname, role = authrole)
                 non_presenter_authors.append(r)
@@ -636,14 +640,20 @@ class FinnaRecordManager(models.Manager):
         master_format = ""
         images_extended_data = data['imagesExtended']
         if images_extended_data:
-            try:
-                master_url = images_extended_data[0]['highResolution']['original'][0]['url']
-                master_format = images_extended_data[0]['highResolution']['original'][0]['format']
-            except:
+            if ('highResolution' in images_extended_data[0]):
+                highres = images_extended_data[0]['highResolution']
+                if ('original' in highres):
+                    master_url = highres['original'][0]['url']
+                    master_format = highres['original'][0]['format']
+                elif ('master' in highres):
+                    master_url = highres['master'][0]['url']
+                    master_format = highres['master'][0]['format']
+            else:
+                print("WARN: did not find highResolution")
                 # If no highResolution or original image
                 master_url = images_extended_data[0]['urls']['large']
                 master_format = 'image/jpeg'
-
+                
         # in some cases, url is not complete:
         # protocol and domain are not stored in the record, which we need later
         if (master_url.find("http://") < 0 and master_url.find("https://") < 0):
