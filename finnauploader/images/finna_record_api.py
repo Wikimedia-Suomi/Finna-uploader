@@ -155,7 +155,7 @@ def get_collection_aliases():
              'Werstas' : '0/Werstas/', # Työväenmuseo Werstas
              #'tvarkisto': '0/tyovaen_arkisto/', # työväen arkisto, ei vapaita kuvia
              'kansan' : '0/kansan_arkisto/', # Kansan Arkisto, Kansan uutisten?
-             #'Aaltoarkisto' : '0/AALTOARKISTO/', # Aalto-yliopiston arkisto, virheitä tallennuksessa
+             'Aaltoarkisto' : '0/AALTOARKISTO/', # Aalto-yliopiston arkisto
              'elka' : '0/elka/', # Suomen Elinkeinoelämän Keskusarkisto
              'Kansallisgalleria' : '0/Kansallisgalleria Arkistokokoelmat/',
              'Kansallisgalleria Ateneumin taidemuseo': '0/Kansallisgalleria Ateneumin taidemuseo/'
@@ -198,7 +198,7 @@ def is_building_collection(name):
                     '0/Lottamuseo/',
                     '0/kansan_arkisto/'
                     '0/Werstas/',
-                    #'0/AALTOARKISTO/', # errors in saving, debug this
+                    '0/AALTOARKISTO/', 
                     '0/Kansallisgalleria Arkistokokoelmat/',
                     '0/Kansallisgalleria Ateneumin taidemuseo/']
     if name in collections:
