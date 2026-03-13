@@ -509,6 +509,64 @@ class FinnaRecordManager(models.Manager):
             print("no year given in data")
             record.year = None
 
+        # Extract imagesExtended data
+        master_url = ""
+        master_format = ""
+        images_extended_data = data['imagesExtended']
+        if images_extended_data:
+            # highResolution may be empty
+            if ('highResolution' in images_extended_data[0]
+                and len(images_extended_data[0]['highResolution']) > 0):
+                highres = images_extended_data[0]['highResolution']
+                if ('original' in highres):
+                    master_url = highres['original'][0]['url']
+                    master_format = highres['original'][0]['format']
+                elif ('master' in highres):
+                    master_url = highres['master'][0]['url']
+                    master_format = highres['master'][0]['format']
+            else:
+                print("WARN: did not find highResolution")
+                # If no highResolution or original image
+                master_url = images_extended_data[0]['urls']['large']
+                master_format = 'image/jpeg'
+        else:
+            print("WARN: did not find imagesExtended")
+                
+        # in some cases, url is not complete:
+        # protocol and domain are not stored in the record, which we need later
+        if (master_url.find("http://") < 0 and master_url.find("https://") < 0):
+            if (master_url.startswith("/Cover/Show") is True):
+                master_url = "https://finna.fi" + master_url
+            else:
+                # might be another museovirasto link, but in different domain
+                print("WARN: not a Finna url and not complete url? ", master_url)
+        if (master_url == ""):
+            # can't use the image without a valid link
+            print("ERROR: did not find master url ")
+            return False
+        # if format is not there it might be possible to determine from extension in resourceName ?
+
+        record.master_url = master_url
+        record.master_format = master_format
+
+        if (len(record.finna_id) >= 128):
+            print("finna id exceeds maximum length", record.finna_id)
+            #print("maximum length currently", record.finna_id.Length())
+            return None # skip
+
+        # some images don't have accession numbers (mainly SA-kuva)
+        if ('identifierString' in data):
+            record.identifier_string = data['identifierString'].strip()
+
+            # identifier string may have list of accession numbers
+            if (len(record.identifier_string) > 500):
+                print("finna identifier_string exceeds maximum length", record.identifier_string)
+                #print("maximum length currently", record.identifier_string.Length())
+                return None # skip
+        else:
+            record.identifier_string = None
+
+
         print("parsing nonpresenters")
 
         # TODO: check for duplicates
@@ -634,44 +692,6 @@ class FinnaRecordManager(models.Manager):
                     subject_detailslist.append(subject_detail_name)
 
         #print("parsing imagesextended")
-
-        # Extract imagesExtended data
-        master_url = ""
-        master_format = ""
-        images_extended_data = data['imagesExtended']
-        if images_extended_data:
-            # highResolution may be empty
-            if ('highResolution' in images_extended_data[0]
-                and len(images_extended_data[0]['highResolution']) > 0):
-                highres = images_extended_data[0]['highResolution']
-                if ('original' in highres):
-                    master_url = highres['original'][0]['url']
-                    master_format = highres['original'][0]['format']
-                elif ('master' in highres):
-                    master_url = highres['master'][0]['url']
-                    master_format = highres['master'][0]['format']
-            else:
-                print("WARN: did not find highResolution")
-                # If no highResolution or original image
-                master_url = images_extended_data[0]['urls']['large']
-                master_format = 'image/jpeg'
-        else:
-            print("WARN: did not find imagesExtended")
-                
-        # in some cases, url is not complete:
-        # protocol and domain are not stored in the record, which we need later
-        if (master_url.find("http://") < 0 and master_url.find("https://") < 0):
-            if (master_url.startswith("/Cover/Show") is True):
-                master_url = "https://finna.fi" + master_url
-            else:
-                # might be another museovirasto link, but in different domain
-                print("WARN: not a Finna url and not complete url? ", master_url)
-        if (master_url == ""):
-            print("WARN: did not find master url ")
-        # if format is not there it might be possible to determine from extension in resourceName ?
-
-        record.master_url = master_url
-        record.master_format = master_format
 
         print("parsing full record")
 
@@ -809,40 +829,6 @@ class FinnaRecordManager(models.Manager):
         else:
             print("could not parse xml full record")
 
-        #print("creating record instance")
-        #images_data = data['images']
-        #record.number_of_images = len(images_data)
-
-        # TODO: move this earlier so we can do away with temporary holders..
-        # Create the record instance
-        #record, created = self.get_or_create(finna_id=data['id'], defaults={'image_right': image_right})
-        #record.image_right = image_right
-        #record.number_of_images = len(images_data)
-        #record.title = data.get('title', '')
-        #record.short_title = data.get('shortTitle', '')
-        #record.master_url = master_url
-        #record.master_format = master_format
-
-        # TODO: if there is no 'year' to get it from 'events',
-        # see record.date_string
-        #if ('year' in data):
-        #    record.year = data['year']
-        #else:
-        #    print("no year given in data")
-        #    record.year = None
-
-        # some images don't have accession numbers (mainly SA-kuva)
-        if ('identifierString' in data):
-            record.identifier_string = data['identifierString'].strip()
-
-            # identifier string may have list of accession numbers
-            if (len(record.identifier_string) > 500):
-                print("finna identifier_string exceeds maximum length", record.identifier_string)
-                #print("maximum length currently", record.identifier_string.Length())
-                return None # skip
-        else:
-            record.identifier_string = None
-
         if ('measurements' in data):
             measurements = data['measurements']
             measurementlist = []
@@ -850,12 +836,6 @@ class FinnaRecordManager(models.Manager):
                 m = striprepeatespaces(m)
                 measurementlist.append(m)
             record.measurements = "\n".join(measurementlist)
-        
-        if (len(record.finna_id) >= 128):
-            print("finna id exceeds maximum length", record.finna_id)
-            #print("maximum length currently", record.finna_id.Length())
-            return None # skip
-        
 
         valmistus = self.getEventsValmistus(data)
         if (valmistus != None):
