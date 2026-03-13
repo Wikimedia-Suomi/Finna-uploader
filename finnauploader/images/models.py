@@ -358,6 +358,7 @@ class FinnaRecordManager(models.Manager):
             return False
         if ('imagesExtended' not in data):
             print("no images extended in the record")
+            # TODO: if there is no imagesextended, see if there is images?
             return False
         return True
     
@@ -521,25 +522,32 @@ class FinnaRecordManager(models.Manager):
         # Extract imagesExtended data
         master_url = ""
         master_format = ""
-        images_extended_data = data['imagesExtended']
-        if images_extended_data:
-            # highResolution may be empty
-            if ('highResolution' in images_extended_data[0]
-                and len(images_extended_data[0]['highResolution']) > 0):
-                highres = images_extended_data[0]['highResolution']
-                if ('original' in highres):
-                    master_url = highres['original'][0]['url']
-                    master_format = highres['original'][0]['format']
-                elif ('master' in highres):
-                    master_url = highres['master'][0]['url']
-                    master_format = highres['master'][0]['format']
-            else:
-                print("WARN: did not find highResolution")
-                # If no highResolution or original image
-                master_url = images_extended_data[0]['urls']['large']
-                master_format = 'image/jpeg'
-        else:
-            print("WARN: did not find imagesExtended")
+
+        # TODO: if there isn't "imagesExtended", try "images"
+        if ('imagesExtended' in data and len(data['imagesExtended']) > 0):
+            images_extended_data = data['imagesExtended']
+            if images_extended_data:
+                # highResolution may be empty
+                if ('highResolution' in images_extended_data[0]
+                    and len(images_extended_data[0]['highResolution']) > 0):
+                    highres = images_extended_data[0]['highResolution']
+                    if ('original' in highres):
+                        master_url = highres['original'][0]['url']
+                        master_format = highres['original'][0]['format']
+                    elif ('master' in highres):
+                        master_url = highres['master'][0]['url']
+                        master_format = highres['master'][0]['format']
+                else:
+                    print("WARN: did not find highResolution from imagesExtended")
+                    # If no highResolution or original image
+                    master_url = images_extended_data[0]['urls']['large']
+                    master_format = 'image/jpeg'
+        elif ('images' in data and len(images_data) > 0):
+            print("WARN: did not find imagesExtended, using images", images_data[0])
+            master_url = images_data[0]
+            master_format = 'image/jpeg'
+
+        #print("WARN: did not find imagesExtended")
                 
         # in some cases, url is not complete:
         # protocol and domain are not stored in the record, which we need later

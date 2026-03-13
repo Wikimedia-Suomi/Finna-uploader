@@ -38,6 +38,9 @@ def do_finna_import(opt_lookfor, opt_type, opt_collection):
         if not 'records' in finna_records:
             print("no records in search results, stopping")
             break
+        
+        if 'resultCount' in finna_records:
+            print("received ", finna_records['resultCount'])
 
         for record in finna_records['records']:
             print(" -- -- -- ") # add a simple separator

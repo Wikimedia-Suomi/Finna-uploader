@@ -51,7 +51,7 @@
       </div>
       <a :href="'https://finna.fi/Record/' + photo.finna_id" target="_new"><img
          class="thumbnail"
-         :src="'https://finna.fi/Cover/Show?source=Solr&index=0&size=small&id=' + photo.finna_id" /></a>
+         :src="'https://finna.fi/Cover/Show?source=Solr&index=0&size=small&id=' + encodeURIComponent(photo.finna_id)" /></a>
       <h5>{{ photo.title }}</h5>
       <ul>
          <li v-for="(summary, index2) in photo.summaries" v-if="summary.lang === 'fi'">{{summary.text}}</li>
