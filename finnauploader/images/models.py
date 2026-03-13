@@ -505,6 +505,15 @@ class FinnaRecordManager(models.Manager):
             record.short_title = ""
         if ('year' in data):
             record.year = data['year']
+            
+            # muinasesineitä koskevissa kuvissa voi olla negatiivinen vuosi,
+            # joka rikkoo tarkistukset.
+            # valokuva ei myöskään voi olla tuolta vuodelta 
+            # ja esineitä koskeville vuosille pitäisi olla jokin muu käsittely
+            # -> jätetään vuosi pois
+            if (int(record.year) < 0):
+                print("negative year")
+                record.year = None
         else:
             print("no year given in data")
             record.year = None
