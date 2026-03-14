@@ -174,6 +174,8 @@ def get_category_place(subject_places):
         return "Petsamo"
     if ('Kristiinankaupunki' in subject_places):
         return "Kristinestad"
+    if ('kuvauspaikka Mikkeli' in subject_places):
+        return "Mikkeli"
 
     cat_place = {
         "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Joutseno","Juupajoki","Jyväskylä","Jämsä","Kaarina","Karkkila","Kajaani","Kauhajoki","Kerava","Kemi","Kitee","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Muhos","Naantali","Padasjoki","Perniö","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tammela","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Vihti","Virolahti","Virrat"
