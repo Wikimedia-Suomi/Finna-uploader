@@ -345,7 +345,7 @@ def get_claims_for_image_upload(finna_image):
     subject_actors = finna_image.subject_actors.all()
     for subject_actor in subject_actors:
         # there is bug in some data
-        if (subject_actor.name == None or subject_actor.name == "" or subject_actor.name == "null"):
+        if (subject_actor.skip_actor() == True):
             continue
 
         if subject_actor.wikidata_id:

@@ -242,6 +242,16 @@ class FinnaSubjectActor(models.Model):
 
     def __str__(self):
         return self.name
+    
+    # in some cases there is incorrect information in subject actors,
+    # check if it should be skipped (no category, no wikidata-depiction, no category)
+    def skip_actor(self):
+        if (self.name == None or self.name == ""):
+            return True
+        skippable = ["null", "puoliso tohtori Thure Roos"]
+        if self.name in skippable:
+            return True
+        return False
 
     #def get_wikidata_id(self):
     #    wikidata_id = wikidata_id
@@ -540,10 +550,12 @@ class FinnaRecordManager(models.Manager):
                 else:
                     print("WARN: did not find highResolution from imagesExtended")
                     # If no highResolution or original image
+                    # might have "master" in addition to "large" as option..
                     master_url = images_extended_data[0]['urls']['large']
                     master_format = 'image/jpeg'
         elif ('images' in data and len(images_data) > 0):
             print("WARN: did not find imagesExtended, using images", images_data[0])
+            # might have multiple images here with different index=
             master_url = images_data[0]
             master_format = 'image/jpeg'
 

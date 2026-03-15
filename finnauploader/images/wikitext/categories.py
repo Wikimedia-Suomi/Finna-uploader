@@ -176,6 +176,8 @@ def get_category_place(subject_places):
         return "Kristinestad"
     if ('kuvauspaikka Mikkeli' in subject_places):
         return "Mikkeli"
+    if ('kuvauspaikka Uusikaupunki' in subject_places):
+        return "Uusikaupunki"
 
     cat_place = {
         "Helsinki","Hanko","Hamina","Heinola","Hyvinkää","Hämeenlinna","Espoo","Forssa","Iisalmi","Imatra","Inari","Joensuu","Joutseno","Juupajoki","Jyväskylä","Jämsä","Kaarina","Karkkila","Kajaani","Kauhajoki","Kerava","Kemi","Kitee","Kokkola","Kotka","Kuopio","Kuusamo","Kouvola","Lahti","Lappajärvi","Lappeenranta","Lohja","Loviisa","Mikkeli","Muhos","Naantali","Padasjoki","Perniö","Porvoo","Pori","Pornainen","Oulu","Raahe","Raisio","Rauma","Rovaniemi","Salo","Savonlinna","Seinäjoki","Siilinjärvi","Sipoo","Sotkamo","Turku","Tammela","Tampere","Tornio","Uusikaupunki","Vantaa","Vaasa","Vihti","Virolahti","Virrat"
@@ -587,7 +589,7 @@ def get_category_for_collection(collection):
     
     # this list should be temporary for testing:
     # some are not compatible yet
-    wikidata_id_list = ["Q123308681", "Q123358672", "Q107388072", "Q113292201"]
+    wikidata_id_list = ["Q123308681", "Q123358672", "Q107388072", "Q113292201", "Q122414127"]
     if collection.wikidata_id in wikidata_id_list:
         return get_collection_image_category_from_wikidata_id(collection.wikidata_id)
     return None
@@ -726,7 +728,7 @@ def create_categories_new(finna_image):
 
     for subject_actor in finna_image.subject_actors.all():
         # there is bug in some cases: skip if no valid name
-        if (subject_actor.name == None or subject_actor.name == "" or subject_actor.name == "null"):
+        if (subject_actor.skip_actor() == True):
             continue
 
         category = get_category_by_wikidata_id(subject_actor.wikidata_id)

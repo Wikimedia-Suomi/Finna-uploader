@@ -112,7 +112,7 @@ def update_imported_wikidata_ids():
     actors = FinnaImage.subject_actors
     for actor in actors:
         # there is bug in some data
-        if (actor.name == None or actor.name == "" or actor.name == "null"):
+        if (actor.skip_actor() == True):
             continue
         
         if actor.wikidata_id: 

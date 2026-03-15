@@ -47,7 +47,7 @@ def update_wikidata_id_for_record_data(finna_image):
     actors = finna_image.subject_actors.all()
     for actor in actors:
         # there is bug in some data
-        if (actor.name == None or actor.name == "" or actor.name == "null"):
+        if (actor.skip_actor() == True):
             continue
         
         wikidata_id = get_subject_actors_wikidata_id(actor.name)
@@ -116,6 +116,12 @@ def generate_filename_for_commons(finna_image):
             name = summaries_name.text
         else:
             print("unable to find name shorter than maximum for filename")
+
+    # commons does not accept "å" in filename?
+    # does not suffice, something else is wrong?
+    #must_be_quoted_name = False
+    #if (name.find("å") > 0):
+    #    must_be_quoted_name = True
 
     name = update_dates_in_filename(name)
     name = name.replace('content description: ', '')
@@ -194,6 +200,7 @@ def generate_filename_for_commons(finna_image):
     # wiki doesn't allow non-breakable spaces or soft-hyphens
     quoted_name = urllib.parse.quote_plus(file_name)
     quoted_name = quoted_name.replace("%C2%A0", " ")
+   
     file_name = urllib.parse.unquote(quoted_name)
 
     print("DEBUG: generated file name for upload:", file_name)
@@ -225,7 +232,7 @@ def upload_file_update_metadata(finna_id):
     # generate name for the upload, show it to the user as well
     filename = generate_filename_for_commons(finna_image)
     image_url = finna_image.master_url
-
+    
     # if we store incomplete url -> needs fixing
     if (image_url.find("http://") < 0 and image_url.find("https://") < 0):
         print("URL is not complete:", image_url)
@@ -268,6 +275,10 @@ def upload_file_update_metadata(finna_id):
     print(filename)
 
     print('uploading from:', image_url)
+
+    # TODO: if there are multiple images in same record,
+    # we would need the index in the name and loop thorugh the urls in record
+    # (currently only first is used)
 
     file_page.text = wikitext
     try:
