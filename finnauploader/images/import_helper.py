@@ -9,6 +9,7 @@ import pywikibot
 from pywikibot.exceptions import NoPageError
 import json
 import re
+import urllib.parse
 from datetime import datetime
 import time
 from images.duplicatedetection import is_already_in_commons, get_existing_finna_ids_from_sparql, get_upload_summary, isToolforgeFinnaId
@@ -136,6 +137,19 @@ def update_uploaded_images():
     for image in images:
 
         uploaded = False
+
+        # in some cases id needs quoting
+        # and data in commons may have quoted id instead of plain id
+        if (image.finna_id.find("%25") < 0)
+            quoted_finna_id = urllib.parse.quote_plus(image.finna_id)
+            if (quoted_finna_id != image.finna_id):
+                if quoted_finna_id in sparql_finna_ids_data:
+                    uploaded = True
+                elif quoted_finna_id in uploadsummary:
+                    uploaded = True
+                elif (isToolforgeFinnaId(quoted_finna_id) == True):
+                    uploaded = True
+
         if image.finna_id in sparql_finna_ids_data:
             uploaded = True
         elif image.finna_id in uploadsummary:
