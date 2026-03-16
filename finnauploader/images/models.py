@@ -434,9 +434,13 @@ class FinnaRecordManager(models.Manager):
             print(json.dumps(image_rights_data))
             exit(1)
         image_rights_copyright = image_rights_data['copyright']
+        # must not be empty
+        if (len(image_rights_copyright) < 1):
+            print("ERROR: empty copyright")
+            exit(1)
 
         # link may be missing in case copyright is "Creative Commons / Sibelius-museo",
-        # it might be found under "rights" with "CC BY 4.0", but there is already mismatch of information
+        # it might be found under "rights" with "CC BY 4.0", but there is already mismatch of information.
         if ('link' not in image_rights_data):
             print("ERROR: link missing for image rights")
             print(json.dumps(image_rights_data))
