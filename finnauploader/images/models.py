@@ -419,6 +419,47 @@ class FinnaRecordManager(models.Manager):
             print("DEBUG: record is not ok, skipping")
             return None
 
+        print("parsing imagerights")
+
+        # Extract and handle image_right data
+        if ('imageRights' not in data):
+            print("ERROR: cannot determine image rights, essential part missing")
+            print(json.dumps(data))
+            exit(1)
+        image_rights_data = data['imageRights']
+
+        # in case there is some mismatch in information (see below) test it first is_supported_copyright()
+        if ('copyright' not in image_rights_data):
+            print("ERROR: cannot determine image rights, essential part missing")
+            print(json.dumps(image_rights_data))
+            exit(1)
+        image_rights_copyright = image_rights_data['copyright']
+
+        # link may be missing in case copyright is "Creative Commons / Sibelius-museo",
+        # it might be found under "rights" with "CC BY 4.0", but there is already mismatch of information
+        if ('link' not in image_rights_data):
+            print("ERROR: link missing for image rights")
+            print(json.dumps(image_rights_data))
+            exit(1)
+        image_rights_link = image_rights_data['link']
+
+        if ('description' not in image_rights_data):
+            print("WARN: description missing for image rights")
+        image_rights_description = image_rights_data.get('description', '')
+        print("DEBUG: found copyright:", image_rights_copyright)
+
+        # TODO:
+        # there might be creditLine for some physical objects in some cases
+        # this seems to be optional information
+        #image_creditline = image_rights_data['creditLine']
+        
+        # TODO : if description has link to creative commons, replace http:// by https://
+        image_right, created = FinnaImageRight.objects.get_or_create(copyright=image_rights_copyright,
+                                                                     link=image_rights_link,
+                                                                     description=image_rights_description)
+
+        print("imageright added")
+
         # Extract and handle institutions data
         institutions = []
         institutions_data = data['institutions']
@@ -447,54 +488,6 @@ class FinnaRecordManager(models.Manager):
                 print("using wikidata id ", wikidata_id, " for institution ", itranslated)
             except:
                 pass
-
-        #print("parsing collections")
-
-        # Extract and handle collections data
-
-        collectionlist = []
-        if 'collections' in data:
-            for collection_name in data['collections']:
-                
-                # cleanup name
-                collection_name = striprepeatespaces(collection_name)
-                if (len(collection_name) == 0):
-                    continue
-
-                # there may be duplicates in some cases?
-                if (collection_name in collectionlist):
-                    continue
-                collectionlist.append(collection_name)
-
-        #print("parsing imagerights")
-
-        # Extract and handle image_right data
-        if ('imageRights' not in data):
-            print("ERROR: cannot determine image rights, essential part missing")
-            print(json.dumps(data))
-            exit(1)
-        image_rights_data = data['imageRights']
-        if ('copyright' not in image_rights_data):
-            print("ERROR: cannot determine image rights, essential part missing")
-            print(json.dumps(image_rights_data))
-            exit(1)
-        image_rights_copyright = image_rights_data['copyright']
-
-        image_rights_link = image_rights_data['link']
-        image_rights_description = image_rights_data.get('description', '')
-        print("DEBUG: found copyright:", image_rights_copyright)
-
-        # TODO:
-        # there might be creditLine for some physical objects in some cases
-        # this seems to be optional information
-        #image_creditline = image_rights_data['creditLine']
-        
-        # TODO : if description has link to creative commons, replace http:// by https://
-        image_right, created = FinnaImageRight.objects.get_or_create(copyright=image_rights_copyright,
-                                                                     link=image_rights_link,
-                                                                     description=image_rights_description)
-
-        print("imageright added")
 
         print("creating record instance")
         
@@ -533,7 +526,7 @@ class FinnaRecordManager(models.Manager):
         master_url = ""
         master_format = ""
 
-        # TODO: if there isn't "imagesExtended", try "images"
+        # if there isn't "imagesExtended", try "images"
         if ('imagesExtended' in data and len(data['imagesExtended']) > 0):
             images_extended_data = data['imagesExtended']
             if images_extended_data:
@@ -560,6 +553,11 @@ class FinnaRecordManager(models.Manager):
             master_format = 'image/jpeg'
 
         #print("WARN: did not find imagesExtended")
+        if (master_url == ""):
+            # can't use the image without a valid link
+            print("ERROR: did not find master url ")
+            return False
+        # if format is not there it might be possible to determine from extension in resourceName ?
                 
         # in some cases, url is not complete:
         # protocol and domain are not stored in the record, which we need later
@@ -569,11 +567,6 @@ class FinnaRecordManager(models.Manager):
             else:
                 # might be another museovirasto link, but in different domain
                 print("WARN: not a Finna url and not complete url? ", master_url)
-        if (master_url == ""):
-            # can't use the image without a valid link
-            print("ERROR: did not find master url ")
-            return False
-        # if format is not there it might be possible to determine from extension in resourceName ?
 
         record.master_url = master_url
         record.master_format = master_format
@@ -595,10 +588,26 @@ class FinnaRecordManager(models.Manager):
         else:
             record.identifier_string = None
 
+        print("parsing collections")
+
+        # Extract and handle collections data
+
+        collectionlist = []
+        if 'collections' in data:
+            for collection_name in data['collections']:
+                
+                # cleanup name
+                collection_name = striprepeatespaces(collection_name)
+                if (len(collection_name) == 0):
+                    continue
+
+                # there may be duplicates in some cases?
+                if (collection_name in collectionlist):
+                    continue
+                collectionlist.append(collection_name)
 
         print("parsing nonpresenters")
 
-        # TODO: check for duplicates
         # Extract and handle non_presenter_authors data
         non_presenter_authors = []
         if ('nonPresenterAuthors' in data):
@@ -1015,6 +1024,9 @@ class FinnaRecordManager(models.Manager):
         
             try:
                 # TODO: search collection with institution
+                # lookup with institutions list of this record
+                
+                
                 # since collection names are not unique
                 #wikidata_id = get_collection_wikidata_id(institution.wikidata_id, collection.name)
                 
@@ -1147,11 +1159,13 @@ class FinnaImage(models.Model):
     # Pseudo properties
     @property
     def thumbnail_url(self):
+        # TODO: if there are multiples images in same record, index should reflect that
         url = f'https://finna.fi/Cover/Show?source=Solr&id={self.finna_id}&index=0&size=small'
         return url
 
     @property
     def image_url(self):
+        # TODO: if there are multiples images in same record, index should reflect that
         url = f'https://finna.fi/Cover/Show?source=Solr&id={self.finna_id}&index=0&size=large'
         return url
 
