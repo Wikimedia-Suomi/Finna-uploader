@@ -15,7 +15,7 @@ from images.wikitext.commons_wikitext import get_wikitext_for_new_image, \
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_institution_wikidata_id, \
-                                    get_collection_wikidata_id, get_clean_institution_name
+                                    get_collection_wikidata_id, striprepeatespaces
 from images.wikitext.timestamps import parse_timestamp 
 
 
@@ -84,11 +84,34 @@ def update_dates_in_filename(input_str):
         output_str = input_str
     return output_str
 
+def get_filename_extension(master_format):
+    if (master_format == None or master_format == ""):
+        print("format missing for file extension")
+        return None
+    
+    format_to_extension = {
+        'tif': 'tif',
+        'tiff': 'tif',
+        'image/tiff': 'tif',
+        'png': 'png',
+        'image/png': 'png',
+        'jpg': 'jpg',
+        'jpeg': 'jpg',
+        'image/jpeg': 'jpg',
+        'gif': 'gif',
+        'image/gif': 'gif'
+    }
+
+    if (master_format in format_to_extension):
+        extension = format_to_extension[master_format]
+        return extension
+    return None
+
 # simplify data model: this is only place where we actually use this
 #
 def generate_filename_for_commons(finna_image):
 
-    filename_extension = finna_image.get_filename_extension()
+    filename_extension = get_filename_extension(finna_image.master_format)
     if (filename_extension == None):
         print("unable to get extension for filename")
         return None

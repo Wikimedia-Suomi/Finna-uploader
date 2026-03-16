@@ -1179,30 +1179,6 @@ class FinnaImage(models.Model):
         url = f'https://finna.fi/Record/{self.finna_id}'
         return url
 
-    def get_filename_extension(self):
-        if (self.master_format == None or self.master_format == ""):
-            print("format missing for file extension")
-            return None
-        
-        format_to_extension = {
-            'tif': 'tif',
-            'tiff': 'tif',
-            'image/tiff': 'tif',
-            'png': 'png',
-            'image/png': 'png',
-            'jpg': 'jpg',
-            'jpeg': 'jpg',
-            'image/jpeg': 'jpg',
-            'gif': 'gif',
-            'image/gif': 'gif'
-        }
-
-        if (self.master_format in format_to_extension):
-            extension = format_to_extension[self.master_format]
-            return extension
-        return None
-
-
     def __str__(self):
         return self.finna_id
 
