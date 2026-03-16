@@ -23,11 +23,19 @@ def update_commons_list(name, wikidata_id):
         page.save("Adding new entry for %s" % name)
 
 
-# Function to check if the Wikidata item is a human
+# Function to check if the Wikidata item is an instance of 
+# a photography studio or a newspaper
 def is_studio(item):
+    
     instance_of = item.claims.get('P31', [])
-    qid = 'Q672070'  # QID for photography studio
-    return any(claim.getTarget().id == qid for claim in instance_of)
+    
+    for claim in instance_of:
+        qid = claim.getTarget().id
+        if (qid == 'Q672070'): # QID for photography studio
+            return True
+        if (qid == 'Q11032'): # QID for newspaper
+            return True
+    return False
 
 def get_name_from_label(wikidata_item, lang='fi'):
     for li in wikidata_item.labels:
