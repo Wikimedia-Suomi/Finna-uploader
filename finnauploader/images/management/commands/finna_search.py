@@ -1,14 +1,13 @@
 from django.core.management.base import BaseCommand
 import time
 from images.finna_record_api import get_supported_collections, \
-                                    get_collection_name_from_alias, \
                                     get_collection_aliases
 from images.import_helper import do_finna_import
 
 class Command(BaseCommand):
     help = 'Import records from Finna search result to the database'
 
-    # TODO: support for alias or institution:
+    # support for alias or institution:
     # Helsingin kaupunginmuseo and SA-kuva have institution but no collection information
     def add_arguments(self, parser):
         # Named (optional) arguments
@@ -43,19 +42,21 @@ class Command(BaseCommand):
             help='Finna lookfor argument.',
         )
 
+        parser.add_argument(
+            '--skipupdate', action='store_true',
+            help='Do not run slow update of previously uploaded images.',
+        )
+
 
     def handle(self, *args, **options):
         lookfor = options['lookfor'] or None
         type = options['type'] or None
-        default_collection = 'Studio Kuvasiskojen kokoelma'
-        collection = options['collection'] or default_collection
-        aliascoll = options['alias'] or None
-
-        if (aliascoll != None):
-            collection = get_collection_name_from_alias(aliascoll)
+        collection = options['collection'] or None
+        alias = options['alias'] or None
+        skip_update = options['skipupdate'] or None
         
         #if (collection == None and aliases != None):
         #    collection = aliases
-        do_finna_import(lookfor, type, collection)
+        do_finna_import(lookfor, type, collection, alias, skip_update)
 
-        self.stdout.write(self.style.SUCCESS('Images saved succesfully!'))
+        self.stdout.write(self.style.SUCCESS('Search completed!'))

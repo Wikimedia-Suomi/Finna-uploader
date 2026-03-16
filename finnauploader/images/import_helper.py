@@ -13,7 +13,10 @@ import urllib.parse
 from datetime import datetime
 import time
 from images.duplicatedetection import is_already_in_commons, get_existing_finna_ids_from_sparql, get_upload_summary, isToolforgeFinnaId
-from images.finna_record_api import do_finna_search
+
+from images.finna_record_api import do_finna_search, \
+                                    get_collection_name_from_alias \
+
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_institution_wikidata_id, \
@@ -22,10 +25,19 @@ from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
 # todo: move more stuff from finna_record_api to here and make it simpler
 
 
-def do_finna_import(opt_lookfor, opt_type, opt_collection):
+def do_finna_import(opt_lookfor, opt_type, opt_collection, opt_alias, skip_update=False):
+
+    # command handling will not call this method without a collection but keep this
+    #default_collection = 'Studio Kuvasiskojen kokoelma'
+    #if (opt_collection == None):
+    #    opt_collection = default_collection
 
     #if (collection == None and aliases != None):
     #    collection = aliases
+
+    if (opt_alias != None):
+        opt_collection = get_collection_name_from_alias(opt_alias)
+
 
     print("fetching with search..")
 
@@ -59,8 +71,12 @@ def do_finna_import(opt_lookfor, opt_type, opt_collection):
     #print("updating ids..")
     #update_imported_wikidata_ids()
 
-    print("updating uploaded images..")
-    update_uploaded_images()
+    # slow
+    if (skip_update == False):
+        print("updating uploaded images..")
+        update_uploaded_images(opt_collection)
+    else:
+        print("skipping update of uploaded images")
     
     print("import done")
     
@@ -124,7 +140,10 @@ def update_imported_wikidata_ids():
         except:
             pass
 
-def update_uploaded_images():
+def update_uploaded_images(collection=None):
+    
+    # TODO: push the list into database somewhere so we don't need to refetch often
+    # and we can do lookups faster (maybe with mixed-case even)
     
     print("Loading existing ids by sparql")
     sparql_finna_ids_data = get_existing_finna_ids_from_sparql()
@@ -133,6 +152,10 @@ def update_uploaded_images():
     uploadsummary = get_upload_summary(1000)
 
     print("Searching for existing images..")
+    
+    # TODO: filter by collection to reduce searches into those that are relevant
+    # or add another flag for those that were added but not checked yet?
+    
     images = FinnaImage.objects.filter(already_in_commons=False)
     for image in images:
 
@@ -140,7 +163,7 @@ def update_uploaded_images():
 
         # in some cases id needs quoting
         # and data in commons may have quoted id instead of plain id
-        if (image.finna_id.find("%25") < 0)
+        if (image.finna_id.find("%25") < 0):
             quoted_finna_id = urllib.parse.quote_plus(image.finna_id)
             if (quoted_finna_id != image.finna_id):
                 if quoted_finna_id in sparql_finna_ids_data:
@@ -150,12 +173,13 @@ def update_uploaded_images():
                 elif (isToolforgeFinnaId(quoted_finna_id) == True):
                     uploaded = True
 
-        if image.finna_id in sparql_finna_ids_data:
-            uploaded = True
-        elif image.finna_id in uploadsummary:
-            uploaded = True
-        elif (isToolforgeFinnaId(image.finna_id) == True):
-            uploaded = True
+        if (uploaded == False):
+            if image.finna_id in sparql_finna_ids_data:
+                uploaded = True
+            elif image.finna_id in uploadsummary:
+                uploaded = True
+            elif (isToolforgeFinnaId(image.finna_id) == True):
+                uploaded = True
         
         if uploaded:
             image.already_in_commons = uploaded
