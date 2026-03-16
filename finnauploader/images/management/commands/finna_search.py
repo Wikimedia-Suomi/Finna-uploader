@@ -53,7 +53,7 @@ class Command(BaseCommand):
         type = options['type'] or None
         collection = options['collection'] or None
         alias = options['alias'] or None
-        skip_update = options['skipupdate'] or None
+        skip_update = options['skipupdate'] or False
         
         #if (collection == None and aliases != None):
         #    collection = aliases
