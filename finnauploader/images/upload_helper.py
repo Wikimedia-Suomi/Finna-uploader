@@ -146,7 +146,9 @@ def generate_filename_for_commons(finna_image):
 
     # some images don't have identifier to be used
     if (finna_image.identifier_string is not None):
-        identifier = finna_image.identifier_string.replace(":", "-")
+        identifier = striprepeatespaces(finna_image.identifier_string)
+        # replace characters not allowed in commons filenames
+        identifier = identifier.replace(":", "-")
         identifier = identifier.replace("/", "_")
     else:
         identifier = ''
@@ -280,6 +282,9 @@ def upload_file_update_metadata(finna_id):
     # we would need the index in the name and loop thorugh the urls in record
     # (currently only first is used)
 
+    # TODO: add download + local upload for some problematic cases where copy-upload isn't possible
+    # see if we can solve redirect-urls that way?
+    
     file_page.text = wikitext
     try:
         # Load file from url
