@@ -155,6 +155,7 @@ def generate_filename_for_commons(finna_image):
     name = name.replace(".", "_")
     name = name.replace(" ", "_")
     name = name.replace(":", "_")
+    name = name.replace("#", "_")
     name = name.replace("_", " ").strip()
 
     if finna_image.year and str(finna_image.year) not in name:
