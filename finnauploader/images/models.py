@@ -144,6 +144,7 @@ class FinnaNonPresenterAuthor(models.Model):
             self.wikidata_id = wikidata_id
             self.save(update_fields=['wikidata_id'])
 
+    # note: some museums use "valmistaja" for photographers..
     def is_photographer(self):
         # note: SLS uses "pht"
         # also: "valokuvaamo" for studios
@@ -582,7 +583,7 @@ class FinnaRecordManager(models.Manager):
 
         # some images don't have accession numbers (mainly SA-kuva)
         if ('identifierString' in data):
-            record.identifier_string = data['identifierString'].strip()
+            record.identifier_string = striprepeatespaces(data['identifierString'])
 
             # identifier string may have list of accession numbers
             if (len(record.identifier_string) > 500):
@@ -1178,14 +1179,10 @@ class FinnaImage(models.Model):
         url = f'https://finna.fi/Record/{self.finna_id}'
         return url
 
-    @property
-    def filename_extension(self):
-        if (self.master_format == None):
+    def get_filename_extension(self):
+        if (self.master_format == None or self.master_format == ""):
             print("format missing for file extension")
-            exit(1)
-        if (self.master_format == ""):
-            print("format missing for file extension")
-            exit(1)
+            return None
         
         format_to_extension = {
             'tif': 'tif',
@@ -1200,12 +1197,10 @@ class FinnaImage(models.Model):
             'image/gif': 'gif'
         }
 
-        try:
+        if (self.master_format in format_to_extension):
             extension = format_to_extension[self.master_format]
             return extension
-        except:
-            print(f'Unknown format: {self.master_format}')
-            exit(1)
+        return None
 
 
     def __str__(self):

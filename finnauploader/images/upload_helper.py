@@ -88,7 +88,11 @@ def update_dates_in_filename(input_str):
 #
 def generate_filename_for_commons(finna_image):
 
-    filename_extension = finna_image.filename_extension
+    filename_extension = finna_image.get_filename_extension()
+    if (filename_extension == None):
+        print("unable to get extension for filename")
+        return None
+        
     summaries_name = finna_image.summaries.filter(lang='en').first()
     alt_title_name = finna_image.alternative_titles.filter(lang='en').first()
 
@@ -233,6 +237,9 @@ def upload_file_update_metadata(finna_id):
 
     # generate name for the upload, show it to the user as well
     filename = generate_filename_for_commons(finna_image)
+    if (filename == None):
+        print("failed to get filename for:", finna_id)
+        return ""
     image_url = finna_image.master_url
     
     # if we store incomplete url -> needs fixing
