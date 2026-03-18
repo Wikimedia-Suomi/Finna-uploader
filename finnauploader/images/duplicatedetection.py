@@ -76,35 +76,67 @@ def get_existing_finna_ids_from_sparql():
 
 # edit summaries of last 1000 edits to check which files were already uploaded
 def get_upload_summary(limit=1000):
-    site = pywikibot.Site('commons', 'commons')
-    site.login()
-
-    # Get own edits
-    current_user = site.user()  # The user whose edits we want to check
-    user = pywikibot.User(site, str(current_user))
-    contribs = user.contributions(total=limit)  # Get the user's last 5000 edits
 
     # maybe use set() for unique list (we don't really care how many times it exists)
-    uploadsummary = list()
-    #for contrib in contribs:
-    #    uploadsummary += str(contrib) + "\n"
+    uploads = list()
+    checked = list() # checked page list (filter)
+    
+    commonssite = pywikibot.Site('commons', 'commons')
+    commonssite.login()
+
+    # Get own edits
+    current_user = commonssite.user()  # The user whose edits we want to check
+    user = pywikibot.User(commonssite, str(current_user))
+    contribs = user.contributions(total=limit)  # Get the user's last 5000 edits
+
+
+    # list of tuples
+    for contrib in contribs:
+        page = contrib[0]
+        # if (page.namespace == 0): does not work correctly ?
+        # we don't care if user modifies something else
+        if (page.title().startswith("File:") == False):
+            continue
+        if page.title() in checked:
+            continue
+        
+        print("contrib: ", page.title())
+        # only use on filepages instead of pages with lists of files..
+        for url in page.extlinks():
+            if (url.find("finna.fi") < 1):
+                continue
+            #print("url in contrib: ", url)
+            uploads.append(url)
+        checked.append(page.title())
 
     usual_uploaders = ['FinnaUploadBot', 'FinnaUploadBot2', 'Zache']
     for username in usual_uploaders:
-        if (current_user != username):
-            user = pywikibot.User(site, username)
-            contribs = user.contributions(total=limit)
+        if (current_user == username):
+            continue
+            
+        user = pywikibot.User(commonssite, username)
+        contribs = user.contributions(total=limit)
 
-            # list of tuples
-            for contrib in contribs:
-                page = contrib[0]
-                # if (page.namespace == 0): does not work correctly ?
-                
-                if (page.title().startswith("File:")):
-                    print("contrib: ", page.title())
-                    uploadsummary.append(page.title())
+        # list of tuples
+        for contrib in contribs:
+            page = contrib[0]
+            # if (page.namespace == 0): does not work correctly ?
+            # we don't care if user modifies something else
+            if (page.title().startswith("File:") == False):
+                continue
+            if page.title() in checked:
+                continue
+            
+            print("contrib: ", page.title())
+            # only use on filepages instead of pages with lists of files..
+            for url in page.extlinks():
+                if (url.find("finna.fi") < 1):
+                    continue
+                #print("url in contrib: ", url)
+                uploads.append(url)
+            checked.append(page.title())
 
-    return uploadsummary
+    return uploads
 
 # only used from import helper during import
 def is_already_in_commons(finna_id, fast=False):
