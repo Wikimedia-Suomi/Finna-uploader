@@ -426,26 +426,26 @@ class FinnaRecordManager(models.Manager):
         if ('imageRights' not in data):
             print("ERROR: cannot determine image rights, essential part missing")
             print(json.dumps(data))
-            exit(1)
+            return None
         image_rights_data = data['imageRights']
 
         # in case there is some mismatch in information (see below) test it first is_supported_copyright()
         if ('copyright' not in image_rights_data):
             print("ERROR: cannot determine image rights, essential part missing")
             print(json.dumps(image_rights_data))
-            exit(1)
+            return None
         image_rights_copyright = image_rights_data['copyright']
         # must not be empty
         if (len(image_rights_copyright) < 1):
             print("ERROR: empty copyright")
-            exit(1)
+            return None
 
         # link may be missing in case copyright is "Creative Commons / Sibelius-museo",
         # it might be found under "rights" with "CC BY 4.0", but there is already mismatch of information.
         if ('link' not in image_rights_data):
             print("ERROR: link missing for image rights")
             print(json.dumps(image_rights_data))
-            exit(1)
+            return None
         image_rights_link = image_rights_data['link']
 
         if ('description' not in image_rights_data):
@@ -561,7 +561,7 @@ class FinnaRecordManager(models.Manager):
         if (master_url == ""):
             # can't use the image without a valid link
             print("ERROR: did not find master url ")
-            return False
+            return None
         # if format is not there it might be possible to determine from extension in resourceName ?
                 
         # in some cases, url is not complete:
@@ -1067,11 +1067,11 @@ class FinnaRecordManager(models.Manager):
     # where is that local_data supposed to come from?
     #def create_from_finna_record(self, record, local_data={}):
     def create_from_finna_record(self, record):
-            
-        # TODO: parse and validate first before trying to store it..
+
+        # parse and validate first before trying to store it..
         if (self.isRecordOk(record) == False):
             print("DEBUG: record is not ok, skipping")
-            return False
+            return True
 
         with transaction.atomic():
 
@@ -1152,7 +1152,8 @@ class FinnaImage(models.Model):
     add_depicts = models.ManyToManyField(FinnaLocalSubject, related_name="depict_images") # rename to "local subjects" or something..
     best_wikidata_location = models.ManyToManyField(FinnaSubjectWikidataPlace)
     commons_images = models.ManyToManyField(WikimediaCommonsImage)
-    already_in_commons = models.BooleanField(default=False)
+    upload_started = models.BooleanField(default=False) # track if upload started but got timeout
+    already_in_commons = models.BooleanField(default=False) # track if upload completed
     skipped = models.BooleanField(default=False)
     data = models.ForeignKey(FinnaRecordSearchIndex, on_delete=models.RESTRICT, null=True, blank=True)
 

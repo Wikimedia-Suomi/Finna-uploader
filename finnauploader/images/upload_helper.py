@@ -241,6 +241,27 @@ def generate_filename_for_commons(finna_image):
 # called from views.py on upload
 #
 def upload_file_update_metadata(finna_id):
+
+    # refetch finna_image.already_in_commons,
+    # it seems the display still has images that are already uploaded
+    # so they should be skipped
+    
+    # try to lookup first if image really was uploaded already
+    # since the something still lists uploaded images..
+    #
+    existing = FinnaImage.objects.filter(finna_id = finna_id)
+    for old_image in existing:
+        if (old_image.already_in_commons == True):
+            print("image has been uploaded already with id:", finna_id)
+            return ""
+
+        # if/when there is timeout in upload, track the unfinished uploads
+        #old_image.upload_started = True
+        if (old_image.upload_started == True and old_image.already_in_commons == False):
+            print("upload started but not finished for:", finna_id)
+            # TODO: file may exist but metadata doesn't?
+            # if so, add only metadata for it
+
     
     # Update to latest finna_record
     response = get_finna_record(finna_id, True)
@@ -287,11 +308,23 @@ def upload_file_update_metadata(finna_id):
     commons_file_name = "File:" + filename
     file_page = pywikibot.FilePage(commonssite, commons_file_name)
 
+    # TODO: if image exists but metadata does not: try write that?
+    # see how commons server responds..
+    # !! we should be careful here not to overwrite something that was maybe done manually or by another script already
+    # so some special care is needed -> needs different checking of what is in structured data already etc. !!
+    #if (old_image.upload_started == True and file_page.exists() == True):
+        #metadataupdate()
+
     # Check if the page exists
     if file_page.exists():
         print(f"The file {commons_file_name} exists already in Commons, skipping.")
-        return ""
 
+        # need to check further before accepting it as same?
+        #old_image.already_in_commons = True
+        #old_image.save()
+        #print("saved status for ", old_image.finna_id)
+        return ""
+    
     # try to generate early so it is possible to return before trying to upload
     structured_data = get_structured_data_for_new_image(finna_image)
     wikitext = get_wikitext_for_new_image(finna_image)
@@ -309,6 +342,10 @@ def upload_file_update_metadata(finna_id):
     print(filename)
 
     print('uploading from:', image_url)
+
+    # if/when there is timeout in upload, track the unfinished uploads
+    old_image.upload_started = True
+    old_image.save()
 
     # TODO: if there are multiple images in same record,
     # we would need the index in the name and loop thorugh the urls in record
