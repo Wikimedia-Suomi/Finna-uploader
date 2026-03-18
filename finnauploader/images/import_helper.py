@@ -15,7 +15,8 @@ import time
 from images.duplicatedetection import is_already_in_commons, get_existing_finna_ids_from_sparql, get_upload_summary, isToolforgeFinnaId
 
 from images.finna_record_api import do_finna_search, \
-                                    get_collection_name_from_alias \
+                                    get_collection_name_from_alias, \
+                                    get_finna_id_from_url
 
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
@@ -140,6 +141,39 @@ def update_imported_wikidata_ids():
         except:
             pass
 
+# the list of uploaded summaries is much shorter so we should use different approach
+# to update uploaded list based on that list
+def update_existing_by_contribs():
+
+    print("Loading 1000 most recent edit summaries for skipping uploaded files")
+
+    # load recent contributions
+    uploadsummary = get_upload_summary(1000)
+
+    for url in uploadsummary:
+        
+        finnaid = get_finna_id_from_url(url)
+        if (finnaid == None):
+            print("no id in url:", url)
+            continue
+        #print("looking up local image by id:", finnaid)
+        
+        images = FinnaImage.objects.filter(finna_id = finnaid)
+        for image in images:
+            if (image.finna_id != finnaid):
+                print("query gave image with different id:", image.finna_id)
+                continue
+                
+            print("found local image with id:", image.finna_id)
+            if (image.already_in_commons == False or image.already_in_commons == None):
+                print("marking as uploaded with id:", finnaid)
+                image.already_in_commons = True
+                image.save(update_fields=['already_in_commons'])
+        #else:
+            # database might have only newer id in case it has changed
+            #print("no local image for identifier:", finnaid)
+
+
 def update_uploaded_images(collection=None):
     
     # TODO: push the list into database somewhere so we don't need to refetch often
@@ -148,8 +182,8 @@ def update_uploaded_images(collection=None):
     print("Loading existing ids by sparql")
     sparql_finna_ids_data = get_existing_finna_ids_from_sparql()
 
-    print("Loading 1000 most recent edit summaries for skipping uploaded files")
-    uploadsummary = get_upload_summary(1000)
+    #print("Loading 1000 most recent edit summaries for skipping uploaded files")
+    #update_existing_by_contribs()
 
     print("Searching for existing images..")
     
@@ -168,15 +202,11 @@ def update_uploaded_images(collection=None):
             if (quoted_finna_id != image.finna_id):
                 if quoted_finna_id in sparql_finna_ids_data:
                     uploaded = True
-                elif quoted_finna_id in uploadsummary:
-                    uploaded = True
                 elif (isToolforgeFinnaId(quoted_finna_id) == True):
                     uploaded = True
 
         if (uploaded == False):
             if image.finna_id in sparql_finna_ids_data:
-                uploaded = True
-            elif image.finna_id in uploadsummary:
                 uploaded = True
             elif (isToolforgeFinnaId(image.finna_id) == True):
                 uploaded = True
