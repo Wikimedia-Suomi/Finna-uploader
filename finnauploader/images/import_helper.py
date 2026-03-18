@@ -74,6 +74,10 @@ def do_finna_import(opt_lookfor, opt_type, opt_collection, opt_alias, skip_updat
 
     # slow
     if (skip_update == False):
+        
+        print("updating by recent contribs..")
+        update_existing_by_contribs()
+        
         print("updating uploaded images..")
         update_uploaded_images(opt_collection)
     else:
@@ -143,36 +147,45 @@ def update_imported_wikidata_ids():
 
 # the list of uploaded summaries is much shorter so we should use different approach
 # to update uploaded list based on that list
-def update_existing_by_contribs():
+def update_existing_by_contribs(limit=1000):
 
-    print("Loading 1000 most recent edit summaries for skipping uploaded files")
+    print("Loading ", str(limit) ," most recent edit summaries for skipping uploaded files")
 
     # load recent contributions
-    uploadsummary = get_upload_summary(1000)
+    uploadsummary = get_upload_summary(limit)
 
     for url in uploadsummary:
-        
-        finnaid = get_finna_id_from_url(url)
-        if (finnaid == None):
-            print("no id in url:", url)
-            continue
-        #print("looking up local image by id:", finnaid)
-        
-        images = FinnaImage.objects.filter(finna_id = finnaid)
-        for image in images:
-            if (image.finna_id != finnaid):
-                print("query gave image with different id:", image.finna_id)
-                continue
-                
-            print("found local image with id:", image.finna_id)
-            if (image.already_in_commons == False or image.already_in_commons == None):
-                print("marking as uploaded with id:", finnaid)
-                image.already_in_commons = True
-                image.save(update_fields=['already_in_commons'])
-        #else:
-            # database might have only newer id in case it has changed
-            #print("no local image for identifier:", finnaid)
+        update_images_by_url(url)
 
+
+def update_images_by_url(finnaurl):
+
+    finnaid = get_finna_id_from_url(finnaurl)
+    if (finnaid == None):
+        print("ERROR: no id in url:", finnaurl)
+        return
+    
+    #print("looking up local image by id:", finnaid)
+    
+    # urls may use quoted format while database uses plain text as it is in Finna..
+    if (finnaid.find("%25") > 0):
+        finnaid = urllib.parse.unquote(finnaid)
+        print("using unencoded id:", finnaid)
+    
+    images = FinnaImage.objects.filter(finna_id = finnaid)
+    for image in images:
+        if (image.finna_id != finnaid):
+            print("query gave image with different id:", image.finna_id)
+            continue
+            
+        print("found local image with id:", image.finna_id)
+        if (image.already_in_commons == False or image.already_in_commons == None):
+            print("marking as uploaded with id:", finnaid)
+            image.already_in_commons = True
+            image.save(update_fields=['already_in_commons'])
+    #else:
+        # database might have only newer id in case it has changed
+        #print("no local image for identifier:", finnaid)
 
 def update_uploaded_images(collection=None):
     
@@ -181,9 +194,6 @@ def update_uploaded_images(collection=None):
     
     print("Loading existing ids by sparql")
     sparql_finna_ids_data = get_existing_finna_ids_from_sparql()
-
-    #print("Loading 1000 most recent edit summaries for skipping uploaded files")
-    #update_existing_by_contribs()
 
     print("Searching for existing images..")
     
@@ -217,3 +227,48 @@ def update_uploaded_images(collection=None):
 
     print("Update done.")
 
+    
+# maincat == "Files uploaded by FinnaUploadBot"
+def update_newest_from_category(maincat, limit=100):
+
+    print("Loading ", str(limit) ," files from category", maincat)
+
+    commonssite = pywikibot.Site('commons', 'commons')
+    commonssite.login()
+
+    cat = pywikibot.Category(commonssite, maincat)
+    pages = cat.newest_pages(limit)
+    
+    for page in pages:
+        if (page.title().startswith("File:") == False):
+            continue
+
+        print("Page:", page.title())
+        for url in page.extlinks():
+            if (url.find("finna.fi") < 1):
+                continue
+            
+            update_images_by_url(url)
+
+# note that this is slow due to amount of files
+# maincat == "Files uploaded by FinnaUploadBot"
+def update_existing_from_category(maincat):
+
+    print("Loading files from category", maincat)
+
+    commonssite = pywikibot.Site('commons', 'commons')
+    commonssite.login()
+    
+    cat = pywikibot.Category(commonssite, maincat)
+    pages = list(commonssite.categorymembers(cat))
+
+    for page in pages:
+        if (page.title().startswith("File:") == False):
+            continue
+        
+        print("Page:", page.title())
+        for url in page.extlinks():
+            if (url.find("finna.fi") < 1):
+                continue
+            
+            update_images_by_url(url)
