@@ -84,9 +84,10 @@ def get_upload_summary(limit=1000):
     user = pywikibot.User(site, str(current_user))
     contribs = user.contributions(total=limit)  # Get the user's last 5000 edits
 
-    uploadsummary = ''
-    for contrib in contribs:
-        uploadsummary += str(contrib) + "\n"
+    # maybe use set() for unique list (we don't really care how many times it exists)
+    uploadsummary = list()
+    #for contrib in contribs:
+    #    uploadsummary += str(contrib) + "\n"
 
     usual_uploaders = ['FinnaUploadBot', 'FinnaUploadBot2', 'Zache']
     for username in usual_uploaders:
@@ -94,8 +95,14 @@ def get_upload_summary(limit=1000):
             user = pywikibot.User(site, username)
             contribs = user.contributions(total=limit)
 
+            # list of tuples
             for contrib in contribs:
-                uploadsummary += str(contrib) + "\n"
+                page = contrib[0]
+                # if (page.namespace == 0): does not work correctly ?
+                
+                if (page.title().startswith("File:")):
+                    print("contrib: ", page.title())
+                    uploadsummary.append(page.title())
 
     return uploadsummary
 
