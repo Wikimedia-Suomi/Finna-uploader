@@ -187,6 +187,7 @@ def generate_filename_for_commons(finna_image):
     name = name.replace("\n", " ")  # don't allow newline in names
     name = name.replace("\t", " ")  # don't allow tabulator in names
     name = name.replace("\r", " ")  # don't allow carriage return in names
+    name = name.replace(" ", "_")  # ensure replaced characters have underscore (no need for %20)
 
     # try to remove soft-hyphens from name while we can
     # note: 0xC2 0xAD in utf-8, 0x00AD in utf-16, which one is used?
@@ -209,6 +210,15 @@ def generate_filename_for_commons(finna_image):
         newnamelen = (220 - lenident)
         if (newnamelen > 200):
             newnamelen = 200
+        
+        # instead of cutting between word (or multi-byte character)
+        # look for preceding space to cut in (and avoid illegal encoding)
+        inewend = quoted_name.rfind("_", 1, newnamelen-1)
+        if (inewend > 1 and inewend < newnamelen):
+            newnamelen = inewend
+            print("found underscore, limiting to", newnamelen)
+        else:
+            print("no underscore", inewend)
         
         quoted_name = quoted_name[:newnamelen] + "__"
         print("new name: ", quoted_name)
