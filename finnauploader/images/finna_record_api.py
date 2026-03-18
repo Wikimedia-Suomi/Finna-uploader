@@ -124,15 +124,16 @@ def get_collection_aliases():
              'Kuvasiskot': 'Studio Kuvasiskojen kokoelma',
              'hkm': '0/HKM/',
              'Helsingin kaupunginmuseo': 'Helsingin kaupunginmuseo',
-             'Vantaa' : '0/VANTAA/', # Vantaan kaupunginmuseo
-             'Kymenlaakso' : '0/Kymenlaakson museo/',
+             'Vantaan' : '0/VANTAA/', # Vantaan kaupunginmuseo
+             'Kymenlaakson' : '0/Kymenlaakson museo/',
              'Lahdenmuseo' : '0/LAHTIMUSEO/', # Lahden museot, myös 1\/LAHTIMUSEO\/Kuvakokoelmat kuva-arkisto\/
              'Varkauden' : '0/VARKAUDENMUSEOT/', # Varkauden museot
              'Kainuun' : '0/KainuunMuseo/',
              'Lapin' : '0/LMM/', # Lapin maakuntamuseo
              'Oulun' : '0/OULUNMUSEO/',
-             'Lappeenrannan museot' : '0/LPRMUSEOT/', # myös 1\/LPRMUSEOT\/Wolkoffin museo\/
+             'Lappeenrannan' : '0/LPRMUSEOT/', # myös 1\/LPRMUSEOT\/Wolkoffin museo\/
              'Mikkelin' : '0/mikkelinmuseot/',
+             'Kuhmu' : '0/KUHMU/', # Kuopion kulttuurihistoriallinen museo
              'Ugin' : '0/Uudenkaupungin museo/',
              'HML' : '0/HMLMUSEO/', # Hämeenlinnan kaupunginmuseo
              'KHM' : '0/KHM/', # Kemin historiallinen museo
@@ -151,6 +152,11 @@ def get_collection_aliases():
              'Siiri': '0/Siiri/', # Tampereen historialliset museot
              'Satmuseo0' : "0/SATMUSEO/", # Satakunnan Museo
              'Satmuseo1' : "1/SATMUSEO/Kuvakokoelma/", # Kuvakokoelma
+             'Rauman' : '0/RAUMANMUSEO/', 
+             'Turun' : '0/Turun kaupunginmuseo/',
+             'Salon' : '0/Salon historiallinen museo/',
+             'Nurmeksen' : '0/NurmeksenMuseo/',
+             'Museovirasto' : '0/Museovirasto/',
              'Vapriikki': '1/Siiri/Vapriikin kuva-arkisto/',
              'Werstas' : '0/Werstas/', # Työväenmuseo Werstas
              #'tvarkisto': '0/tyovaen_arkisto/', # työväen arkisto, ei vapaita kuvia
@@ -183,6 +189,7 @@ def is_building_collection(name):
                     '0/OULUNMUSEO/',
                     '0/LPRMUSEOT/',
                     '0/mikkelinmuseot/',
+                    '0/KUHMU/',
                     '0/Uudenkaupungin museo/',
                     '0/HMLMUSEO/',
                     '0/KHM/',
@@ -196,8 +203,13 @@ def is_building_collection(name):
                     '0/tekniikan_museo/',
                     '0/Metsastysmuseo/',
                     '0/Lottamuseo/',
+                    '0/RAUMANMUSEO/',
+                    '0/Turun kaupunginmuseo/',
+                    '0/Salon historiallinen museo/',
+                    '0/NurmeksenMuseo/',
                     '0/kansan_arkisto/'
                     '0/Werstas/',
+                    '0/Museovirasto/',
                     '0/AALTOARKISTO/', 
                     '0/Kansallisgalleria Arkistokokoelmat/',
                     '0/Kansallisgalleria Ateneumin taidemuseo/']

@@ -589,9 +589,20 @@ def get_category_for_collection(collection):
     
     # this list should be temporary for testing:
     # some are not compatible yet
-    wikidata_id_list = ["Q123308681", "Q123358672", "Q107388072", "Q113292201", "Q122414127"]
+    wikidata_id_list = ["Q123308681", "Q123358672", "Q107388072", "Q113292201", "Q122414127", "Q123308774"]
     if collection.wikidata_id in wikidata_id_list:
         return get_collection_image_category_from_wikidata_id(collection.wikidata_id)
+
+    # just collection qcode to category: should have link in commons if possible
+    collection_categories = {
+        'Q123508786' : 'Collections of the Finnish Railway Museum',
+        'Q123272489' : 'Media by The Maritime Museum of Finland',
+        'Q123508795' : 'Archeological Picture Collection'
+    }
+    if (collection.wikidata_id in collection_categories):
+        category = collection_categories[collection.wikidata_id]
+        return category
+    
     return None
 
 # TODO:
@@ -599,18 +610,19 @@ def get_category_for_collection(collection):
 def get_category_for_institution(institution):
     
     # use mapping via qcode to category name?
+    institution_categories = {
+        'Q1418116' : 'Files from Museum of Finnish Architecture',
+        'Q5549583' : 'Files from Museum of Technology, Helsinki',
+        'Q11879901': 'Files from the Finnish Forest Museum Lusto',
+        'Q1418136' : 'Collections of the National Museum of Finland',
+        #'Q4306382' : 'Files from the Sibelius Museum',
+        'Q18346788' : 'Theatre Museum (Helsinki)'
+    }
 
-    instname = institution.value
-    if (instname.find("\n") > 0 or instname.find("\t") > 0):
-        instname = striprepeatespaces(instname)
-
-    if (instname.find("Teatterimuseo") >= 0):
-        return "Theatre Museum (Helsinki)"
-    
-    if (instname.find("Tekniikan museo") >= 0):
-        return "Files from Museum of Technology, Helsinki"
-    
-    #if (instname.find("Sibelius-museo") >= 0):
+    if (institution.wikidata_id):
+        if (institution.wikidata_id in institution_categories):
+            category = institution_categories[institution.wikidata_id]
+            return category
 
     #print("DEBUG: no category for institution:", institution_name)
 

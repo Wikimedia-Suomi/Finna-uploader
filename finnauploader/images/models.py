@@ -148,7 +148,7 @@ class FinnaNonPresenterAuthor(models.Model):
     def is_photographer(self):
         # note: SLS uses "pht"
         # also: "valokuvaamo" for studios
-        known_roles = ['kuvaaja', 'valokuvaaja', 'Valokuvaaja', 'valokuvaamo', 'pht']
+        known_roles = ['kuvaaja', 'valokuvaaja', 'Valokuvaaja', 'valokuvaamo', 'pht', 'kuvaaja varma']
         if (self.role in known_roles):
             return True
         return False
