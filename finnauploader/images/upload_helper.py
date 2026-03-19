@@ -34,7 +34,10 @@ def update_wikidata_id_for_record_data(finna_image):
     # if author(s) are not known the list should be empty
     non_presenter_authors = finna_image.non_presenter_authors.all()
     for author in non_presenter_authors:
-        wikidata_id = get_author_wikidata_id(author.name)
+        
+        authname = striprepeatespaces(author.name)
+        
+        wikidata_id = get_author_wikidata_id(authname)
         author.set_wikidata_id(wikidata_id)
 
     # if there are no collections the list should be empty, that should be fine

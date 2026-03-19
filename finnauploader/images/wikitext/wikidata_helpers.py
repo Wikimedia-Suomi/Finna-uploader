@@ -309,12 +309,15 @@ def get_author_name(nonPresenterAuthors):
 
 # use mapping from Finna-string to qcode
 def get_author_wikidata_id(name):
+
+    authname = striprepeatespaces(name)
+    
     try:
-        obj = NonPresenterAuthorsCache.objects.get(name=name)
+        obj = NonPresenterAuthorsCache.objects.get(name = authname)
         return obj.wikidata_id
     except NonPresenterAuthorsCache.DoesNotExist:
         url = 'https://commons.wikimedia.org/wiki/User:FinnaUploadBot/data/nonPresenterAuthors' # noqa
-        print(f'Unknown author: "{name}". Add author to {url}')
+        print(f'Unknown author: "{authname}". Add author to {url}')
         raise MissingNonPresenterAuthorError
     return obj.wikidata_id
 
