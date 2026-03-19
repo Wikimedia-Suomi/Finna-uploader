@@ -637,6 +637,14 @@ class FinnaRecordManager(models.Manager):
                     authrole = np_author['role'].strip()
                 else:
                     print("role is missing from nonpresenters")
+
+                    # fixup some mess
+                    if (authname.find("(valokuvaaja)") > 0):
+                        authrole = "valokuvaaja"
+                        authname = authname.replace("(valokuvaaja)", "").strip()
+                    if (authname.find("(valokuvaamo)") > 0):
+                        authrole = "valokuvaamo"
+                        authname = authname.replace("(valokuvaamo)", "").strip()
                 
                 r, created = FinnaNonPresenterAuthor.objects.get_or_create(name = authname, role = authrole)
                 non_presenter_authors.append(r)
