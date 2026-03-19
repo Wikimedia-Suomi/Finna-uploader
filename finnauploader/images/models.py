@@ -353,6 +353,12 @@ class FinnaMaterials(models.Model):
 #    def __str__(self):
 #        return self.value
 
+class FinnaFormats(models.Model):
+    value = models.CharField(max_length=32)
+    name = models.CharField(max_length=128)
+
+    def __str__(self):
+        return self.value
 
 # Managers
 class FinnaRecordManager(models.Manager):
@@ -468,37 +474,6 @@ class FinnaRecordManager(models.Manager):
                                                                      link=image_rights_link,
                                                                      description=image_rights_description)
 
-        print("imageright added")
-
-        # Extract and handle institutions data
-        institutions = []
-        institutions_data = data['institutions']
-        for institution in institutions_data:
-            #print("DEBUG: institution: ", str(institution))
-
-            # sanitize data: newlines and tabulators into regular spaces at least
-            instval = institution['value']
-            if (instval.find("\n") > 0 or instval.find("\t") > 0):
-                instval = striprepeatespaces(instval)
-
-            itranslated = ""
-            if ('translated' in institution):
-                itranslated = institution['translated']
-
-            print("using institution", instval, " - ", itranslated)
-            r, created = FinnaInstitution.objects.get_or_create(value = instval, 
-                                                               defaults={'translated': itranslated})
-            institutions.append(r)
-            #print("institution saved", instval)
-            
-            try:
-                # Update wikidata id
-                wikidata_id = get_institution_wikidata_id(itranslated)
-                r.set_wikidata_id(wikidata_id)
-                print("using wikidata id ", wikidata_id, " for institution ", itranslated)
-            except:
-                pass
-
         print("creating record instance")
         
         images_data = data['images']
@@ -598,6 +573,34 @@ class FinnaRecordManager(models.Manager):
         else:
             record.identifier_string = None
 
+        # Extract and handle institutions data
+        institutions_data = data['institutions']
+        for institution in institutions_data:
+            #print("DEBUG: institution: ", str(institution))
+
+            # sanitize data: newlines and tabulators into regular spaces at least
+            instval = institution['value']
+            if (instval.find("\n") > 0 or instval.find("\t") > 0):
+                instval = striprepeatespaces(instval)
+
+            itranslated = ""
+            if ('translated' in institution):
+                itranslated = institution['translated']
+
+            print("using institution", instval, " - ", itranslated)
+            r, created = FinnaInstitution.objects.get_or_create(value = instval, 
+                                                               defaults={'translated': itranslated})
+            record.institutions.add(r)
+            #print("institution saved", instval)
+            
+            try:
+                # Update wikidata id
+                wikidata_id = get_institution_wikidata_id(itranslated)
+                r.set_wikidata_id(wikidata_id)
+                print("using wikidata id ", wikidata_id, " for institution ", itranslated)
+            except:
+                pass
+
         print("parsing collections")
 
         # Extract and handle collections data
@@ -619,7 +622,6 @@ class FinnaRecordManager(models.Manager):
         print("parsing nonpresenters")
 
         # Extract and handle non_presenter_authors data
-        non_presenter_authors = []
         if ('nonPresenterAuthors' in data):
             non_presenter_authors_data = data['nonPresenterAuthors']
             for np_author in non_presenter_authors_data:
@@ -647,7 +649,8 @@ class FinnaRecordManager(models.Manager):
                         authname = authname.replace("(valokuvaamo)", "").strip()
                 
                 r, created = FinnaNonPresenterAuthor.objects.get_or_create(name = authname, role = authrole)
-                non_presenter_authors.append(r)
+                record.non_presenter_authors.add(r)
+
                 try:
                     # Update wikidata id
                     wikidata_id = get_author_wikidata_id(authname)
@@ -655,10 +658,7 @@ class FinnaRecordManager(models.Manager):
                 except:
                     pass
 
-        #print("parsing buildings")
-
-        # Extract and handle buildings data
-        buildingslist = []
+        # buildings : institutions and such
         if ('buildings' in data):
             buildings_data = data['buildings']
             for building in buildings_data:
@@ -674,7 +674,25 @@ class FinnaRecordManager(models.Manager):
                 building_translated = building['translated'].strip()
                 
                 r, created = FinnaBuilding.objects.get_or_create(value = building_value, defaults={'translated': building_translated})
-                buildingslist.append(r)
+                record.buildings.add(r)
+
+        # formats: physical object, photograph etc.
+        if ('formats' in data):
+            formats_data = data['formats']
+            for ff in formats_data:
+
+                if ('value' not in ff):
+                    print("value is missing from formats")
+                    continue
+                if ('translated' not in ff):
+                    print("translated is missing from formats")
+                    continue
+                
+                ff_value = ff['value'].strip()
+                ff_translated = ff['translated'].strip()
+                
+                r, created = FinnaFormats.objects.get_or_create(value = ff_value, name = ff_translated)
+                record.formats.add(r)
 
 
         # Extract and handle subjects data
@@ -699,7 +717,6 @@ class FinnaRecordManager(models.Manager):
         #print("parsing subjectsextended")
 
         # Extract and handle subjectExtented data
-        subjects_extendedlist = []
         if ('subjectsExtended' in data):
             subject_extented_data = data['subjectsExtended']
             for se in subject_extented_data:
@@ -723,7 +740,8 @@ class FinnaRecordManager(models.Manager):
                                                                         record_id=se['id'], 
                                                                         ids=se['ids'], 
                                                                         detail=se['detail'])
-                subjects_extendedlist.append(r)
+                record.subject_extented.add(r)
+                
 
         # Extract and handle subjectActors data
         subject_actorlist = []
@@ -753,7 +771,7 @@ class FinnaRecordManager(models.Manager):
 
         inscriptionlist = []
         exhibitionlist = []
-        #classificationlist = []
+        classificationlist = []
         summarieslist = []
         alternative_titles = []
         #materiallist = []
@@ -964,9 +982,9 @@ class FinnaRecordManager(models.Manager):
         for summary in summarieslist:
             record.summaries.add(summary)
 
-        #record.classifications.clear()
-        #for i in classificationlist:
-        #    record.classifications.add(i)
+        record.classifications.clear()
+        for i in classificationlist:
+            record.classifications.add(i)
 
         record.inscriptions.clear()
         for i in inscriptionlist:
@@ -990,12 +1008,6 @@ class FinnaRecordManager(models.Manager):
         for alternative_title in alternative_titles:
             record.alternative_titles.add(alternative_title)
 
-        for non_presenter_author in non_presenter_authors:
-            record.non_presenter_authors.add(non_presenter_author)
-
-        for building in buildingslist:
-            record.buildings.add(building)
-
         for subject_name in subjectslist:
             if (subject_name == None or subject_name == "" or subject_name == "null"):
                 continue
@@ -1010,9 +1022,6 @@ class FinnaRecordManager(models.Manager):
             r, created = FinnaSubjectPlace.objects.get_or_create(name = subject_place_name)
             record.subject_places.add(r)
 
-        for se in subjects_extendedlist:
-            record.subject_extented.add(se)
-
         for subject_actor_name in subject_actorlist:
             if (subject_actor_name == None or subject_actor_name == "" or subject_actor_name == "null"):
                 continue
@@ -1025,7 +1034,6 @@ class FinnaRecordManager(models.Manager):
                 r.set_wikidata_id(wikidata_id)
             except:
                 pass
-
 
         for subject_detail in subject_detailslist:
             
@@ -1055,8 +1063,6 @@ class FinnaRecordManager(models.Manager):
             except:
                 pass
 
-        for institution in institutions:
-            record.institutions.add(institution)
 
         try:
             print("creating search index")
@@ -1157,6 +1163,8 @@ class FinnaImage(models.Model):
     inscriptions = models.ManyToManyField(FinnaInscription)
     exhibition_history = models.ManyToManyField(FinnaExhibitionHistory)
     #physical_descriptions = models.ManyToManyField(FinnaPhysicalDescription)
+    # formats, list of formats like physical object, photograph with subcategories
+    formats = models.ManyToManyField(FinnaFormats)
     collections = models.ManyToManyField(FinnaCollection)
     buildings = models.ManyToManyField(FinnaBuilding)
     institutions = models.ManyToManyField(FinnaInstitution)
