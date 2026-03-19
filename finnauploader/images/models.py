@@ -359,6 +359,28 @@ class FinnaFormats(models.Model):
 
     def __str__(self):
         return self.value
+    
+    def isImage(self):
+        # could be 1/Image/<subclass> or similar
+        if (self.value == "0/Image/"):
+            return True
+        return False
+
+    def isPhysicalObject(self):
+        if (self.value == "0/PhysicalObject/"):
+            return True
+        return False
+
+    def isPlace(self):
+        if (self.value == "0/Place/"):
+            return True
+        return False
+
+    def isArtwork(self):
+        if (self.value == "0/WorkOfArt/"):
+            return True
+        return False
+
 
 # Managers
 class FinnaRecordManager(models.Manager):
