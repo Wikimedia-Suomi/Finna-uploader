@@ -131,6 +131,7 @@ def get_collection_aliases():
              'Kainuun' : '0/KainuunMuseo/',
              'Lapin' : '0/LMM/', # Lapin maakuntamuseo
              'Oulun' : '0/OULUNMUSEO/',
+             'Tornion' : '0/Tornionlaakso/',
              'Lappeenrannan' : '0/LPRMUSEOT/', # myös 1\/LPRMUSEOT\/Wolkoffin museo\/
              'Mikkelin' : '0/mikkelinmuseot/',
              'Kuhmu' : '0/KUHMU/', # Kuopion kulttuurihistoriallinen museo
@@ -140,31 +141,53 @@ def get_collection_aliases():
              'FMP': '0/FMP/', # Suomen valokuvataiteen museo
              'JOKA': 'JOKA Journalistinen kuva-arkisto',
              'SLS' : '0/SLS/', # Svenska litteraturs\u00e4llskapet i Finland
-             'SA-kuva': '0/SA-kuva/',
+             'SA-kuva' : '0/SA-kuva/',
+             'Forssan' : '0/FORSSANMUSEO/',
+             'Heinolan' : '0/Heinolan museot/', 
+             'Kamu' : '0/ESPOO_KAUPMUS/', # KAMU Espoon kaupunginmuseo
              'Taika' : '0/TAIKA/', # Hyvinkään
-             'SibeliusMuseum' : '0/SibeliusmuseumsArkiv/',
+             'Tuusulan' : '0/Tuusulan museo/',
+             'Imatran' : '0/imatranmuseot/',
+             'Kouvolan' : '0/POIKILO/',
+             'Loviisan' : '0/loviisankaupunginmuseo/',
+             'SibeliusMuseum' : '0/Sibeliusmuseum/',
+             'SibeliusArkiv' : '0/SibeliusmuseumsArkiv/',
              'Teatterimuseo' : '0/TEATTERIMUSEO/',
-             'Lusto' : '0/Lusto/', # Suomen mestämuseo
+             'Lusto' : '0/Lusto/', # Suomen metsämuseo
+             'Pielisen' : '0/PielisenMuseo/',
+             'Marinum' : '0/Forum Marinum/',
+             'Merimuseo' : '0/RAUMANMERIMUSEO/',
+             'Ilmailu' : '0/ilmailumuseo/',
              'Yomuseo' : '0/yo-museo/', # Tiedemuseo Liekki
              'Tekniikanmuseo' : '0/tekniikan_museo/', # Tekniikan museo
              'Metsästysmuseo' : '0/Metsastysmuseo/', # Suomen Metsästysmuseo
+             'Urheilumuseo' : '0/URHEILUMUSEO/',
              'Lottamuseo' : '0/Lottamuseo/', 
              'Siiri': '0/Siiri/', # Tampereen historialliset museot
              'Satmuseo0' : "0/SATMUSEO/", # Satakunnan Museo
              'Satmuseo1' : "1/SATMUSEO/Kuvakokoelma/", # Kuvakokoelma
              'Rauman' : '0/RAUMANMUSEO/', 
-             'Turun' : '0/Turun kaupunginmuseo/',
+             'Turunkm' : '0/Turun kaupunginmuseo/',
+             'Turunmus' : '0/Turun museokeskus/',
+             'Naantalin' : '0/Naantalin museo/',
              'Salon' : '0/Salon historiallinen museo/',
              'Nurmeksen' : '0/NurmeksenMuseo/',
              'Museovirasto' : '0/Museovirasto/',
              'Vapriikki': '1/Siiri/Vapriikin kuva-arkisto/',
+             'Valkeakosken' : '0/VISAVUORI/',
              'Werstas' : '0/Werstas/', # Työväenmuseo Werstas
              #'tvarkisto': '0/tyovaen_arkisto/', # työväen arkisto, ei vapaita kuvia
              'kansan' : '0/kansan_arkisto/', # Kansan Arkisto, Kansan uutisten?
              'Aaltoarkisto' : '0/AALTOARKISTO/', # Aalto-yliopiston arkisto
              'elka' : '0/elka/', # Suomen Elinkeinoelämän Keskusarkisto
+             'Kustavin' : '0/Kustavin museo/',
+             'Käsityö' : '0/SKM/',
+             'Arkkitehtuurimuseo' : '0/MFA/',
+             'WAM' : '0/WAM Turun kaupungin taidemuseo/',
+             'Kansallismuseo' : '0/Suomen kansallismuseo/',
              'Kansallisgalleria' : '0/Kansallisgalleria Arkistokokoelmat/',
-             'Kansallisgalleria Ateneumin taidemuseo': '0/Kansallisgalleria Ateneumin taidemuseo/'
+             'Ateneumin': '0/Kansallisgalleria Ateneumin taidemuseo/',
+             'Sinebrychoffin' : '0/Kansallisgalleria Sinebrychoffin taidemuseo/'
     }
     return aliases
 
@@ -187,6 +210,7 @@ def is_building_collection(name):
                     '0/KainuunMuseo/',
                     '0/LMM/',
                     '0/OULUNMUSEO/',
+                    '0/Tornionlaakso/',
                     '0/LPRMUSEOT/',
                     '0/mikkelinmuseot/',
                     '0/KUHMU/',
@@ -195,24 +219,46 @@ def is_building_collection(name):
                     '0/KHM/',
                     '0/FMP/',
                     '0/SLS/',
+                    '0/FORSSANMUSEO/',
+                    '0/Heinolan museot/',
+                    '0/ESPOO_KAUPMUS/',
                     '0/TAIKA/',
+                    '0/Tuusulan museo/',
+                    '0/imatranmuseot/',
+                    '0/POIKILO/',
+                    '0/loviisankaupunginmuseo/',
                     '0/SibeliusmuseumsArkiv/',
                     '0/TEATTERIMUSEO/',
                     '0/Lusto/',
+                    '0/PielisenMuseo/',
+                    '0/Forum Marinum/',
+                    '0/RAUMANMERIMUSEO/',
+                    '0/ilmailumuseo/',
                     '0/yo-museo/',
                     '0/tekniikan_museo/',
                     '0/Metsastysmuseo/',
+                    '0/URHEILUMUSEO/',
                     '0/Lottamuseo/',
                     '0/RAUMANMUSEO/',
                     '0/Turun kaupunginmuseo/',
+                    '0/Turun museokeskus/',
+                    '0/Naantalin museo/',
                     '0/Salon historiallinen museo/',
                     '0/NurmeksenMuseo/',
                     '0/kansan_arkisto/'
+                    '0/VISAVUORI/',
                     '0/Werstas/',
                     '0/Museovirasto/',
-                    '0/AALTOARKISTO/', 
+                    '0/AALTOARKISTO/',
+                    '0/elka',
+                    '0/Kustavin museo/',
+                    '0/SKM/',
+                    '0/MFA/',
+                    '0/WAM Turun kaupungin taidemuseo/',
+                    '0/Suomen kansallismuseo/',
                     '0/Kansallisgalleria Arkistokokoelmat/',
-                    '0/Kansallisgalleria Ateneumin taidemuseo/']
+                    '0/Kansallisgalleria Ateneumin taidemuseo/',
+                    '0/Kansallisgalleria Sinebrychoffin taidemuseo/']
     if name in collections:
         return True
     return False
