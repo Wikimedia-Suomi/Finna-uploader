@@ -159,6 +159,11 @@ class FinnaNonPresenterAuthor(models.Model):
         return False
         # note: "kuvan kohteen tekijä" might be used for architect of a depicted building
 
+    def is_designer(self):
+        if (self.role == 'suunnittelija' or self.role == 'Suunnittelija'):
+            return True
+        return False
+
     def is_illustrator(self):
         # kuvittaja? is it used?
         if (self.role == 'piirtäjä' or self.role == 'Piirtäjä'):
@@ -626,7 +631,7 @@ class FinnaRecordManager(models.Manager):
                 #    print("role is missing from nonpresenters")
                 #    continue
 
-                authname = np_author['name'].strip()
+                authname = striprepeatespaces(np_author['name'])
                 authrole = ""
                 if ('role' in np_author):
                     authrole = np_author['role'].strip()
