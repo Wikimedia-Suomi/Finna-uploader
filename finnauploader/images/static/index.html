@@ -45,20 +45,20 @@
 <script type="text/x-template" id="photos-template">
   <div>
     <div v-for="(photo, index) in photos" class='photocontainer'>
-      <div class='imagebuttons'>
+      <div class='imagebuttons'> <!-- use id as-is for correct lookup -->
          <button @click="uploadclick(index)" class='likebutton' :value='photo.finna_id'>Upload</button>
          <button @click="deleteclick(index)" class='deletebutton' :value='photo.finna_id'>Remove</button>
       </div>
-      <a :href="'https://finna.fi/Record/' + photo.finna_id" target="_new"><img
+      <a :href="photo.v_record_url" target="_new"><img
          class="thumbnail"
-         :src="'https://finna.fi/Cover/Show?source=Solr&index=0&size=small&id=' + encodeURIComponent(photo.finna_id)" /></a>
+         :src="photo.v_thumbnail_url" /></a>
       <h5>{{ photo.title }}</h5>
       <ul>
          <li v-for="(summary, index2) in photo.summaries" v-if="summary.lang === 'fi'">{{summary.text}}</li>
          <li v-for="(non_presenter_author, index2) in photo.non_presenter_authors" :class="{ 'missing': !non_presenter_author.wikidata_id }">{{non_presenter_author.name}} ({{non_presenter_author.role}})</li>
          <li v-if="photo.year">{{photo.year}}</li>
          <li v-for="(subject_actor, index2) in photo.subject_actors" :class="{ 'missing': !subject_actor.wikidata_id }">{{subject_actor.name}}</li>
-         <li><small><a :href="'https://www.finna.fi/Record/' + photo.finna_id" target="_blank">{{photo.identifier_string}}</a></small></li>
+         <li><small><a :href="photo.v_record_url" target="_blank">{{photo.identifier_string}}</a></small></li>
       </ul>
     </div>
   </div>

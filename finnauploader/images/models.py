@@ -8,6 +8,7 @@ from django.db.utils import Error, DataError
 import re
 import json
 import urllib
+import urllib.parse
 from datetime import datetime
 
 import xml.etree.ElementTree as XEltree
@@ -1205,11 +1206,34 @@ class FinnaImage(models.Model):
     identifier_string = models.CharField(max_length=500, null=True, blank=True)
     short_title = models.TextField()
 
+    def get_encoded_finna_id(self):
+        finnaid = self.finna_id
+        
+        quoteid = True
+        # fmp id but already encoded?
+        if (finnaid.startswith("fmp.") == True and finnaid.find("%2F") > 0):
+            quoteid = False
+        # sls id but already encoded?
+        if (finnaid.startswith("sls.") == True and finnaid.find("%25") > 0):
+            quoteid = False
+
+        if (quoteid == True):
+            #print("DEBUG: quoting id:", finnaid)
+            return urllib.parse.quote_plus(finnaid)
+        return finnaid
+
     # Pseudo properties
     @property
     def thumbnail_url(self):
         # TODO: if there are multiples images in same record, index should reflect that
         url = f'https://finna.fi/Cover/Show?source=Solr&id={self.finna_id}&index=0&size=small'
+        return url
+
+    @property
+    def v_thumbnail_url(self):
+        # encoded url of the image for the view, see FinnaImageSerializer in serializers.py
+        finnaid = self.get_encoded_finna_id()
+        url = f'https://finna.fi/Cover/Show?source=Solr&id={finnaid}&index=0&size=small'
         return url
 
     @property
@@ -1219,8 +1243,23 @@ class FinnaImage(models.Model):
         return url
 
     @property
+    def v_image_url(self):
+        # encoded url of the image for the view, see FinnaImageSerializer in serializers.py
+        finnaid = self.get_encoded_finna_id()
+        url = f'https://finna.fi/Cover/Show?source=Solr&id={finnaid}&index=0&size=large'
+        return url
+
+    @property
     def url(self):
+        # where is this property used?
         url = f'https://finna.fi/Record/{self.finna_id}'
+        return url
+    
+    @property
+    def v_record_url(self):
+        # encoded url of the record for the view, see FinnaImageSerializer in serializers.py
+        finnaid = self.get_encoded_finna_id()
+        url = f'https://finna.fi/Record/{finnaid}'
         return url
 
     def __str__(self):

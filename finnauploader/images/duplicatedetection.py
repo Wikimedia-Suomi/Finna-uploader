@@ -83,36 +83,18 @@ def get_upload_summary(limit=1000):
     
     commonssite = pywikibot.Site('commons', 'commons')
     commonssite.login()
+    current_user = commonssite.user()
 
-    # Get own edits
-    current_user = commonssite.user()  # The user whose edits we want to check
-    user = pywikibot.User(commonssite, str(current_user))
-    contribs = user.contributions(total=limit)  # Get the user's last 5000 edits
+    usual_uploaders = list()
+    usual_uploaders.append(str(current_user)) # get own edits
+    if (current_user != 'FinnaUploadBot'):
+        usual_uploaders.append('FinnaUploadBot')
+    if (current_user != 'FinnaUploadBot2'):
+        usual_uploaders.append('FinnaUploadBot2')
+    #usual_uploaders.append('Zache')
 
 
-    # list of tuples
-    for contrib in contribs:
-        page = contrib[0]
-        # if (page.namespace == 0): does not work correctly ?
-        # we don't care if user modifies something else
-        if (page.title().startswith("File:") == False):
-            continue
-        if page.title() in checked:
-            continue
-        
-        print("contrib: ", page.title())
-        # only use on filepages instead of pages with lists of files..
-        for url in page.extlinks():
-            if (url.find("finna.fi") < 1):
-                continue
-            #print("url in contrib: ", url)
-            uploads.append(url)
-        checked.append(page.title())
-
-    usual_uploaders = ['FinnaUploadBot', 'FinnaUploadBot2', 'Zache']
     for username in usual_uploaders:
-        if (current_user == username):
-            continue
             
         user = pywikibot.User(commonssite, username)
         contribs = user.contributions(total=limit)

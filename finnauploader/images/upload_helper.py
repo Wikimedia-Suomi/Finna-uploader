@@ -28,13 +28,18 @@ def update_wikidata_id_for_record_data(finna_image):
     # this should not be empty, there should be institution
     institutions = finna_image.institutions.all()
     for institution in institutions:
-        wikidata_id = get_institution_wikidata_id(institution.translated)
+
+        # fixup before lookup
+        instname = striprepeatespaces(institution.translated)
+        
+        wikidata_id = get_institution_wikidata_id(instname)
         institution.set_wikidata_id(wikidata_id)
 
     # if author(s) are not known the list should be empty
     non_presenter_authors = finna_image.non_presenter_authors.all()
     for author in non_presenter_authors:
-        
+
+        # fixup before lookup
         authname = striprepeatespaces(author.name)
         
         wikidata_id = get_author_wikidata_id(authname)
@@ -43,7 +48,11 @@ def update_wikidata_id_for_record_data(finna_image):
     # if there are no collections the list should be empty, that should be fine
     collections = finna_image.collections.all()
     for collection in collections:
-        wikidata_id = get_collection_wikidata_id(collection.name)
+
+        # fixup before lookup
+        collname = striprepeatespaces(collection.name)
+
+        wikidata_id = get_collection_wikidata_id(collname)
         collection.set_wikidata_id(wikidata_id)
 
     # if there are no known actors this list should be empty
@@ -52,14 +61,19 @@ def update_wikidata_id_for_record_data(finna_image):
         # there is bug in some data
         if (actor.skip_actor() == True):
             continue
+
+        # fixup before lookup
+        actname = striprepeatespaces(actor.name)
         
-        wikidata_id = get_subject_actors_wikidata_id(actor.name)
+        wikidata_id = get_subject_actors_wikidata_id(actname)
         actor.set_wikidata_id(wikidata_id)
 
+    # empty set, not in use
     for add_depict in finna_image.add_depicts.all():
         wikidata_id = get_wikidata_id_from_url(add_depict.value)
         add_depict.set_wikidata_id(wikidata_id)
 
+    # empty set, not in use
     for add_category in finna_image.add_categories.all():
         wikidata_id = get_wikidata_id_from_url(add_category.value)
         add_category.set_wikidata_id(wikidata_id)
@@ -250,6 +264,28 @@ def generate_filename_for_commons(finna_image):
     print("DEBUG: generated file name for upload:", file_name)
     return file_name
 
+# check and return correct url with some encoding (if needed)
+def get_image_url(finna_image):
+
+    image_url = finna_image.master_url
+
+    # should not need this here
+    #if (image_url.startswith("/Cover/Show") is True):
+    
+    # if we store incomplete url -> needs fixing
+    if (image_url.find("http://") < 0 and image_url.find("https://") < 0):
+        print("URL is not complete:", image_url)
+        return None
+
+    # can't upload from redirector with copy-upload:
+    # must handle differently
+    if (image_url.find("siiri.urn") > 0 or image_url.find("profium.com") > 0):
+        print("Cannot use copy-upload from URL:", image_url)
+        return None
+    
+    return image_url
+
+
 # bad name due to existing methods, rename later
 # called from views.py on upload
 #
@@ -286,7 +322,9 @@ def upload_file_update_metadata(finna_id):
     print("DEBUG: new record from finna for id:", finna_id)
     print(str(new_record))
 
-    # 
+    # ok, so we verify we got current data before upload,
+    # but why create new record instance instead of looking up old and updating?
+    # see what can be done..
     finna_image = FinnaImage.objects.create_from_data(new_record)
     
     # verify we have valid wikidata id where necessary
@@ -299,18 +337,13 @@ def upload_file_update_metadata(finna_id):
     if (filename == None):
         print("failed to get filename for:", finna_id)
         return ""
-    image_url = finna_image.master_url
-    
-    # if we store incomplete url -> needs fixing
-    if (image_url.find("http://") < 0 and image_url.find("https://") < 0):
-        print("URL is not complete:", image_url)
+
+    # check url and apply some encoding (if necessary)
+    image_url = get_image_url(finna_image)
+    if (image_url == None):
+        print("failed to get image url for:", finna_id)
         return ""
 
-    # can't upload from redirector with copy-upload:
-    # must handle differently
-    if (image_url.find("siiri.urn") > 0 or image_url.find("profium.com") > 0):
-        print("Cannot use copy-upload from URL:", image_url)
-        return ""
 
     commonssite = pywikibot.Site('commons', 'commons')
     commonssite.login()

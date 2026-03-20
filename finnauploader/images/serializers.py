@@ -1,4 +1,5 @@
 from rest_framework import serializers
+import urllib.parse
 from .models import FinnaImage, FinnaImageRight, FinnaNonPresenterAuthor, \
                     FinnaSummary, FinnaSubject, FinnaSubjectPlace, \
                     FinnaSubjectActor, FinnaSubjectDetail, FinnaCollection, \
@@ -70,6 +71,7 @@ class FinnaInstitutionSerializer(serializers.ModelSerializer):
         model = FinnaInstitution
         fields = '__all__'
 
+# TODO: finna id needs encoding for url in some cases (sls images)
 
 class FinnaImageSerializer(serializers.ModelSerializer):
     non_presenter_authors = FinnaNonPresenterAuthorSerializer(many=True)
@@ -92,7 +94,10 @@ class FinnaImageSerializer(serializers.ModelSerializer):
                   'subject_places', 'subject_actors', 'subject_details',
                   'collections', 'buildings', 'image_right', 'identifier_string',
                   'short_title', 'alternative_titles', 'date_string',
-                  'measurements', 'institutions', 'skipped']
+                  'measurements', 'institutions', 'skipped', 
+                  'v_thumbnail_url', 'v_image_url', 'v_record_url']
+
+        #fields['finna_id'] = urllib.parse.quote_plus(fields['finna_id'])
 
 #    finna_id = models.CharField(max_length=200, null=False, blank=False, db_index=True, unique=True)
 #    title = models.CharField(max_length=200)
