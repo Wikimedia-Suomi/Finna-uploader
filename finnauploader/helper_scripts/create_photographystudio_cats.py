@@ -28,14 +28,30 @@ def update_commons_list(name, wikidata_id):
 def is_studio(item):
     
     instance_of = item.claims.get('P31', [])
-    
     for claim in instance_of:
         qid = claim.getTarget().id
         if (qid == 'Q672070'): # QID for photography studio
             return True
+    return False
+
+def is_newspaper(item):
+    
+    instance_of = item.claims.get('P31', [])
+    for claim in instance_of:
+        qid = claim.getTarget().id
         if (qid == 'Q11032'): # QID for newspaper
             return True
     return False
+
+def is_magazine(item):
+    
+    instance_of = item.claims.get('P31', [])
+    for claim in instance_of:
+        qid = claim.getTarget().id
+        if (qid == 'Q41298'): # QID for magazine
+            return True
+    return False
+
 
 def get_name_from_label(wikidata_item, lang='fi'):
     for li in wikidata_item.labels:
@@ -58,13 +74,23 @@ def create_creator_template(name, wikidata_id):
 
 
 # Function to create a commons category and a subcategory for photographs
-def create_commons_category(name):
+def create_commons_category(name, studio=True, newspaper=False, magazine=False):
+    
+    categories = list()
+    if (studio == True):
+        categories.append("[[Category:Photographic studios in Finland]]")
+    if (newspaper == True):
+        categories.append("[[Category:Newspapers in Finland]]")
+    if (magazine == True):
+        categories.append("[[Category:Magazines of Finland]]")
+    
     # Main category
     category_name = "Category:%s" % name
     category_page = pywikibot.Page(commons_site, category_name)
     if not category_page.exists():
         category_page.text = "{{Wikidata Infobox}}\n\n"
-        category_page.text += "[[Category:Photographic studios in Finland]]"
+        for cat in categories:
+            category_page.text += cat
         category_page.save("Creating new category: %s" % category_name)
     return category_name
 
@@ -112,8 +138,11 @@ def main(wikidata_id, expected_name):
         return
 
     # Check if the item is a studio
-    if not is_studio(wikidata_item):
-        print("Item is not a photostudio.")
+    isstudio = is_studio(wikidata_item)
+    isnewspaper = is_newspaper(wikidata_item)
+    ismagazine = is_magazine(wikidata_item)
+    if (isstudio == False and isnewspaper == False and ismagazine == False):
+        print("Item is not a photostudio, newspaper or magazine.")
         return
 
     # Get the actual name from the Wikidata item
@@ -170,7 +199,7 @@ def main(wikidata_id, expected_name):
 
     # Check for Commons category (P373)
     if 'P373' not in wikidata_item.claims:
-        created_category_name = create_commons_category(new_catname)
+        created_category_name = create_commons_category(new_catname, isstudio, isnewspaper, ismagazine)
         category_claim = pywikibot.Claim(wikidata_site, 'P373')
         category_claim.setTarget(new_catname)
         wikidata_item.addClaim(category_claim)
