@@ -80,7 +80,7 @@ def create_commons_category(name, studio=True, newspaper=False, magazine=False):
     if (studio == True):
         categories.append("[[Category:Photographic studios in Finland]]")
     if (newspaper == True):
-        categories.append("[[Category:Newspapers in Finland]]")
+        categories.append("[[Category:Newspapers of Finland]]")
     if (magazine == True):
         categories.append("[[Category:Magazines of Finland]]")
     
