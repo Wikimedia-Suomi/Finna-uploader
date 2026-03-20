@@ -2,7 +2,6 @@
 # generated based on finna data for uploaded stuff
 
 import mwparserfromhell
-import urllib.parse
 
 from images.wikitext.timestamps import parse_timestamp_string
 from images.wikitext.categories import create_categories_new
@@ -260,25 +259,6 @@ def get_titles_from_image(finna_image):
             
     return '\n'.join(titles)
 
-# get record url with appropriate encoding (where needed)
-def get_encoded_record_url(finna_image):
-    finnaid = finna_image.finna_id
-    
-    quoteid = True
-    # fmp id but already encoded?
-    if (finnaid.startswith("fmp.") == True and finnaid.find("%2F") > 0):
-        quoteid = False
-    # sls id but already encoded?
-    if (finnaid.startswith("sls.") == True and finnaid.find("%25") > 0):
-        quoteid = False
-
-    if (quoteid == True):
-        print("DEBUG: quoting id:", finnaid)
-        finnaid = urllib.parse.quote_plus(finnaid)
-
-    url = f'https://finna.fi/Record/{finnaid}'
-    return url
-
 def get_depicted_people_from_image(finna_image):
     depicted_people = list(finna_image.subject_actors.values_list('name', flat=True))  # noqa
     return "; ".join(depicted_people)
@@ -339,7 +319,7 @@ def create_photograph_template(finna_image):
     template.add('inscriptions', get_inscriptions(finna_image)) # inscriptionDescription/descriptiveNoteValue from xml record
     template.add('notes', '')
     template.add('accession number', finna_image.identifier_string)
-    template.add('source', get_encoded_record_url(finna_image))
+    template.add('source', finna_image.get_record_url(True))
     template.add('permission',  make_lang_template(permissionstring, lang))
 
     template.add('other_versions', '')

@@ -1262,6 +1262,18 @@ class FinnaImage(models.Model):
         url = f'https://finna.fi/Record/{finnaid}'
         return url
 
+    # get record url with appropriate encoding (where needed)
+    def get_record_url(self, encode=True):
+
+        finnaid = ""
+        if (encode == True):
+            finnaid = self.get_encoded_finna_id()
+        else:
+            finnaid = self.finna_id
+        url = f'https://finna.fi/Record/{finnaid}'
+        
+        return url
+
     def __str__(self):
         return self.finna_id
 

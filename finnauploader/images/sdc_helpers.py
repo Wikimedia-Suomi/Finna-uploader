@@ -283,17 +283,18 @@ def get_claims_for_image_upload(finna_image):
     if (len(institutions) == 0):
         print("no institutions found for image ")
         exit()
+
+    recordurl = finna_image.get_record_url(True) # sdc needs encoding here
         
     for institution in institutions:
         # when using beyond JOKA-archive, fetch correct values per image
         # publisher = 'Q3029524'  # Finnish Heritage Agency
         operator = 'Q420747'    # National library
-        url = finna_image.url
 
-        claim = create_P7482_source_of_file(url, operator, institution)
+        claim = create_P7482_source_of_file(recordurl, operator, institution)
         claims.append(claim)
 
-    claim = create_P9478_finna_id(finna_image.get_finna_id())
+    claim = create_P9478_finna_id(finna_image.get_finna_id()) # this one does not need encoding
     claims.append(claim)
 
     claim = get_inception_claim(finna_image)
@@ -302,7 +303,7 @@ def get_claims_for_image_upload(finna_image):
     # create claims for image rights
 
     copyright_data = finna_image.image_right.get_copyright()
-    claim = create_P275_licence(copyright_data, finna_image.url)
+    claim = create_P275_licence(copyright_data, recordurl)
     claims.append(claim)
 
     claim = create_P6216_copyright_state(copyright_data)
@@ -453,6 +454,7 @@ def create_P1071_location(finna_image):
     location_string = clean_depicted_places("; ".join(depicted_places))
 
     print(location_string)
+    recordurl = finna_image.get_record_url(True) # sdc needs encoding here
 
     for wikidata_id in wikidata_ids:
         # Create a new Claim
@@ -470,9 +472,8 @@ def create_P1071_location(finna_image):
         source_claims.append(ref_claim)
 
         # Source url
-        source_url = finna_image.url
         ref_claim = pywikibot.Claim(wikidata_site, 'P854')
-        ref_claim.setTarget(source_url)
+        ref_claim.setTarget(recordurl)
         source_claims.append(ref_claim)
 
         # Date
