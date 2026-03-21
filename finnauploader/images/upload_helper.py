@@ -210,6 +210,7 @@ def generate_filename_for_commons(finna_image):
     # note: 0xC2 0xAD in utf-8, 0x00AD in utf-16, which one is used?
     name = name.replace(u"\u00A0", "")
     name = name.replace("\xc2\xa0", "")
+    name = name.replace("‎", "") # remove non-printable space
 
     lenident = len(year) +1 + len(identifier)+2 + len(filename_extension)+1
 
@@ -254,6 +255,7 @@ def generate_filename_for_commons(finna_image):
     # replace non-breakable spaces with normal spaces
     # 0xC2 0xA0 in utf-8, 0x00A0 in utf-16
     file_name = file_name.replace(u"\u00A0", " ")
+    file_name = file_name.replace("‎", "") # remove non-printable space
 
     # wiki doesn't allow non-breakable spaces or soft-hyphens
     quoted_name = urllib.parse.quote_plus(file_name)
