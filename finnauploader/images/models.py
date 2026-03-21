@@ -149,7 +149,7 @@ class FinnaNonPresenterAuthor(models.Model):
     def is_photographer(self):
         # note: SLS uses "pht"
         # also: "valokuvaamo" for studios
-        known_roles = ['kuvaaja', 'valokuvaaja', 'Valokuvaaja', 'valokuvaamo', 'pht', 'kuvaaja varma']
+        known_roles = ['kuvaaja', 'Kuvaaja', 'valokuvaaja', 'Valokuvaaja', 'valokuvaamo', 'Valokuvaamo', 'pht', 'kuvaaja varma']
         if (self.role in known_roles):
             return True
         return False
@@ -1219,7 +1219,14 @@ class FinnaImage(models.Model):
 
         if (quoteid == True):
             #print("DEBUG: quoting id:", finnaid)
-            return urllib.parse.quote_plus(finnaid)
+            finnaid = urllib.parse.quote_plus(finnaid)
+
+        # special case which does not seem to be handled without
+        if (finnaid.startswith("sls.") == True and finnaid.find("Ö") > 0):
+            finnaid = finnaid.replace("Ö", "%C3%96")
+        if (finnaid.startswith("sls.") == True and finnaid.find("å") > 0):
+            finnaid = finnaid.replace("å", "%C3%A5")
+            
         return finnaid
 
     # Pseudo properties
