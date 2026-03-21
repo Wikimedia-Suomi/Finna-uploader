@@ -1208,6 +1208,11 @@ class FinnaImage(models.Model):
 
     def get_encoded_finna_id(self):
         finnaid = self.finna_id
+
+        # some don't work correctly with the encoding, others need it:
+        # for example, kouvolan museo does not work correct when : is encoded to %3A
+        if (finnaid.startswith("fmp.") == False and finnaid.startswith("sls.") == False):
+            return finnaid
         
         quoteid = True
         # fmp id but already encoded?
