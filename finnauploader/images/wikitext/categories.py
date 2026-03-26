@@ -192,7 +192,40 @@ def get_category_place(subject_places):
             #return p
     return ""
 
+# if there isn't precise place for the year, try region instead:
+# also mapping from finnish to category in commons (mostly english)
+#
+def get_category_region(subject_places):
 
+    print("DEBUG: get_category_region, subject places: ", str(subject_places) )
+
+    subject_regions = {
+        'Ahvenanmaa' : 'Åland',
+        'Etelä-Karjala' : 'South Karelia',
+        'Etelä-Pohjanmaa' : 'South Ostrobothnia',
+        'Etelä-Savo' : 'Southern Savonia',
+        'Kainuu' : 'Kainuu',
+        'Kanta-Häme' : 'Tavastia Proper',
+        'Keski-Pohjanmaa' : 'Central Ostrobothnia',
+        'Keski-Suomi' : 'Central Finland',
+        'Kymenlaakso' : 'Kymenlaakso',
+        'Lappi' : 'Lapland',
+        'Pirkanmaa' : 'Pirkanmaa',
+        'Pohjanmaa' : 'Ostrobothnia',
+        'Pohjois-Karjala' : 'North Karelia',
+        'Pohjois-Pohjanmaa' : 'Northern Ostrobothnia',
+        'Pohjois-Savo' : 'Northern Savonia',
+        'Päijät-Häme' : 'Päijänne Tavastia',
+        'Satakunta' : 'Satakunta',
+        'Uusimaa' : 'Uusimaa',
+        'Varsinais-Suomi' : 'Finland Proper'
+    }
+
+    for place in subject_places:
+        if (place in subject_regions):
+            category = subject_regions[place]
+            return category
+    return ""
 
 def get_category_for_subject(subject_name):
 
@@ -616,7 +649,8 @@ def get_category_for_institution(institution):
         'Q11879901': 'Files from the Finnish Forest Museum Lusto',
         'Q1418136' : 'Collections of the National Museum of Finland',
         #'Q4306382' : 'Files from the Sibelius Museum',
-        'Q18346788' : 'Theatre Museum (Helsinki)'
+        'Q18346788' : 'Theatre Museum (Helsinki)',
+        'Q3917218' : 'Media by Forum Marinum'
     }
 
     if (institution.wikidata_id):
@@ -769,22 +803,25 @@ def create_categories_new(finna_image):
     isInFinland = False
     cat_place = get_category_place(subject_places)
     if (len(cat_place) == 0):
-        # TODO: try to cache the lookups
-        # if we didn't have fast recognizing, try slow one
-        #for place in reversed(subject_places):
-            #location_id = get_location_by_name(place)
-            #if (location_id != None):
+        cat_place = get_category_region(subject_places)
+        if (len(cat_place) == 0):
+            # TODO: try to cache the lookups
+            # if we didn't have fast recognizing, try slow one
+            #for place in reversed(subject_places):
+                #location_id = get_location_by_name(place)
+                #if (location_id != None):
 
-        # fallback, if all else fails, at least try to detect counry
-        if (depicted_places.find('Suomi') >= 0):
-            cat_place = "Finland"
-            isInFinland = True
-            print("Place recognized as Finland, no further")
-        #elif 'Suomen entinen kunta/pitäjä' in depicted_places:
-            #cat_place = "Finland"
-            #isInFinland = True
-            #print("Place formerly in Finland")
-    else:
+            # fallback, if all else fails, at least try to detect counry
+            if (depicted_places.find('Suomi') >= 0):
+                cat_place = "Finland"
+                isInFinland = True
+                print("Place recognized as Finland, no further")
+            #elif 'Suomen entinen kunta/pitäjä' in depicted_places:
+                #cat_place = "Finland"
+                #isInFinland = True
+                #print("Place formerly in Finland")
+
+    if (len(cat_place) > 0):
         # for now, we recognize mostly places in finland..
         # these places that we recognize are no longer part of finland, if not one of them -> assume in finland
         if ('Viipuri' not in depicted_places and 'Petsamo' not in depicted_places and 'Sortavala' not in depicted_places and 'Jääski' not in depicted_places):
