@@ -27,6 +27,18 @@ def make_lang_template(text, lang='fi'):
     else:
         return ''
 
+# join list into a string, filter duplicates (if any)
+def get_joined_list(data):
+
+    datalist = list()
+    
+    # cleanup duplicates
+    for d in data:
+        if d in datalist:
+            continue
+        datalist.append(d)
+    return "; ".join(datalist)
+
 
 def clean_depicted_places(location_string):
     locations = location_string.split(';')
@@ -261,7 +273,9 @@ def get_titles_from_image(finna_image):
 
 def get_depicted_people_from_image(finna_image):
     depicted_people = list(finna_image.subject_actors.values_list('name', flat=True))  # noqa
-    return "; ".join(depicted_people)
+
+    # cleanup duplicates
+    return get_joined_list(depicted_people)
 
 def get_depicted_places_from_image(finna_image):
     depicted_places = list(finna_image.subject_places.values_list('name', flat=True))  # noqa
@@ -269,7 +283,9 @@ def get_depicted_places_from_image(finna_image):
 
 def get_collections_from_image(finna_image):
     collections = list(finna_image.collections.values_list('name', flat=True))
-    return "; ".join(collections)
+    
+    # cleanup duplicates
+    return get_joined_list(collections)
 
 def create_photograph_template(finna_image):
     lang = 'fi' # no need to repeat
