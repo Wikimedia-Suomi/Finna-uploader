@@ -310,7 +310,7 @@ def get_claims_for_image_upload(finna_image):
     claims.append(claim)
 
     # create claims for image authors/creators
-
+    authorlist = list() # filter duplicates
     non_presenter_authors = finna_image.non_presenter_authors.all()
     for author in non_presenter_authors:
         
@@ -322,14 +322,21 @@ def get_claims_for_image_upload(finna_image):
         if (author.is_creator()):
             continue
 
+        if author.wikidata_id in authorlist:
+            # already made the claim (duplicate)
+            continue
+
         #if (author.is_photographer() or author.is_architect() or author.is_illustrator() or author.is_creator()):
         role = get_role_qcode_for_author(author)
         if (not author.wikidata_id):
             print("wikidata id missing for author: ", author.name)
             exit()
-
+            
         claim = create_P170_author(author.wikidata_id, role)
         claims.append(claim)
+        
+        # don't make duplicates
+        authorlist.append(author.wikidata_id)
 
 
     # create claims for collections
