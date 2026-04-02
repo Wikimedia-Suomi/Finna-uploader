@@ -35,6 +35,7 @@ class FinnaMappingsCacheManager(models.Manager):
         rev_id = self._get_latest_revision_id(site, page_title)
 
         # Test if there is newer revisions in wiki
+        update = False
         if (int(obj.rev_id) < rev_id):
             update = True
 
