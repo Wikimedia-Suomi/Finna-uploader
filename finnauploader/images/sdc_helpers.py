@@ -273,6 +273,40 @@ def get_collections_for_sdc(finna_image):
             colllist.append(collection.wikidata_id)
     return colllist
 
+def get_authors_for_sdc(finna_image):
+
+    authorslist = dict() # filter duplicates
+
+    # create claims for image authors/creators
+    non_presenter_authors = finna_image.non_presenter_authors.all()
+    for author in non_presenter_authors:
+        
+        # skip claim where author role is "valmistaja"
+        if (author.is_manufacturer()):
+            continue
+        
+        # skip claim where author role is "tekijä"
+        if (author.is_creator()):
+            continue
+
+        if (not author.wikidata_id):
+            print("wikidata id missing for author: ", author.name)
+            exit()
+
+        if author.wikidata_id in authorslist:
+            # already made the claim (duplicate)
+            print("duplicate author: ", author.wikidata_id)
+            continue
+
+        #if (author.is_photographer() or author.is_architect() or author.is_illustrator() or author.is_creator()):
+        role = get_role_qcode_for_author(author)
+            
+        # don't make duplicates
+        authorslist[author.wikidata_id] = role
+
+    return authorslist
+
+
 # this context is for sdc data in commons,
 # used during upload to create claims
 def get_claims_for_image_upload(finna_image):
@@ -309,34 +343,15 @@ def get_claims_for_image_upload(finna_image):
     claim = create_P6216_copyright_state(copyright_data)
     claims.append(claim)
 
-    # create claims for image authors/creators
-    authorlist = list() # filter duplicates
-    non_presenter_authors = finna_image.non_presenter_authors.all()
-    for author in non_presenter_authors:
-        
-        # skip claim where author role is "valmistaja"
-        if (author.is_manufacturer()):
-            continue
-        
-        # skip claim where author role is "tekijä"
-        if (author.is_creator()):
-            continue
+    # create claims for image authors/creators:
+    # use pair of wikidata id and role id
+    authorlist = get_authors_for_sdc(finna_image)
+    for auth, role in authorlist.items():
+        print("using auth", auth, "role", role)
 
-        if author.wikidata_id in authorlist:
-            # already made the claim (duplicate)
-            continue
-
-        #if (author.is_photographer() or author.is_architect() or author.is_illustrator() or author.is_creator()):
-        role = get_role_qcode_for_author(author)
-        if (not author.wikidata_id):
-            print("wikidata id missing for author: ", author.name)
-            exit()
-            
-        claim = create_P170_author(author.wikidata_id, role)
+        # create claim for author and role (if any, optional)
+        claim = create_P170_author(auth, role)
         claims.append(claim)
-        
-        # don't make duplicates
-        authorlist.append(author.wikidata_id)
 
 
     # create claims for collections
