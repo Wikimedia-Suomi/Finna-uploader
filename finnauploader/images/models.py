@@ -1213,11 +1213,24 @@ class FinnaImage(models.Model):
         # for example, kouvolan museo does not work correct when : is encoded to %3A
         if (finnaid.startswith("fmp.") == False and finnaid.startswith("sls.") == False):
             return finnaid
+
+        if (finnaid.startswith("fmp.") == True and finnaid.find("%2F") > 0):
+            # don't do double quoting
+            return finnaid
+        if (finnaid.startswith("fmp.") == True):
+            # do this once in this case
+            return urllib.parse.quote_plus(finnaid)
+            
+
+        # seems to need special casing
+        if (finnaid.find(":") > 0 and finnaid.startswith("sls.SLSA") == True):
+            return finnaid.replace(":", "%253A")
+        
+        # don't do anything else in this case?
+        if (finnaid.startswith("sls.SLSA") == True):
+            return finnaid
         
         quoteid = True
-        # fmp id but already encoded?
-        if (finnaid.startswith("fmp.") == True and finnaid.find("%2F") > 0):
-            quoteid = False
         # sls id but already encoded?
         if (finnaid.startswith("sls.") == True and finnaid.find("%25") > 0):
             quoteid = False
@@ -1231,7 +1244,15 @@ class FinnaImage(models.Model):
             finnaid = finnaid.replace("Ö", "%C3%96")
         if (finnaid.startswith("sls.") == True and finnaid.find("å") > 0):
             finnaid = finnaid.replace("å", "%C3%A5")
+
+        # seems to need special casing
+        #if (finnaid .find("+") > 0):
+        #    finnaid  = finnaid .replace("+", "%2B")
             
+        # seems to need special casing
+        #if (finnaid.find(":") > 0 and finnaid.startswith("fmp.") == True):
+        #    finnaid = finnaid.replace(":", "%3A")
+
         return finnaid
 
     # Pseudo properties
