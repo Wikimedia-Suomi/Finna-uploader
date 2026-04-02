@@ -21,7 +21,7 @@ class FinnaMappingsCacheManager(models.Manager):
 
     def update(self):
         page_title = self.model.page_title
-        print("Updating cache for:", page_title)
+        print("Checking cache for page:", page_title)
 
         site = pywikibot.Site("commons")
 
@@ -35,26 +35,32 @@ class FinnaMappingsCacheManager(models.Manager):
         rev_id = self._get_latest_revision_id(site, page_title)
 
         # Test if there is newer revisions in wiki
-        update = int(obj.rev_id) < rev_id
+        if (int(obj.rev_id) < rev_id):
+            update = True
 
         # Update cache if needed:
         # commons page revision has changed or local cache is being initialized
         if created or update:
-            print(f'Updating {page_title}')
+            print(f'Updating cache from page {page_title}')
             self._update_cache(site, page_title, rev_id, obj)
 
-    def _get_latest_revision_id(self, site, page_title):
-        rev_id = 0
+    # note: different pages have different editing times and different versions
+    # (they are not always linear)
+    def _get_latest_revision_id(self, site, page_title, old_rev_id=0):
+        
+        rev_id = old_rev_id
         for n in range(1, 5):
             if n == 1:
                 new_page_title = page_title
             else:
                 new_page_title = f'{page_title}_{n}'
+
             page = pywikibot.Page(site, new_page_title)
             if page.exists() and page.latest_revision_id > rev_id:
-                print("Updating from page:", page.title())
+                print("Updating from page:", page.title(), "revision:", page.latest_revision_id)
                 rev_id = page.latest_revision_id
-        print("Page:", page_title, "revision:", rev_id)
+            else:
+                print("Page:", page.title(), "has revision:", page.latest_revision_id)
         return rev_id
 
     def _update_cache(self, site, page_title, rev_id, obj):
@@ -67,6 +73,7 @@ class FinnaMappingsCacheManager(models.Manager):
         for name in rows:
             wikidata_id = rows[name]
             self.get_or_create(name=name, wikidata_id=wikidata_id)
+            
         obj.rev_id = rev_id
         obj.save()
         print("Saved cache for:", page_title)
