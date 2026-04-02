@@ -34,29 +34,6 @@ def are_there_messages_for_bot_in_commons():
     return False
 
 
-# Edit Wikimedia Commons mediaitem using wbeditentity
-def edit_commons_mediaitem(commonssite, page_title, data):
-    
-    # Reload file_page to be sure that we have updated page_id
-
-    file_page = pywikibot.FilePage(commonssite, page_title)
-    media_identifier = 'M' + str(file_page.pageid) # what is in pageid on error?
-    print("media identifier: ", media_identifier)
-
-    csrf_token = commonssite.tokens['csrf']
-    payload = {
-        'action': 'wbeditentity',
-        'format': u'json',
-        'id': media_identifier,
-        'data':  json.dumps(data),
-        'token': csrf_token,
-        'bot': True,  # in case you're using a bot account (which you should)
-    }
-    request = commonssite.simple_request(**payload)
-    ret = request.submit()
-    return ret
-
-
 def is_qid(page_title):
     return bool(re.match(r'^Q\d+$', page_title))
 

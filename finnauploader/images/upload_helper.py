@@ -7,7 +7,6 @@ import urllib
 from datetime import datetime
 
 from images.finna_record_api import get_finna_record, is_valid_finna_record
-from images.pywikibot_helpers import edit_commons_mediaitem
 from images.pywikibot_helpers import get_wikidata_id_from_url
 from images.sdc_helpers import get_structured_data_for_new_image
 from images.wikitext.commons_wikitext import get_wikitext_for_new_image, \
@@ -287,6 +286,11 @@ def get_image_url(finna_image):
     
     return image_url
 
+# we have some cases where might need to download locally first
+# and apply format conversion or use different source domain (not copy-upload).
+# some urls might have redirect service in use.
+#def download_file(remote_url):
+#    return download_helper.download_file(remote_url)
 
 # bad name due to existing methods, rename later
 # called from views.py on upload
@@ -334,6 +338,7 @@ def upload_file_update_metadata(finna_id):
         print("failed to update wikidata ids for record:", finna_id)
         return ""
 
+    # TODO: when using local file in upload, verify image format from file
     # generate name for the upload, show it to the user as well
     filename = generate_filename_for_commons(finna_image)
     if (filename == None):
@@ -346,6 +351,11 @@ def upload_file_update_metadata(finna_id):
         print("failed to get image url for:", finna_id)
         return ""
 
+    # TODO: if necessary, in case of redirector (copy-upload can't be used)
+    # download the file first before uploading
+    #buf = download_file(image_url)
+    # TODO: should we use buffer directly or save to temp file?
+    # TODO: when using local file in upload, verify image format from file
 
     commonssite = pywikibot.Site('commons', 'commons')
     commonssite.login()
@@ -410,6 +420,13 @@ def upload_file_update_metadata(finna_id):
         print(f"The file {commons_file_name} failed to be uploaded.")
         raise
 
+    # if we need to do download/conversion first
+    # upload from local file
+    #if (upload_local == True):
+    #    print("uploading converted local file ")
+    # TODO : use buffer directly instead of file?
+    #    file_page.upload(image_file_name, comment=comment,ignore_warnings=True)
+
     # TODO: in case image upload went to sleep for a while pywikibot does not handle it correctly:
     # image might be there but server thinks it is locked by someone else?
     # -> cannot save structured data for it
@@ -439,3 +456,25 @@ def upload_file_update_metadata(finna_id):
 
     # ok, this is just for user information now
     return filename
+
+# Edit Wikimedia Commons mediaitem using wbeditentity
+def edit_commons_mediaitem(commonssite, page_title, data):
+    
+    # Reload file_page to be sure that we have updated page_id
+
+    file_page = pywikibot.FilePage(commonssite, page_title)
+    media_identifier = 'M' + str(file_page.pageid) # what is in pageid on error?
+    print("media identifier: ", media_identifier)
+
+    csrf_token = commonssite.tokens['csrf']
+    payload = {
+        'action': 'wbeditentity',
+        'format': u'json',
+        'id': media_identifier,
+        'data':  json.dumps(data),
+        'token': csrf_token,
+        'bot': True,  # in case you're using a bot account (which you should)
+    }
+    request = commonssite.simple_request(**payload)
+    ret = request.submit()
+    return ret
