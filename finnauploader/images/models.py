@@ -1221,6 +1221,10 @@ class FinnaImage(models.Model):
             # do this once in this case
             return urllib.parse.quote_plus(finnaid)
             
+        if (finnaid.startswith("siiri.") == True):
+            # should be encoded already, use as is
+            # if not %25 in string -> quote()
+            return finnaid
 
         # seems to need special casing
         if (finnaid.find(":") > 0 and finnaid.startswith("sls.SLSA") == True):

@@ -6,6 +6,11 @@ import pywikibot
 
 class MappingCache:
 
+    def __init__(self):
+        # TODO: map revision per sub-page
+        self.rev_id = 0
+        #self.cache = {}
+
     # perform simple checks that values are usable
     def validate_text(self, text):
         if (text.find("http:") >= 0 or text.find("https:") >= 0):
@@ -35,18 +40,50 @@ class MappingCache:
             parsed_data[name] = q_item
         return parsed_data
 
-    def parse_cache_page(self, site, page_title):
-        print("Loading page:", page_title)
-        page = pywikibot.Page(site, page_title)
-        cache = self.parse_name_and_q_item(page.text)
-        for n in range(2, 6):
-            page = pywikibot.Page(site, f'{page_title} {n}')
-            if page.exists():
-                print("Parsing page:", page.title())
-                sub = self.parse_name_and_q_item(page.text)
+    def parse_mapping_from_page(self, page):
+        mapping = {}
+        if not page.exists():
+            return mapping
+
+        print("Parsing mapping from page:", page.title())
+        sub = self.parse_name_and_q_item(page.text)
+        for key, value in sub.items():
+            mapping[key] = value
+        return mapping
+
+    def parse_cache_pages(self, site, page_title):
+        rev_id = 0
+
+        # avoid clearing if possible
+        #self.cache.clear()
+
+        print("Loading mapping pages:", page_title)
+        cache = {}
+        for n in range(0, 6):
+            new_page_title = ""
+            if n == 0:
+                new_page_title = page_title
+            else:
+                new_page_title = f'{page_title}_{n}'
+
+            # we need to load the page to get revision so might as well parse it..
+            print("Loading page:", new_page_title)
+            page = pywikibot.Page(site, new_page_title)
+            
+            if page.exists() and page.latest_revision_id > rev_id:
+                print("Updating from page:", page.title(), "revision:", page.latest_revision_id)
+                #rev_id = page.latest_revision_id
+
+                sub = self.parse_to_cache_from_page(page)
                 for key, value in sub.items():
                     cache[key] = value
+            else:
+            #    print("Page:", page.title(), "has revision:", page.latest_revision_id)
+                print("Page:", new_page_title, " does not exist or is older")
+
+        self.rev_id = rev_id
         return cache
+
 
     def is_cached(self, name):
         try:

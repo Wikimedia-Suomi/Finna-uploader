@@ -31,51 +31,21 @@ class FinnaMappingsCacheManager(models.Manager):
         obj, created = cache.get_or_create(page_title=page_title,
                                            defaults=defaults)
 
-        # Get latest revid of wiki pages
-        rev_id = self._get_latest_revision_id(site, page_title)
-
-        # Test if there is newer revisions in wiki
-        update = False
-        if (int(obj.rev_id) < rev_id):
-            update = True
-
-        # Update cache if needed:
-        # commons page revision has changed or local cache is being initialized
-        if created or update:
-            print(f'Updating cache from page {page_title}')
-            self._update_cache(site, page_title, rev_id, obj)
-
-    # note: different pages have different editing times and different versions
-    # (they are not always linear)
-    def _get_latest_revision_id(self, site, page_title, old_rev_id=0):
-        
-        rev_id = old_rev_id
-        for n in range(1, 5):
-            if n == 1:
-                new_page_title = page_title
-            else:
-                new_page_title = f'{page_title}_{n}'
-
-            page = pywikibot.Page(site, new_page_title)
-            if page.exists() and page.latest_revision_id > rev_id:
-                print("Updating from page:", page.title(), "revision:", page.latest_revision_id)
-                rev_id = page.latest_revision_id
-            else:
-                print("Page:", page.title(), "has revision:", page.latest_revision_id)
-        return rev_id
-
-    def _update_cache(self, site, page_title, rev_id, obj):
         print("Saving cache for:", page_title)
         mapping = MappingCache()
-        rows = mapping.parse_cache_page(site, page_title)
+
+        maprows = mapping.parse_cache_pages(site, page_title)
+        if (mapping.rev_id <= obj.rev_id):
+            print("mapping older or equal revision")
+            return
 
         # TODO: you shouldn't clear entire cache every time
         self.clear()
-        for name in rows:
-            wikidata_id = rows[name]
+        for name, wikidata_id in maprows.items():
+            #wikidata_id = maprows[name]
             self.get_or_create(name=name, wikidata_id=wikidata_id)
             
-        obj.rev_id = rev_id
+        obj.rev_id = mapping.rev_id
         obj.save()
         print("Saved cache for:", page_title)
 
