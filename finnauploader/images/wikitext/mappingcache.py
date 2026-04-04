@@ -7,7 +7,7 @@ import pywikibot
 class MappingCache:
 
     def __init__(self):
-        self.rev_id = 0
+        #self.rev_id = 0
         # revision per sub-page
         self.sub_rev_id = {}
         
@@ -44,19 +44,8 @@ class MappingCache:
             parsed_data[name] = q_item
         return parsed_data
 
-    def parse_mapping_from_page(self, page):
-        mapping = {}
-        if not page.exists():
-            return mapping
-
-        print("Parsing mapping from page:", page.title())
-        sub = self.parse_name_and_q_item(page.text)
-        for key, value in sub.items():
-            mapping[key] = value
-        return mapping
-
     def parse_cache_pages(self, site):
-        
+
         if (self.base_page_title == ""):
             return
         
@@ -71,28 +60,32 @@ class MappingCache:
                 new_page_title = f'{self.base_page_title}_{n}'
 
             # we need to load the page to get revision so might as well parse it..
-            print("Loading page:", new_page_title)
+            #print("Loading page:", new_page_title)
             page = pywikibot.Page(site, new_page_title)
 
             # if we don't have per-page revision yet
             sub_rev_id = 0
             if n in self.sub_rev_id:
                 sub_rev_id = self.sub_rev_id[n]
-            if page.exists() and page.latest_revision_id > sub_rev_id:
-                print("Updating from page:", page.title(), "revision:", page.latest_revision_id)
-                #rev_id = page.latest_revision_id
 
-                sub = self.parse_to_cache_from_page(page)
+            if page.exists() and page.latest_revision_id > sub_rev_id:
+                print("Parsing from page:", page.title(), "revision:", page.latest_revision_id)
+
+                sub = self.parse_name_and_q_item(page.text)
                 for key, value in sub.items():
                     self.cache[key] = value
+
                 self.sub_rev_id[n] = page.latest_revision_id
-            else:
+                print("Parsed page:", page.title(), "revision:", page.latest_revision_id)
+            #else:
             #    print("Page:", page.title(), "has revision:", page.latest_revision_id)
-                print("Page:", new_page_title, " does not exist or is older")
-            if (sub_rev_id > rev_id):
+            #    print("Page:", new_page_title, " does not exist or is older")
+
+            if (sub_rev_id > rev_id and sub_rev_id > 0):
                 rev_id = sub_rev_id
 
-        self.rev_id = rev_id
+        print("Loaded mapping for:", self.base_page_title, "revision:", rev_id)
+        #self.rev_id = rev_id
         return rev_id
 
 
