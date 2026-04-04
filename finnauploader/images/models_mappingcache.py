@@ -61,6 +61,7 @@ class FinnaMappingsCacheManager(models.Manager):
         if (mapping.base_page_title == ""):
             mapping.base_page_title = page_title
 
+        # check if there is newer version of mapping available
         rev_id = mapping.parse_cache_pages(site)
         if (obj.rev_id >= rev_id):
             print("mapping older or equal revision")
@@ -68,7 +69,7 @@ class FinnaMappingsCacheManager(models.Manager):
 
         print("Saving cache for:", page_title)
 
-        # TODO: you shouldn't clear entire cache every time
+        # TODO: you shouldn't clear entire stored cache every time
         self.clear()
         for name, wikidata_id in mapping.cache.items():
             #wikidata_id = maprows[name]
