@@ -3,6 +3,30 @@ from images.wikitext.mappingcache import MappingCache
 import pywikibot
 
 
+# make sure we keep the cache somewhere to avoid reparsing
+g_nonPresenterAuthorsMapping = MappingCache()
+g_collectionsMapping = MappingCache()
+g_institutionsMapping = MappingCache()
+g_subjectActorsMapping = MappingCache()
+g_subjectPlacesMapping = MappingCache()
+
+
+def getMappingByPage(page_title):
+
+    if (page_title.find("nonPresenterAuthors") > 0):
+        return g_nonPresenterAuthorsMapping
+    if (page_title.find("collections") > 0):
+        return g_collectionsMapping
+    if (page_title.find("institutions") > 0):
+        return g_institutionsMapping
+    if (page_title.find("subjectActors") > 0):
+        return g_subjectActorsMapping
+    if (page_title.find("subjectPlaces") > 0):
+        return g_subjectPlacesMapping
+
+    return None
+
+
 # Store latest wikipage revids to db
 class WikitextCache(models.Model):
     page_title = models.CharField(max_length=255)
@@ -31,9 +55,11 @@ class FinnaMappingsCacheManager(models.Manager):
         obj, created = cache.get_or_create(page_title=page_title,
                                            defaults=defaults)
 
+        # first time or later..
         print("Loading mapping for:", page_title)
-        mapping = MappingCache()
-        mapping.base_page_title = page_title
+        mapping = getMappingByPage(page_title)
+        if (mapping.base_page_title == ""):
+            mapping.base_page_title = page_title
 
         rev_id = mapping.parse_cache_pages(site)
         if (obj.rev_id >= rev_id):
