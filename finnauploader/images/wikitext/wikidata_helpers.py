@@ -316,6 +316,11 @@ def get_author_wikidata_id(name):
         authname = authname.replace("(valokuvaaja)", "").strip()
     if (authname.find("(valokuvaamo)") > 0):
         authname = authname.replace("(valokuvaamo)", "").strip()
+
+    if (authname.endswith(": :") == True):
+        authname = authname[:len(authname)-3]
+
+    print("looking for id for ", authname)
     
     try:
         obj = NonPresenterAuthorsCache.objects.get(name = authname)

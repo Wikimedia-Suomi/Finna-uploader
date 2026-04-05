@@ -671,6 +671,9 @@ class FinnaRecordManager(models.Manager):
                         authrole = "valokuvaamo"
                         authname = authname.replace("(valokuvaamo)", "").strip()
                 
+                if (authname.endswith(": :") == True):
+                    authname = authname[:len(authname)-3]
+                
                 r, created = FinnaNonPresenterAuthor.objects.get_or_create(name = authname, role = authrole)
                 record.non_presenter_authors.add(r)
 
