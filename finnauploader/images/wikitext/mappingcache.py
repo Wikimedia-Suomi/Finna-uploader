@@ -81,6 +81,8 @@ class MappingCache:
             #    print("Page:", page.title(), "has revision:", page.latest_revision_id)
             #    print("Page:", new_page_title, " does not exist or is older")
 
+            if n in self.sub_rev_id:
+                sub_rev_id = self.sub_rev_id[n]
             if (sub_rev_id > rev_id and sub_rev_id > 0):
                 rev_id = sub_rev_id
 

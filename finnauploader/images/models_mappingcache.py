@@ -56,7 +56,7 @@ class FinnaMappingsCacheManager(models.Manager):
                                            defaults=defaults)
 
         # first time or later..
-        print("Loading mapping for:", page_title)
+        print("Loading mapping for:", page_title, "current revision:", obj.rev_id)
         mapping = getMappingByPage(page_title)
         if (mapping.base_page_title == ""):
             mapping.base_page_title = page_title
