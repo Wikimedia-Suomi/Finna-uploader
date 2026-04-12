@@ -7,8 +7,8 @@ import urllib
 from datetime import datetime
 
 from images.finna_record_api import get_finna_record, is_valid_finna_record
-from images.pywikibot_helpers import get_wikidata_id_from_url
 from images.sdc_helpers import get_structured_data_for_new_image
+#from images.wikitext.wikidata_helpers import get_wikidata_id_from_url
 from images.wikitext.commons_wikitext import get_wikitext_for_new_image, \
                                       get_comment_text
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
@@ -16,6 +16,8 @@ from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_institution_wikidata_id, \
                                     get_collection_wikidata_id, striprepeatespaces
 from images.wikitext.timestamps import parse_timestamp 
+
+from images.download_helper import download_file 
 
 
 # before starting upload, recheck wikidata ids if they were not updated earlier:
@@ -68,14 +70,14 @@ def update_wikidata_id_for_record_data(finna_image):
         actor.set_wikidata_id(wikidata_id)
 
     # empty set, not in use
-    for add_depict in finna_image.add_depicts.all():
-        wikidata_id = get_wikidata_id_from_url(add_depict.value)
-        add_depict.set_wikidata_id(wikidata_id)
+    #for add_depict in finna_image.add_depicts.all():
+    #    wikidata_id = get_wikidata_id_from_url(add_depict.value)
+    #    add_depict.set_wikidata_id(wikidata_id)
 
     # empty set, not in use
-    for add_category in finna_image.add_categories.all():
-        wikidata_id = get_wikidata_id_from_url(add_category.value)
-        add_category.set_wikidata_id(wikidata_id)
+    #for add_category in finna_image.add_categories.all():
+    #    wikidata_id = get_wikidata_id_from_url(add_category.value)
+    #    add_category.set_wikidata_id(wikidata_id)
     
     return True
 
@@ -280,7 +282,8 @@ def get_image_url(finna_image):
 
     # can't upload from redirector with copy-upload:
     # must handle differently
-    if (image_url.find("siiri.urn") > 0 or image_url.find("profium.com") > 0):
+    #if (image_url.find("siiri.urn") > 0): 
+    if (image_url.find("profium.com") > 0):
         print("Cannot use copy-upload from URL:", image_url)
         return None
     
@@ -289,8 +292,37 @@ def get_image_url(finna_image):
 # we have some cases where might need to download locally first
 # and apply format conversion or use different source domain (not copy-upload).
 # some urls might have redirect service in use.
-#def download_file(remote_url):
-#    return download_helper.download_file(remote_url)
+def download_image(remote_url):
+#
+# siiri can have redirect of the image from url given in Finna
+# so follow correct location: we can't use copy-upload for this if we don't know where it is..
+#
+    redirect = False
+    if (remote_url.find("siiri.urn") > 0):
+        redirect = True
+
+    buffer = download_file(remote_url, redirect)
+    if (buffer == None):
+        print("ERROR: could not get buffer")
+        return None
+    if (buffer.readable() == False or buffer.closed == True):
+        print("ERROR: can't read image from stream")
+        return None
+    if (buffer.getbuffer().nbytes < 100):
+        print("ERROR: less than 100 bytes in buffer")
+        return None
+
+    img = None
+    try:
+        img = Image.open(buffer)
+        # TODO:
+        # check image format, validity
+        return img
+    except:
+        print("ERROR: pillow failed to open image from buffer")
+        return None
+    return img
+
 
 # bad name due to existing methods, rename later
 # called from views.py on upload
@@ -350,6 +382,16 @@ def upload_file_update_metadata(finna_id):
     if (image_url == None):
         print("failed to get image url for:", finna_id)
         return ""
+
+    local_img = None
+    #local_file = False
+    if (image_url.find("siiri.urn") > 0):
+        #local_file = True
+        local_img = download_image(image_url)
+        if (local_img == None):
+            print("failed to get image from url:", image_url)
+            return ""
+
 
     # TODO: if necessary, in case of redirector (copy-upload can't be used)
     # download the file first before uploading
@@ -413,12 +455,22 @@ def upload_file_update_metadata(finna_id):
     # see if we can solve redirect-urls that way?
     
     file_page.text = wikitext
-    try:
-        # Load file from url
-        file_page.upload(image_url, comment=comment, asynchronous=True)
-    except:
-        print(f"The file {commons_file_name} failed to be uploaded.")
-        raise
+    
+    if (local_img == None):
+        try:
+            # Load file from url
+            file_page.upload(image_url, comment=comment, asynchronous=True)
+        except:
+            print(f"The file {commons_file_name} failed to be uploaded.")
+            raise
+    else:
+        try:
+            # Load file from url
+            file_page.upload(local_img, comment=comment, asynchronous=False)
+        except:
+            print(f"The file {commons_file_name} failed to be uploaded.")
+            raise
+        
 
     # if we need to do download/conversion first
     # upload from local file

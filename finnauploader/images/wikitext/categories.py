@@ -699,6 +699,14 @@ def get_categories_for_authors(finna_image):
             if (category != None):
                 categories.add(category)
 
+        if (author.is_designer()):
+            if (not author.wikidata_id):
+                print("wikidata id missing for author: ", author.name)
+                exit()
+            category = get_works_category_by_creator_id(author.wikidata_id)
+            if (category != None):
+                categories.add(category)
+
         # skip claim where author role is "tekijä"?
         #if (author.is_creator()):
         #    continue

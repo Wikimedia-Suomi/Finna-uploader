@@ -6,13 +6,11 @@ import json
 from images.wikitext.commons_wikitext import clean_depicted_places
 from images.wikitext.timestamps import parse_timestamp
 
-from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
+from images.wikitext.wikidata_helpers import getWdsite, \
+                                    get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_institution_wikidata_id, \
                                     get_collection_wikidata_id, get_clean_institution_name
-
-
-wikidata_site = pywikibot.Site("wikidata", "wikidata")  # Connect to Wikidata
 
 
 def create_P7482_source_of_file(url, operator, publisher):
@@ -26,6 +24,9 @@ def create_P7482_source_of_file(url, operator, publisher):
 
     if not publisher:
         return None
+ 
+    # reuse session and use proper login
+    wikidata_site = getWdsite()
 
     claim_target = pywikibot.ItemPage(wikidata_site, 'Q74228490')
     claim = pywikibot.Claim(wikidata_site, 'P7482')
@@ -73,6 +74,9 @@ def create_P275_licence(value, url):
         exit(1)
         return None
 
+    # reuse session and use proper login
+    wikidata_site = getWdsite()
+
     qcode = licences[value]
     claim_target = pywikibot.ItemPage(wikidata_site, qcode)
     claim = pywikibot.Claim(wikidata_site, 'P275')
@@ -106,6 +110,9 @@ def create_P6216_copyright_state(value):
         exit(1)
         return None
 
+    # reuse session and use proper login
+    wikidata_site = getWdsite()
+
     qcode = copyright_states[value]
     claim_target = pywikibot.ItemPage(wikidata_site, qcode)
     claim = pywikibot.Claim(wikidata_site, 'P6216')
@@ -118,6 +125,9 @@ def create_P9478_finna_id(value):
     if not value:
         return None
 
+    # reuse session and use proper login
+    wikidata_site = getWdsite()
+
     claim_target = value
     claim = pywikibot.Claim(wikidata_site, 'P9478')
     claim.setTarget(claim_target)
@@ -129,6 +139,9 @@ def create_P9478_finna_id(value):
 def create_P170_author(wikidata_id, role):
     if not wikidata_id:
         return None
+
+    # reuse session and use proper login
+    wikidata_site = getWdsite()
 
     # P170 "Author"
     claim = pywikibot.Claim(wikidata_site, 'P170')
@@ -152,6 +165,9 @@ def create_P195_collection(wikidata_id, collection_number):
     if not wikidata_id:
         return None
 
+    # reuse session and use proper login
+    wikidata_site = getWdsite()
+
     # check if same collection was added already to filter duplicates?
 
     claim_target = pywikibot.ItemPage(wikidata_site, wikidata_id)
@@ -173,6 +189,9 @@ def create_P180_depict(wikidata_id):
     if not wikidata_id:
         return None
 
+    # reuse session and use proper login
+    wikidata_site = getWdsite()
+
     claim_target = pywikibot.ItemPage(wikidata_site, wikidata_id)
     claim = pywikibot.Claim(wikidata_site, 'P180')
     claim.setTarget(claim_target)
@@ -181,6 +200,10 @@ def create_P180_depict(wikidata_id):
 
 
 def create_P571_inception(date_obj, precision):
+
+    # reuse session and use proper login
+    wikidata_site = getWdsite()
+    
     print(date_obj)
     target = pywikibot.WbTime(
                               year=date_obj.year,
@@ -462,6 +485,9 @@ def get_structured_data_for_new_image(finna_image):
 
 
 def create_P1071_location(finna_image):
+
+    # reuse session and use proper login
+    wikidata_site = getWdsite()
 
     ret = []
     wikidata_ids = set()

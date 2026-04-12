@@ -23,6 +23,14 @@ creatorNames = {}
 subjectCategories = {}
 collectionCategories = {}
 
+g_wdsite = {}
+
+def getWdsite():
+    if (g_wdsite == None):
+        g_wdsite = pywikibot.Site("wikidata", "wikidata")
+        g_wdsite.login() # ensure we have proper login
+    
+    return g_wdsite
 
 # if there is update, just invalidate all
 def invalidateWikidataCaches():
@@ -107,9 +115,8 @@ def get_collection_image_category_from_wikidata_id(wikidata_id):
         return getCollectionCategory(wikidata_id)
 
     # Connect to Wikidata
-    site = pywikibot.Site("wikidata", "wikidata")
-    # commons_site = pywikibot.Site("commons", "commons")
-    repo = site.data_repository()
+    wdsite = getWdsite()
+    repo = wdsite.data_repository()
 
     item = None
     try:
@@ -252,8 +259,8 @@ def get_institution_name_by_wikidata_id(wikidata_id):
         return institution_template_name
 
     # Connect to Wikidata
-    site = pywikibot.Site("wikidata", "wikidata")
-    repo = site.data_repository()
+    wdsite = getWdsite()
+    repo = wdsite.data_repository()
 
     # Access the Wikidata item using the provided ID
     item = pywikibot.ItemPage(repo, wikidata_id)
@@ -357,8 +364,8 @@ def get_creator_nane_by_wikidata_id(wikidata_id):
         return creator_name
 
     # Connect to Wikidata
-    site = pywikibot.Site("wikidata", "wikidata")
-    repo = site.data_repository()
+    wdsite = getWdsite()
+    repo = wdsite.data_repository()
 
     # Access the Wikidata item using the provided ID
     item = pywikibot.ItemPage(repo, wikidata_id)
@@ -410,9 +417,8 @@ def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
     #    return getSubjectCategory(wikidata_id)
 
     # Connect to Wikidata
-    site = pywikibot.Site("wikidata", "wikidata")
-    # commons_site = pywikibot.Site("commons", "commons")
-    repo = site.data_repository()
+    wdsite = getWdsite()
+    repo = wdsite.data_repository()
 
     item = None
     try:
@@ -473,9 +479,8 @@ def get_place_by_wikidata_id(wikidata_id):
     #     return getPlaceCategory(wikidata_id)
 
     # Connect to Wikidata
-    site = pywikibot.Site("wikidata", "wikidata")
-    # commons_site = pywikibot.Site("commons", "commons")
-    repo = site.data_repository()
+    wdsite = getWdsite()
+    repo = wdsite.data_repository()
 
     item = None
     try:
@@ -547,3 +552,72 @@ def get_subject_actors_wikidata_id(name):
         raise MissingSubjectActorError
     return obj.wikidata_id
 
+def is_qid(page_title):
+    return bool(re.match(r'^Q\d+$', page_title))
+
+
+def parse_qid_from_wikidata_url(url):
+    ret = None
+
+    if 'https://wikidata.org/wiki/Q' in url:
+        ret = url.replace('https://wikidata.org/wiki/', '')
+    elif 'http://wikidata.org/wiki/Q' in url:
+        ret = url.replace('http://wikidata.org/wiki/', '')
+    elif '//wikidata.org/wiki/Q' in url:
+        ret = url.replace('//wikidata.org/wiki/', '')
+    return ret
+
+
+def parse_qid_from_commons_category(url):
+    ret = None
+
+    if '//' not in url and 'category:' in url.lower():
+        try:
+            # should use full login 
+            site = pywikibot.Site('commons')
+            page = pywikibot.Page(site, url)
+            data_item = page.data_item()
+            # Get the associated DataItem (Wikidata item) for the page
+            ret = data_item.id
+        except:
+            pass
+    return ret
+
+
+def parse_wikidata_id_from_url(url):
+    try:
+        # Create a Site object from the URL
+        site = pywikibot.Site(url=url)
+
+        # Extract the page title from the URL and get the Page object
+        # This assumes the title is the last segment of the URL
+        title = url.split('/')[-1]
+        page = pywikibot.Page(site, title)
+        data_item = page.data_item()
+
+        # Get the associated DataItem (Wikidata item) for the page
+        return data_item.id
+    except NoPageError:
+        return None
+    except IndexError:
+        return False
+    return None
+
+
+def get_wikidata_id_from_url(url):
+    if is_qid(url):
+        return url
+
+    ret = parse_qid_from_commons_category(url)
+    if ret:
+        return ret
+
+    ret = parse_qid_from_wikidata_url(url)
+    if ret:
+        return ret
+
+    ret = parse_wikidata_id_from_url(url)
+    if ret:
+        return ret
+
+    return None

@@ -163,7 +163,6 @@ def get_collection_aliases():
              'Metsästysmuseo' : '0/Metsastysmuseo/', # Suomen Metsästysmuseo
              'Urheilumuseo' : '0/URHEILUMUSEO/',
              'Lottamuseo' : '0/Lottamuseo/', 
-             'Siiri': '0/Siiri/', # Tampereen historialliset museot
              'Satmuseo0' : "0/SATMUSEO/", # Satakunnan Museo
              'Satmuseo1' : "1/SATMUSEO/Kuvakokoelma/", # Kuvakokoelma
              'Rauman' : '0/RAUMANMUSEO/', 
@@ -173,6 +172,7 @@ def get_collection_aliases():
              'Salon' : '0/Salon historiallinen museo/',
              'Nurmeksen' : '0/NurmeksenMuseo/',
              'Museovirasto' : '0/Museovirasto/',
+             'Siiri': '0/Siiri/', # Tampereen historialliset museot
              'Vapriikki': '1/Siiri/Vapriikin kuva-arkisto/',
              'Valkeakosken' : '0/VISAVUORI/',
              'Werstas' : '0/Werstas/', # Työväenmuseo Werstas
@@ -245,7 +245,9 @@ def is_building_collection(name):
                     '0/Naantalin museo/',
                     '0/Salon historiallinen museo/',
                     '0/NurmeksenMuseo/',
-                    '0/kansan_arkisto/'
+                    '0/kansan_arkisto/',
+                    '0/Siiri/',
+                    '1/Siiri/Vapriikin kuva-arkisto/',
                     '0/VISAVUORI/',
                     '0/Werstas/',
                     '0/Museovirasto/',
