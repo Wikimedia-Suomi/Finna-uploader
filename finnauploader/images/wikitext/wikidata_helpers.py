@@ -23,9 +23,10 @@ creatorNames = {}
 subjectCategories = {}
 collectionCategories = {}
 
-g_wdsite = {}
+g_wdsite = None
 
 def getWdsite():
+    global g_wdsite
     if (g_wdsite == None):
         g_wdsite = pywikibot.Site("wikidata", "wikidata")
         g_wdsite.login() # ensure we have proper login
