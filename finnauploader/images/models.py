@@ -1289,26 +1289,16 @@ class FinnaImage(models.Model):
 
     # Pseudo properties
     @property
-    def thumbnail_url(self):
-        # TODO: if there are multiples images in same record, index should reflect that
-        url = f'https://finna.fi/Cover/Show?source=Solr&id={self.finna_id}&index=0&size=small'
-        return url
-
-    @property
     def v_thumbnail_url(self):
+        # TODO: get correct path from image_paths where type == small
         # encoded url of the image for the view, see FinnaImageSerializer in serializers.py
         finnaid = self.get_encoded_finna_id()
         url = f'https://finna.fi/Cover/Show?source=Solr&id={finnaid}&index=0&size=small'
         return url
 
     @property
-    def image_url(self):
-        # TODO: if there are multiples images in same record, index should reflect that
-        url = f'https://finna.fi/Cover/Show?source=Solr&id={self.finna_id}&index=0&size=large'
-        return url
-
-    @property
     def v_image_url(self):
+        # TODO: get correct path from image_paths where type == large
         # encoded url of the image for the view, see FinnaImageSerializer in serializers.py
         finnaid = self.get_encoded_finna_id()
         url = f'https://finna.fi/Cover/Show?source=Solr&id={finnaid}&index=0&size=large'
