@@ -576,14 +576,18 @@ class FinnaRecordManager(models.Manager):
             return None
         # if format is not there it might be possible to determine from extension in resourceName ?
 
-        # TODO: type (small, medium, large, master, original) and image path as-is
-        #if ('imagesExtended' in data):
-        #    for ext in data['imagesExtended']:
-        #        it = ext[]
-        #        path = ext[]
-        #    r, created = FinnaImagePath.objects.get_or_create(value = instval, 
-        #                                                       defaults={'translated': itranslated})
-        #    record.image_paths.add(r)
+        # type (small, medium, large, master, original) and image path as-is
+        if ('imagesExtended' in data and len(data['imagesExtended']) > 0):
+            images_extended_data = data['imagesExtended']
+            if images_extended_data:
+                for ext in images_extended_data[0]['urls']:
+                    it = ext[0]
+                    path = ext[1]
+                    if (len(it) == 0 or len(path) == 0):
+                        continue
+                    r, created = FinnaImagePath.objects.get_or_create(imagetype = it, 
+                                                                    path = path)
+                    record.image_paths.add(r)
 
         # in some cases, url is not complete:
         # protocol and domain are not stored in the record, which we need later
