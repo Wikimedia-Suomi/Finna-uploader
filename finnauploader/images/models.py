@@ -1212,6 +1212,11 @@ class FinnaImage(models.Model):
     def get_encoded_finna_id(self):
         finnaid = self.finna_id
 
+        if (finnaid.startswith("siiri.") == True):
+            # should be encoded already, use as is
+            # if not %25 in string -> quote()
+            return finnaid
+
         # some don't work correctly with the encoding, others need it:
         # for example, kouvolan museo does not work correct when : is encoded to %3A
         if (finnaid.startswith("fmp.") == False and finnaid.startswith("sls.") == False):
@@ -1223,19 +1228,13 @@ class FinnaImage(models.Model):
         if (finnaid.startswith("fmp.") == True):
             # do this once in this case
             return urllib.parse.quote_plus(finnaid)
-            
-        if (finnaid.startswith("siiri.") == True):
-            # should be encoded already, use as is
-            # if not %25 in string -> quote()
-            return finnaid
 
         # seems to need special casing
-        if (finnaid.find(":") > 0 and finnaid.startswith("sls.SLSA") == True):
-            return finnaid.replace(":", "%253A")
-        
-        # don't do anything else in this case?
         if (finnaid.startswith("sls.SLSA") == True):
-            return finnaid
+            quotedid = finnaid
+            quotedid = quotedid.replace(":", "%253A")
+            quotedid = quotedid.replace("+", "%2B")
+            return quotedid
         
         quoteid = True
         # sls id but already encoded?
