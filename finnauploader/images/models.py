@@ -382,6 +382,15 @@ class FinnaFormats(models.Model):
             return True
         return False
 
+# path to image (part of url) or potentially full url:
+# type may be size (small, medium, large) or master/original
+class FinnaImagePath(models.Model):
+    imagetype = models.CharField(max_length=50)
+    path = models.TextField()
+
+    def __str__(self):
+        return self.path
+
 
 # Managers
 class FinnaRecordManager(models.Manager):
@@ -533,6 +542,10 @@ class FinnaRecordManager(models.Manager):
         # Extract imagesExtended data
         master_url = ""
         master_format = ""
+        
+        # TODO: type (small, medium, large, master, original) and image path as-is
+        #imagelist = dict()
+        #FinnaImagePath
 
         # if there isn't "imagesExtended", try "images"
         if ('imagesExtended' in data and len(data['imagesExtended']) > 0):
@@ -1177,6 +1190,7 @@ class FinnaImage(models.Model):
     master_url = models.URLField(max_length=500)
     master_format = models.TextField()
     measurements = models.TextField()
+    image_paths = models.ManyToManyField(FinnaImagePath)
     materials = models.ManyToManyField(FinnaMaterials)
     non_presenter_authors = models.ManyToManyField(FinnaNonPresenterAuthor)
     summaries = models.ManyToManyField(FinnaSummary)
