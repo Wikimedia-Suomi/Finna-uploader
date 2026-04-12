@@ -543,10 +543,6 @@ class FinnaRecordManager(models.Manager):
         master_url = ""
         master_format = ""
         
-        # TODO: type (small, medium, large, master, original) and image path as-is
-        #imagelist = dict()
-        #FinnaImagePath
-
         # if there isn't "imagesExtended", try "images"
         if ('imagesExtended' in data and len(data['imagesExtended']) > 0):
             images_extended_data = data['imagesExtended']
@@ -579,7 +575,16 @@ class FinnaRecordManager(models.Manager):
             print("ERROR: did not find master url ")
             return None
         # if format is not there it might be possible to determine from extension in resourceName ?
-                
+
+        # TODO: type (small, medium, large, master, original) and image path as-is
+        #if ('imagesExtended' in data):
+        #    for ext in data['imagesExtended']:
+        #        it = ext[]
+        #        path = ext[]
+        #    r, created = FinnaImagePath.objects.get_or_create(value = instval, 
+        #                                                       defaults={'translated': itranslated})
+        #    record.image_paths.add(r)
+
         # in some cases, url is not complete:
         # protocol and domain are not stored in the record, which we need later
         if (master_url.find("http://") < 0 and master_url.find("https://") < 0):
@@ -1228,8 +1233,11 @@ class FinnaImage(models.Model):
 
         if (finnaid.startswith("siiri.") == True):
             # should be encoded already, use as is
-            # if not %25 in string -> quote()
-            return finnaid
+            # if not %25 in string -> quote(),
+            # don't add double
+            if (finnaid.find("%25") > 0):
+                return finnaid
+            return urllib.parse.quote_plus(finnaid)
 
         # some don't work correctly with the encoding, others need it:
         # for example, kouvolan museo does not work correct when : is encoded to %3A
