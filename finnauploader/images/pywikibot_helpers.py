@@ -11,11 +11,28 @@ pywikibot.config.socket_timeout = 240
 
 dtstart = datetime.now()
 
+g_wdsite = None
+g_commonssite = None
+
+def getWdsite():
+    global g_wdsite
+    if (g_wdsite == None):
+        g_wdsite = pywikibot.Site("wikidata", "wikidata")
+        g_wdsite.login() # ensure we have proper login
+    
+    return g_wdsite
+
+def getCommonsite():
+    global g_commonssite
+    if (g_commonssite == None):
+        g_commonssite = pywikibot.Site('commons', 'commons')
+        g_commonssite.login() # ensure we have proper login
+    
+    return g_commonssite
 
 def are_there_messages_for_bot_in_commons():
 
-    commonssite = pywikibot.Site('commons', 'commons')
-    commonssite.login()
+    commonssite = getCommonsite()
     
     # Check if the page exists
     if commonssite.userinfo['messages']:

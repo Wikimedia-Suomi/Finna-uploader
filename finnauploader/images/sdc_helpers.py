@@ -6,8 +6,8 @@ import json
 from images.wikitext.commons_wikitext import clean_depicted_places
 from images.wikitext.timestamps import parse_timestamp
 
-from images.wikitext.wikidata_helpers import getWdsite, \
-                                    get_author_wikidata_id, \
+from images.pywikibot_helpers import getWdsite
+from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_institution_wikidata_id, \
                                     get_collection_wikidata_id, get_clean_institution_name

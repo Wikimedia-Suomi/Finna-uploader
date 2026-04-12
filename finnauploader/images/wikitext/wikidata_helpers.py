@@ -17,21 +17,14 @@ from images.exceptions import MissingNonPresenterAuthorError, \
 
 import pywikibot
 
+from images.pywikibot_helpers import getWdsite, getCommonsite
+
 # reduce repeated queries a bit
 institutionNames = {}
 creatorNames = {}
 subjectCategories = {}
 collectionCategories = {}
 
-g_wdsite = None
-
-def getWdsite():
-    global g_wdsite
-    if (g_wdsite == None):
-        g_wdsite = pywikibot.Site("wikidata", "wikidata")
-        g_wdsite.login() # ensure we have proper login
-    
-    return g_wdsite
 
 # if there is update, just invalidate all
 def invalidateWikidataCaches():
@@ -575,8 +568,10 @@ def parse_qid_from_commons_category(url):
     if '//' not in url and 'category:' in url.lower():
         try:
             # should use full login 
-            site = pywikibot.Site('commons')
-            page = pywikibot.Page(site, url)
+            # ensure proper login
+            commonssite = getCommonsite()
+            
+            page = pywikibot.Page(commonssite, url)
             data_item = page.data_item()
             # Get the associated DataItem (Wikidata item) for the page
             ret = data_item.id

@@ -2,6 +2,7 @@ from django.db import models
 from images.wikitext.mappingcache import MappingCache
 import pywikibot
 
+from images.pywikibot_helpers import getCommonsite
 
 # make sure we keep the cache somewhere to avoid reparsing
 g_nonPresenterAuthorsMapping = MappingCache()
@@ -47,7 +48,8 @@ class FinnaMappingsCacheManager(models.Manager):
         page_title = self.model.page_title
         print("Checking cache for page:", page_title)
 
-        site = pywikibot.Site("commons")
+        # ensure proper login
+        commonssite = getCommonsite()
 
         # get latest rev id in database
         defaults = {'rev_id': 0}
@@ -62,7 +64,7 @@ class FinnaMappingsCacheManager(models.Manager):
             mapping.base_page_title = page_title
 
         # check if there is newer version of mapping available
-        rev_id = mapping.parse_cache_pages(site)
+        rev_id = mapping.parse_cache_pages(commonssite)
         if (obj.rev_id >= rev_id):
             print("mapping older or equal revision")
             return

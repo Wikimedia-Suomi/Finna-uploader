@@ -18,6 +18,8 @@ from images.finna_record_api import do_finna_search, \
                                     get_collection_name_from_alias, \
                                     get_finna_id_from_url
 
+from images.pywikibot_helpers import getCommonsite
+
 from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
                                     get_subject_actors_wikidata_id, \
                                     get_institution_wikidata_id, \
@@ -233,8 +235,8 @@ def update_newest_from_category(maincat, limit=100):
 
     print("Loading ", str(limit) ," files from category", maincat)
 
-    commonssite = pywikibot.Site('commons', 'commons')
-    commonssite.login()
+    # ensure proper login
+    commonssite = getCommonsite()
 
     cat = pywikibot.Category(commonssite, maincat)
     pages = cat.newest_pages(limit)
@@ -256,8 +258,8 @@ def update_existing_from_category(maincat):
 
     print("Loading files from category", maincat)
 
-    commonssite = pywikibot.Site('commons', 'commons')
-    commonssite.login()
+    # ensure proper login
+    commonssite = getCommonsite()
     
     cat = pywikibot.Category(commonssite, maincat)
     pages = list(commonssite.categorymembers(cat))

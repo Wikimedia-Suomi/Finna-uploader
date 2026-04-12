@@ -2,6 +2,7 @@ import requests
 import pywikibot
 from pywikibot.data import sparql
 
+from images.pywikibot_helpers import getCommonsite
 
 # finna id query results: reduce queries
 toolforgeFinnaId = {}
@@ -80,9 +81,10 @@ def get_upload_summary(limit=1000):
     # maybe use set() for unique list (we don't really care how many times it exists)
     uploads = list()
     checked = list() # checked page list (filter)
-    
-    commonssite = pywikibot.Site('commons', 'commons')
-    commonssite.login()
+
+    # ensure proper login
+    commonssite = getCommonsite()
+
     current_user = commonssite.user()
 
     usual_uploaders = list()

@@ -6,6 +6,8 @@ import re
 import urllib
 from datetime import datetime
 
+from images.pywikibot_helpers import getCommonsite
+
 from images.finna_record_api import get_finna_record, is_valid_finna_record
 from images.sdc_helpers import get_structured_data_for_new_image
 #from images.wikitext.wikidata_helpers import get_wikidata_id_from_url
@@ -399,9 +401,9 @@ def upload_file_update_metadata(finna_id):
     # TODO: should we use buffer directly or save to temp file?
     # TODO: when using local file in upload, verify image format from file
 
-    commonssite = pywikibot.Site('commons', 'commons')
-    commonssite.login()
-    
+    # ensure proper login
+    commonssite = getCommonsite()
+
     # before doing other tasks it would be good to check first if file with same name exists
     #also make sure not to create it by mistake while checking..
 
