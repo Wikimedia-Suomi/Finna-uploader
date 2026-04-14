@@ -1,13 +1,14 @@
 import requests
 import pywikibot
 from pywikibot.data import sparql
+from pywikibot.data.sparql import SparqlQuery
 
 from images.pywikibot_helpers import getCommonsite
 
 # finna id query results: reduce queries
 toolforgeFinnaId = {}
-uploadsummary = None
-sparql_finna_ids_data = None
+g_uploadsummary = None
+g_sparql_finna_ids_data = None
 
 # set into cache
 def setToolforgeFinnaId(finna_id, exists):
@@ -124,22 +125,24 @@ def get_upload_summary(limit=1000):
 
 # only used from import helper during import
 def is_already_in_commons(finna_id, fast=False):
-    if (sparql_finna_ids_data == None):
+    global g_sparql_finna_ids_data
+    if (g_sparql_finna_ids_data == None):
         print("Loading existing ids by sparql")
-        sparql_finna_ids_data = get_existing_finna_ids_from_sparql()
+        g_sparql_finna_ids_data = get_existing_finna_ids_from_sparql()
 
-    if (uploadsummary == None):
+    global g_uploadsummary
+    if (g_uploadsummary == None):
         print("Loading 1000 most recent edit summaries for skipping uploaded files")
-        uploadsummary = get_upload_summary(1000)
+        g_uploadsummary = get_upload_summary(1000)
 
     #print("DEBUG: searching for existing finna id: ", finna_id)
     
     # Check if image is already uploaded
-    if finna_id in sparql_finna_ids_data:
+    if finna_id in g_sparql_finna_ids_data:
         print(f'Skipping 1: {finna_id} already uploaded based on sparql')
         return True
 
-    if finna_id in uploadsummary:
+    if finna_id in g_uploadsummary:
         print(f'Skipping 2: {finna_id} already uploaded based on summaries')
         return True
 
@@ -155,5 +158,22 @@ def is_already_in_commons(finna_id, fast=False):
             print(msg)
             return True
     return False
+
+
+def test_if_finna_id_exists_in_commons(finna_id, slow=False):
+    query = """
+SELECT DISTINCT ?media ?finna_id ?phash ?dhash WHERE {
+    ?media wdt:P9478 __finna_id__ .
+    OPTIONAL { ?media wdt:P9310 ?phash }
+    OPTIONAL { ?media wdt:P12563 ?dhash }
+} LIMIT 3
+"""
+
+    query = query.replace('__finna_id__', f'"{finna_id}"')
+    endpoint = 'https://commons-query.wikimedia.org/sparql'
+    entity_url = 'https://commons.wikimedia.org/entity/'
+    sparql = SparqlQuery(endpoint=endpoint, entity_url=entity_url)
+    data = sparql.select(query)
+    return data
 
 # main ()

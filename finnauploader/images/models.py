@@ -579,15 +579,19 @@ class FinnaRecordManager(models.Manager):
         # type (small, medium, large, master, original) and image path as-is
         if ('imagesExtended' in data and len(data['imagesExtended']) > 0):
             images_extended_data = data['imagesExtended']
-            if images_extended_data:
-                for ext in images_extended_data[0]['urls']:
-                    it = ext[0]
-                    path = ext[1]
-                    if (len(it) == 0 or len(path) == 0):
-                        continue
-                    r, created = FinnaImagePath.objects.get_or_create(imagetype = it, 
-                                                                    path = path)
-                    record.image_paths.add(r)
+            #if images_extended_data:
+            
+                # this is bugged, fix it
+                #for ext in images_extended_data[0]['urls']:
+                
+                    #it = ext
+                    #path = ""
+                    #if (len(it) == 0 or len(path) == 0):
+                    #    continue
+                    #print("DEBUG, urls: ", it, " - ", path, " ext", str(ext))
+                    
+                    #r, created = FinnaImagePath.objects.get_or_create(imagetype = it, path = path)
+                    #record.image_paths.add(r)
 
         # in some cases, url is not complete:
         # protocol and domain are not stored in the record, which we need later
@@ -1007,6 +1011,8 @@ class FinnaRecordManager(models.Manager):
                         if (ptmp not in subject_placeslist):
                             subject_placeslist.append(ptmp)
 
+                #if ('actors' in valm):
+                #    name, role
                 #if ('materials' in valm):
                 #    for material in valm['materials']:
                 #        material = striprepeatespaces(material)
@@ -1286,15 +1292,33 @@ class FinnaImage(models.Model):
         #    finnaid = finnaid.replace(":", "%3A")
 
         return finnaid
+    
+    # sizetype: small, medium, large, master, original
+    def getThumbnailUrl(self, sizetype):
+
+        url = ""
+        for p in self.image_paths.all():
+            print("DEBUG, sizetype: ", sizetype, " - ", self.finna_id, "path", p.path)
+            
+            if p.imagetype == sizetype:
+                path = p.path
+                url = 'https://finna.fi' + path
+                break
+            
+        # fallback in case data has not been re-imported yet:
+        # ideally this would not be necessary
+        if (url == ""):
+            print("did not find path for ", sizetype)
+            finnaid = self.get_encoded_finna_id()
+            url = f'https://finna.fi/Cover/Show?source=Solr&id={finnaid}&index=0&size={sizetype}'
+        return url
+        
 
     # Pseudo properties
     @property
     def v_thumbnail_url(self):
-        # TODO: get correct path from image_paths where type == small
         # encoded url of the image for the view, see FinnaImageSerializer in serializers.py
-        finnaid = self.get_encoded_finna_id()
-        url = f'https://finna.fi/Cover/Show?source=Solr&id={finnaid}&index=0&size=small'
-        return url
+        return self.getThumbnailUrl("small")
 
     @property
     def v_image_url(self):
@@ -1304,11 +1328,11 @@ class FinnaImage(models.Model):
         url = f'https://finna.fi/Cover/Show?source=Solr&id={finnaid}&index=0&size=large'
         return url
 
-    @property
-    def url(self):
+    # ambiguous and unclear where this is used..
+    #def url(self):
         # where is this property used?
-        url = f'https://finna.fi/Record/{self.finna_id}'
-        return url
+     #   url = f'https://finna.fi/Record/{self.finna_id}'
+     #   return url
     
     @property
     def v_record_url(self):

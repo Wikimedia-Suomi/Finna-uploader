@@ -159,6 +159,7 @@ def get_comment_text(finna_image):
 
     if not authorlist:
         authorlist.append('unknown')
+    f_recordurl = finna_image.get_record_url(False)
 
     ret = "Uploading \'" + finna_image.short_title + "\'"
     ret = ret + " by \'" + "; ".join(authorlist) + "\'"
@@ -166,7 +167,7 @@ def get_comment_text(finna_image):
     copyrighttemplate = get_copyright_template_name(finna_image)
 
     ret = f'{ret} with licence {copyrighttemplate}'
-    ret = f'{ret} from {finna_image.url}'
+    ret = f'{ret} from {f_recordurl}'
 
     return ret
 

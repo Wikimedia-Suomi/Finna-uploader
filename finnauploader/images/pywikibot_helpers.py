@@ -3,7 +3,6 @@ from pywikibot.exceptions import NoPageError
 import json
 import re
 from datetime import datetime
-from pywikibot.data.sparql import SparqlQuery
 
 
 # should do this here instead of in wikidata_helpers.py ?
@@ -51,18 +50,3 @@ def are_there_messages_for_bot_in_commons():
     return False
 
 
-def test_if_finna_id_exists_in_commons(finna_id, slow=False):
-    query = """
-SELECT DISTINCT ?media ?finna_id ?phash ?dhash WHERE {
-    ?media wdt:P9478 __finna_id__ .
-    OPTIONAL { ?media wdt:P9310 ?phash }
-    OPTIONAL { ?media wdt:P12563 ?dhash }
-} LIMIT 3
-"""
-
-    query = query.replace('__finna_id__', f'"{finna_id}"')
-    endpoint = 'https://commons-query.wikimedia.org/sparql'
-    entity_url = 'https://commons.wikimedia.org/entity/'
-    sparql = SparqlQuery(endpoint=endpoint, entity_url=entity_url)
-    data = sparql.select(query)
-    return data
