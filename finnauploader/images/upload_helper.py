@@ -6,7 +6,7 @@ import re
 import urllib
 from datetime import datetime
 
-from images.pywikibot_helpers import getCommonsite
+from images.pywikibot_helpers import getCommonsite, getWdsite
 
 from images.finna_record_api import get_finna_record, is_valid_finna_record
 from images.sdc_helpers import get_structured_data_for_new_image
@@ -26,7 +26,7 @@ from images.download_helper import download_file
 # mapping may be added for authors/creators/subjects after data was fetched originally
 # 
 # this should simplify rest of data handling after this
-def update_wikidata_id_for_record_data(finna_image):
+def update_wikidata_id_for_record_data(commonssite, wikidata_site, finna_image):
 
     # this should not be empty, there should be institution
     institutions = finna_image.institutions.all()
@@ -73,12 +73,12 @@ def update_wikidata_id_for_record_data(finna_image):
 
     # empty set, not in use
     #for add_depict in finna_image.add_depicts.all():
-    #    wikidata_id = get_wikidata_id_from_url(add_depict.value)
+    #    wikidata_id = get_wikidata_id_from_url(commonssite, add_depict.value)
     #    add_depict.set_wikidata_id(wikidata_id)
 
     # empty set, not in use
     #for add_category in finna_image.add_categories.all():
-    #    wikidata_id = get_wikidata_id_from_url(add_category.value)
+    #    wikidata_id = get_wikidata_id_from_url(commonssite, add_category.value)
     #    add_category.set_wikidata_id(wikidata_id)
     
     return True
@@ -331,6 +331,14 @@ def download_image(remote_url):
 #
 def upload_file_update_metadata(finna_id):
 
+    #print("DEBUG: site login ok")
+
+    # reuse session and ensure proper login
+    commonssite = getCommonsite()
+    print("DEBUG: commons site login ok")
+    wikidata_site = getWdsite()
+    print("DEBUG: wikidata site login ok")
+
     # refetch finna_image.already_in_commons,
     # it seems the display still has images that are already uploaded
     # so they should be skipped
@@ -368,7 +376,7 @@ def upload_file_update_metadata(finna_id):
     finna_image = FinnaImage.objects.create_from_data(new_record)
     
     # verify we have valid wikidata id where necessary
-    if (update_wikidata_id_for_record_data(finna_image) == False):
+    if (update_wikidata_id_for_record_data(commonssite, wikidata_site, finna_image) == False):
         print("failed to update wikidata ids for record:", finna_id)
         return ""
 
@@ -401,8 +409,6 @@ def upload_file_update_metadata(finna_id):
     # TODO: should we use buffer directly or save to temp file?
     # TODO: when using local file in upload, verify image format from file
 
-    # ensure proper login
-    commonssite = getCommonsite()
 
     # before doing other tasks it would be good to check first if file with same name exists
     #also make sure not to create it by mistake while checking..
@@ -428,8 +434,8 @@ def upload_file_update_metadata(finna_id):
         return ""
     
     # try to generate early so it is possible to return before trying to upload
-    structured_data = get_structured_data_for_new_image(finna_image)
-    wikitext = get_wikitext_for_new_image(finna_image)
+    structured_data = get_structured_data_for_new_image(wikidata_site, finna_image)
+    wikitext = get_wikitext_for_new_image(wikidata_site, finna_image)
     comment = get_comment_text(finna_image)
 
     if (len(comment) > 250):

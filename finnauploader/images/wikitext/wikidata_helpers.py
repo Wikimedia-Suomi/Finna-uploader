@@ -17,7 +17,7 @@ from images.exceptions import MissingNonPresenterAuthorError, \
 
 import pywikibot
 
-from images.pywikibot_helpers import getWdsite, getCommonsite
+#from images.pywikibot_helpers import getWdsite, getCommonsite
 
 # reduce repeated queries a bit
 institutionNames = {}
@@ -102,14 +102,14 @@ def isCollectionCategory(wikidata_id):
 
 # Commons-category associated with wikidata-entry
 # Commons-luokka (P373)
-def get_collection_image_category_from_wikidata_id(wikidata_id):
+def get_collection_image_category_from_wikidata_id(wdsite, wikidata_id):
 
     # reduce repeated queries a bit
     if (isCollectionCategory(wikidata_id) is True):
         return getCollectionCategory(wikidata_id)
 
     # Connect to Wikidata
-    wdsite = getWdsite()
+    #wdsite = getWdsite()
     repo = wdsite.data_repository()
 
     item = None
@@ -245,7 +245,7 @@ def isInstitutionName(wikidata_id):
     return False
 
 
-def get_institution_name_by_wikidata_id(wikidata_id):
+def get_institution_name_by_wikidata_id(wdsite, wikidata_id):
 
     # reduce repeated queries a bit
     if (isInstitutionName(wikidata_id) is True):
@@ -253,7 +253,7 @@ def get_institution_name_by_wikidata_id(wikidata_id):
         return institution_template_name
 
     # Connect to Wikidata
-    wdsite = getWdsite()
+    #wdsite = getWdsite()
     repo = wdsite.data_repository()
 
     # Access the Wikidata item using the provided ID
@@ -350,7 +350,7 @@ def isCreatorName(wikidata_id):
 
 
 # creator name according wikidata entry for creator template
-def get_creator_nane_by_wikidata_id(wikidata_id):
+def get_creator_nane_by_wikidata_id(wdsite, wikidata_id):
 
     # reduce repeated queries a bit
     if (isCreatorName(wikidata_id) is True):
@@ -358,7 +358,7 @@ def get_creator_nane_by_wikidata_id(wikidata_id):
         return creator_name
 
     # Connect to Wikidata
-    wdsite = getWdsite()
+    #wdsite = getWdsite()
     repo = wdsite.data_repository()
 
     # Access the Wikidata item using the provided ID
@@ -404,14 +404,14 @@ def isSubjectCategory(wikidata_id):
 
 # Commons-category associated with wikidata-entry
 # Commons-luokka (P373)
-def get_subject_image_category_from_wikidata_id(wikidata_id, mandatory=False):
+def get_subject_image_category_from_wikidata_id(wdsite, wikidata_id, mandatory=False):
 
     # reduce repeated queries a bit
     # if (isSubjectCategory(wikidata_id) is True):
     #    return getSubjectCategory(wikidata_id)
 
     # Connect to Wikidata
-    wdsite = getWdsite()
+    #wdsite = getWdsite()
     repo = wdsite.data_repository()
 
     item = None
@@ -466,14 +466,14 @@ class WikidataPlace:
         self.nation = None
 
 
-def get_place_by_wikidata_id(wikidata_id):
+def get_place_by_wikidata_id(wdsite, wikidata_id):
 
     # reduce repeated queries a bit
     # if (isPlaceCategory(wikidata_id) is True):
     #     return getPlaceCategory(wikidata_id)
 
     # Connect to Wikidata
-    wdsite = getWdsite()
+    #wdsite = getWdsite()
     repo = wdsite.data_repository()
 
     item = None
@@ -562,14 +562,14 @@ def parse_qid_from_wikidata_url(url):
     return ret
 
 
-def parse_qid_from_commons_category(url):
+def parse_qid_from_commons_category(commonssite, url):
     ret = None
 
     if '//' not in url and 'category:' in url.lower():
         try:
             # should use full login 
             # ensure proper login
-            commonssite = getCommonsite()
+            #commonssite = getCommonsite()
             
             page = pywikibot.Page(commonssite, url)
             data_item = page.data_item()
@@ -600,11 +600,11 @@ def parse_wikidata_id_from_url(url):
     return None
 
 
-def get_wikidata_id_from_url(url):
+def get_wikidata_id_from_url(commonssite, url):
     if is_qid(url):
         return url
 
-    ret = parse_qid_from_commons_category(url)
+    ret = parse_qid_from_commons_category(commonssite, url)
     if ret:
         return ret
 

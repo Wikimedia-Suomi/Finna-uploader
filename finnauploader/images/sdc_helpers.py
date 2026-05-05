@@ -6,14 +6,8 @@ import json
 from images.wikitext.commons_wikitext import clean_depicted_places
 from images.wikitext.timestamps import parse_timestamp
 
-from images.pywikibot_helpers import getWdsite
-from images.wikitext.wikidata_helpers import get_author_wikidata_id, \
-                                    get_subject_actors_wikidata_id, \
-                                    get_institution_wikidata_id, \
-                                    get_collection_wikidata_id, get_clean_institution_name
 
-
-def create_P7482_source_of_file(url, operator, publisher):
+def create_P7482_source_of_file(wikidata_site, url, operator, publisher):
     # Q74228490 = file available on the internet
 
     if not url:
@@ -25,9 +19,6 @@ def create_P7482_source_of_file(url, operator, publisher):
     if not publisher:
         return None
  
-    # reuse session and use proper login
-    wikidata_site = getWdsite()
-
     claim_target = pywikibot.ItemPage(wikidata_site, 'Q74228490')
     claim = pywikibot.Claim(wikidata_site, 'P7482')
     claim.setTarget(claim_target)
@@ -57,7 +48,7 @@ def create_P7482_source_of_file(url, operator, publisher):
     return claim
 
 
-def create_P275_licence(value, url):
+def create_P275_licence(wikidata_site, value, url):
     if not value:
         print("No licence error")
         exit(1)
@@ -74,9 +65,6 @@ def create_P275_licence(value, url):
         exit(1)
         return None
 
-    # reuse session and use proper login
-    wikidata_site = getWdsite()
-
     qcode = licences[value]
     claim_target = pywikibot.ItemPage(wikidata_site, qcode)
     claim = pywikibot.Claim(wikidata_site, 'P275')
@@ -92,7 +80,7 @@ def create_P275_licence(value, url):
     return claim
 
 
-def create_P6216_copyright_state(value):
+def create_P6216_copyright_state(wikidata_site, value):
     if not value:
         return None
 
@@ -110,9 +98,6 @@ def create_P6216_copyright_state(value):
         exit(1)
         return None
 
-    # reuse session and use proper login
-    wikidata_site = getWdsite()
-
     qcode = copyright_states[value]
     claim_target = pywikibot.ItemPage(wikidata_site, qcode)
     claim = pywikibot.Claim(wikidata_site, 'P6216')
@@ -121,12 +106,9 @@ def create_P6216_copyright_state(value):
     return claim
 
 # finna id property
-def create_P9478_finna_id(value):
+def create_P9478_finna_id(wikidata_site, value):
     if not value:
         return None
-
-    # reuse session and use proper login
-    wikidata_site = getWdsite()
 
     claim_target = value
     claim = pywikibot.Claim(wikidata_site, 'P9478')
@@ -136,12 +118,9 @@ def create_P9478_finna_id(value):
 
 
 # TODO: this include photograper, by could include "illustrator" or other such role as well
-def create_P170_author(wikidata_id, role):
+def create_P170_author(wikidata_site, wikidata_id, role):
     if not wikidata_id:
         return None
-
-    # reuse session and use proper login
-    wikidata_site = getWdsite()
 
     # P170 "Author"
     claim = pywikibot.Claim(wikidata_site, 'P170')
@@ -161,12 +140,9 @@ def create_P170_author(wikidata_id, role):
     return claim
 
 
-def create_P195_collection(wikidata_id, collection_number):
+def create_P195_collection(wikidata_site, wikidata_id, collection_number):
     if not wikidata_id:
         return None
-
-    # reuse session and use proper login
-    wikidata_site = getWdsite()
 
     # check if same collection was added already to filter duplicates?
 
@@ -185,12 +161,9 @@ def create_P195_collection(wikidata_id, collection_number):
     return claim
 
 
-def create_P180_depict(wikidata_id):
+def create_P180_depict(wikidata_site, wikidata_id):
     if not wikidata_id:
         return None
-
-    # reuse session and use proper login
-    wikidata_site = getWdsite()
 
     claim_target = pywikibot.ItemPage(wikidata_site, wikidata_id)
     claim = pywikibot.Claim(wikidata_site, 'P180')
@@ -199,11 +172,8 @@ def create_P180_depict(wikidata_id):
     return claim
 
 
-def create_P571_inception(date_obj, precision):
+def create_P571_inception(wikidata_site, date_obj, precision):
 
-    # reuse session and use proper login
-    wikidata_site = getWdsite()
-    
     print(date_obj)
     target = pywikibot.WbTime(
                               year=date_obj.year,
@@ -238,12 +208,12 @@ def wbEditEntity(site, page, data):
     return ret
 
 
-def get_inception_claim(finna_image):
+def get_inception_claim(wikidata_site, finna_image):
     try:
         timestamp, precision = parse_timestamp(finna_image.get_date_string())
 
         if timestamp and precision:
-            claim = create_P571_inception(timestamp, precision)
+            claim = create_P571_inception(wikidata_site, timestamp, precision)
             return claim
     except:
         print("failed to create inception")
@@ -332,7 +302,8 @@ def get_authors_for_sdc(finna_image):
 
 # this context is for sdc data in commons,
 # used during upload to create claims
-def get_claims_for_image_upload(finna_image):
+def get_claims_for_image_upload(wikidata_site, finna_image):
+    
     claims = []
     
     # verify there are no duplicates and get list of wikidata ids
@@ -348,22 +319,22 @@ def get_claims_for_image_upload(finna_image):
         # publisher = 'Q3029524'  # Finnish Heritage Agency
         operator = 'Q420747'    # National library
 
-        claim = create_P7482_source_of_file(recordurl, operator, institution)
+        claim = create_P7482_source_of_file(wikidata_site, recordurl, operator, institution)
         claims.append(claim)
 
-    claim = create_P9478_finna_id(finna_image.get_finna_id()) # this one does not need encoding
+    claim = create_P9478_finna_id(wikidata_site, finna_image.get_finna_id()) # this one does not need encoding
     claims.append(claim)
 
-    claim = get_inception_claim(finna_image)
+    claim = get_inception_claim(wikidata_site, finna_image)
     claims.append(claim)
 
     # create claims for image rights
 
     copyright_data = finna_image.image_right.get_copyright()
-    claim = create_P275_licence(copyright_data, recordurl)
+    claim = create_P275_licence(wikidata_site, copyright_data, recordurl)
     claims.append(claim)
 
-    claim = create_P6216_copyright_state(copyright_data)
+    claim = create_P6216_copyright_state(wikidata_site, copyright_data)
     claims.append(claim)
 
     # create claims for image authors/creators:
@@ -373,7 +344,7 @@ def get_claims_for_image_upload(finna_image):
         print("using auth", auth, "role", role)
 
         # create claim for author and role (if any, optional)
-        claim = create_P170_author(auth, role)
+        claim = create_P170_author(wikidata_site, auth, role)
         claims.append(claim)
 
 
@@ -383,7 +354,7 @@ def get_claims_for_image_upload(finna_image):
     collections = get_collections_for_sdc(finna_image)
     for collection in collections:
 
-        claim = create_P195_collection(collection, finna_image.identifier_string)
+        claim = create_P195_collection(wikidata_site, collection, finna_image.identifier_string)
         claims.append(claim)
 
     # create claims for subject actors
@@ -395,7 +366,7 @@ def get_claims_for_image_upload(finna_image):
             continue
 
         if subject_actor.wikidata_id:
-            claim = create_P180_depict(subject_actor.wikidata_id)
+            claim = create_P180_depict(wikidata_site, subject_actor.wikidata_id)
             claims.append(claim)
 
     # Handle local subjects
@@ -406,16 +377,16 @@ def get_claims_for_image_upload(finna_image):
             print("wikidata id missing for subject: ", add_depict.name)
             exit()
 
-        claim = create_P180_depict(add_depict.wikidata_id)
+        claim = create_P180_depict(wikidata_site, add_depict.wikidata_id)
         claims.append(claim)
 
-    p1771_location_claims = create_P1071_location(finna_image)
+    p1771_location_claims = create_P1071_location(wikidata_site, finna_image)
     for p1771_location_claim in p1771_location_claims:
         claims.append(p1771_location_claim)
 
     return claims
 
-def get_sdc_labels(finna_image):
+def get_labels_for_sdc(finna_image):
 
     labels = {}
     
@@ -464,8 +435,8 @@ def get_sdc_labels(finna_image):
 
 # this context is for sdc data in commons,
 # used by views.py
-def get_structured_data_for_new_image(finna_image):
-    claims = get_claims_for_image_upload(finna_image)
+def get_structured_data_for_new_image(wikidata_site, finna_image):
+    claims = get_claims_for_image_upload(wikidata_site, finna_image)
 
     json_claims = []
     for claim in claims:
@@ -474,7 +445,7 @@ def get_structured_data_for_new_image(finna_image):
             json_claims.append(claim)
 
     # labels in commons
-    labels = get_sdc_labels(finna_image)
+    labels = get_labels_for_sdc(finna_image)
 
     ret = {
         'labels': labels,
@@ -484,10 +455,7 @@ def get_structured_data_for_new_image(finna_image):
     return ret
 
 
-def create_P1071_location(finna_image):
-
-    # reuse session and use proper login
-    wikidata_site = getWdsite()
+def create_P1071_location(wikidata_site, finna_image):
 
     ret = []
     wikidata_ids = set()

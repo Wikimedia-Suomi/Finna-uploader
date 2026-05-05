@@ -4,10 +4,9 @@
 import mwparserfromhell
 
 from images.wikitext.timestamps import parse_timestamp_string
-from images.wikitext.categories import create_categories_new
+from images.wikitext.categories import create_categories_for_new_image
 
 from images.wikitext.wikidata_helpers import get_creator_nane_by_wikidata_id, \
-                                        get_institution_wikidata_id, \
                                         get_institution_name_by_wikidata_id, striprepeatespaces
 
 
@@ -55,14 +54,14 @@ def clean_depicted_places(location_string):
     return ret
 
 # photographers specifically
-def get_creator_templates_for_photographers(finna_image):
+def get_creator_templates_for_photographers(wikidata_site, finna_image):
     creator_templates = []
     for creator in finna_image.non_presenter_authors.all():
         if (creator.is_photographer()):
             if (not creator.wikidata_id):
                 print("wikidata id missing for creator: ", creator.name)
                 exit()
-            creatorName = get_creator_nane_by_wikidata_id(creator.wikidata_id)
+            creatorName = get_creator_nane_by_wikidata_id(wikidata_site, creator.wikidata_id)
             if (creatorName is not None):
                 template = '{{Creator:' + creatorName + '}}'
                 # don't add duplicates (error in source)
@@ -72,7 +71,7 @@ def get_creator_templates_for_photographers(finna_image):
     return "".join(creator_templates)
 
 # non-photographer authors (architects, illustrators)
-def get_creator_templates_for_authors(finna_image):
+def get_creator_templates_for_authors(wikidata_site, finna_image):
     creator_templates = []
     for creator in finna_image.non_presenter_authors.all():
         creatorName = None
@@ -80,7 +79,7 @@ def get_creator_templates_for_authors(finna_image):
             if (not creator.wikidata_id):
                 print("wikidata id missing for creator: ", creator.name)
                 exit()
-            creatorName = get_creator_nane_by_wikidata_id(creator.wikidata_id)
+            creatorName = get_creator_nane_by_wikidata_id(wikidata_site, creator.wikidata_id)
             if (creatorName is not None):
                 template = '{{Creator:' + creatorName + '}}'
                 # don't add duplicates (error in source)
@@ -98,14 +97,14 @@ def get_creator_templates_for_authors(finna_image):
     return "".join(creator_templates)
 
 
-def get_institution_templates(finna_image):
+def get_institution_templates(wikidata_site, finna_image):
     institution_templates = []
     for institution in finna_image.institutions.all():
         if (not institution.wikidata_id):
             print("wikidata id missing for institution: ", institution.name)
             exit()
         
-        institutionName = get_institution_name_by_wikidata_id(institution.wikidata_id)
+        institutionName = get_institution_name_by_wikidata_id(wikidata_site, institution.wikidata_id)
         if (institutionName is not None):
             print("using name", institutionName, " for institution ", institution.translated)
             template = '{{Institution:' + institutionName + '}}'
@@ -288,7 +287,7 @@ def get_collections_from_image(finna_image):
     # cleanup duplicates
     return get_joined_list(collections)
 
-def create_photograph_template(finna_image):
+def create_photograph_template(wikidata_site, finna_image):
     lang = 'fi' # no need to repeat
     
     # Create a new WikiCode object
@@ -302,10 +301,10 @@ def create_photograph_template(finna_image):
 
     # Add the parameters to the template
     # creator: photographer
-    template.add('photographer', get_creator_templates_for_photographers(finna_image))
+    template.add('photographer', get_creator_templates_for_photographers(wikidata_site, finna_image))
 
     # other creators or authors: architects, illustrators
-    template.add('author', get_creator_templates_for_authors(finna_image))
+    template.add('author', get_creator_templates_for_authors(wikidata_site, finna_image))
     
     # TODO:
     # for other kinds of creators (manufacturer of object), just use plain string?
@@ -327,7 +326,7 @@ def create_photograph_template(finna_image):
     template.add('date', get_timestamp_string(finna_image))
     template.add('medium', get_materials(finna_image)) # physical descriptions? ("lasinegatiivi" etc.)
     template.add('dimensions', str(finna_image.measurements))
-    template.add('institution', get_institution_templates(finna_image))
+    template.add('institution', get_institution_templates(wikidata_site, finna_image))
     template.add('department', make_lang_template(joinedcollections, lang))  # noqa
     template.add('references', '')
     template.add('object history', '')
@@ -362,16 +361,19 @@ def create_photograph_template(finna_image):
     return flat_wikitext
 
 
-def get_wikitext_for_new_image(finna_image):
-    photo_template = create_photograph_template(finna_image)
+def get_wikitext_for_new_image(wikidata_site, finna_image):
 
     copyrighttemplatename = get_copyright_template_name(finna_image)
+    
+    photo_template = create_photograph_template(wikidata_site, finna_image)
+
+    categories = create_categories_for_new_image(wikidata_site, finna_image)
 
     wikitext_parts = []
     wikitext_parts.append("== {{int:filedesc}} ==")
     wikitext_parts.append(photo_template + '\n')
     wikitext_parts.append("== {{int:license-header}} ==")
     wikitext_parts.append("{{" + copyrighttemplatename + "}}\n{{FinnaReview}}")
-    wikitext_parts.append(create_categories_new(finna_image))
+    wikitext_parts.append(categories)
     wikitext = "\n".join(wikitext_parts)
     return wikitext

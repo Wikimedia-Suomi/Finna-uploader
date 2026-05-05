@@ -5,14 +5,14 @@ import mwparserfromhell
 
 from images.wikitext.wikidata_helpers import get_subject_image_category_from_wikidata_id, \
                                     get_collection_image_category_from_wikidata_id, \
-                                    get_creator_nane_by_wikidata_id, striprepeatespaces
+                                    striprepeatespaces
 
 
-def get_category_by_wikidata_id(wikidata_id):
+def get_category_by_wikidata_id(wikidata_site, wikidata_id):
     if not wikidata_id:
         return None
     
-    category = get_subject_image_category_from_wikidata_id(wikidata_id)
+    category = get_subject_image_category_from_wikidata_id(wikidata_site, wikidata_id)
     if category:
         # this is error in the data if someone has added this way (unlikely, but check it anyway)
         if (category.find("Category:") >= 0):
@@ -21,12 +21,12 @@ def get_category_by_wikidata_id(wikidata_id):
     return None
 
 
-def get_photography_category_by_photographer_id(wikidata_id):
+def get_photography_category_by_photographer_id(wikidata_site, wikidata_id):
     if not wikidata_id:
         print('DEBUG: no wikidata id, unable to find photographer category')
         return None
 
-    creatorName = get_subject_image_category_from_wikidata_id(wikidata_id)
+    creatorName = get_subject_image_category_from_wikidata_id(wikidata_site, wikidata_id)
     if (creatorName != None):
         print('DEBUG: creator name ', creatorName ,' for wikidata id: ', wikidata_id)
         
@@ -47,12 +47,12 @@ def get_photography_category_by_photographer_id(wikidata_id):
 # and authors includes person with role "arkkitehti"
 # categorize under "buildings by <architect>"
 # subject should include "rakennukset"
-def get_building_category_by_architect_id(wikidata_id):
+def get_building_category_by_architect_id(wikidata_site, wikidata_id):
     if not wikidata_id:
         print('DEBUG: no wikidata id, unable to find architect category')
         return None
     
-    creatorName = get_subject_image_category_from_wikidata_id(wikidata_id)
+    creatorName = get_subject_image_category_from_wikidata_id(wikidata_site, wikidata_id)
     if (creatorName != None):
         print('DEBUG: creator name ', creatorName ,' for wikidata id: ', wikidata_id)
 
@@ -68,12 +68,12 @@ def get_building_category_by_architect_id(wikidata_id):
 
     return None
 
-def get_works_category_by_creator_id(wikidata_id):
+def get_works_category_by_creator_id(wikidata_site, wikidata_id):
     if not wikidata_id:
         print('DEBUG: no wikidata id, unable to find creator category')
         return None
 
-    creatorName = get_subject_image_category_from_wikidata_id(wikidata_id)
+    creatorName = get_subject_image_category_from_wikidata_id(wikidata_site, wikidata_id)
     if (creatorName != None):
         print('DEBUG: creator name ', creatorName ,' for wikidata id: ', wikidata_id)
 
@@ -89,8 +89,8 @@ def get_works_category_by_creator_id(wikidata_id):
 
     return None
 
-
-def get_subject_category(finna_subject):
+# not used anywhere?
+def get_subject_category(wikidata_site, finna_subject):
     value = finna_subject.value.replace('category:', 'Category:')
 
     if 'https://commons.wikimedia.org/wiki/Category:' in value:
@@ -102,7 +102,7 @@ def get_subject_category(finna_subject):
     if '^Category:' in value:
         return value.replace('Category:', '')
 
-    return get_category_by_wikidata_id(finna_subject.wikidata_id)
+    return get_category_by_wikidata_id(wikidata_site, finna_subject.wikidata_id)
 
 
 def get_category_for_building(subject_name, depicted_places):
@@ -604,7 +604,7 @@ def get_category_for_building_by_place(subject_name, subject_places):
 
     return None
 
-def get_category_for_collection(collection):
+def get_category_for_collection(wikidata_site, collection):
 
     # there may be preceding or trailing space -> remove it
     # in some cases there are tabulators or newlines in between..
@@ -624,7 +624,7 @@ def get_category_for_collection(collection):
     # some are not compatible yet
     wikidata_id_list = ["Q123308681", "Q123358672", "Q107388072", "Q113292201", "Q122414127", "Q123308774"]
     if collection.wikidata_id in wikidata_id_list:
-        return get_collection_image_category_from_wikidata_id(collection.wikidata_id)
+        return get_collection_image_category_from_wikidata_id(wikidata_site, collection.wikidata_id)
 
     # just collection qcode to category: should have link in commons if possible
     collection_categories = {
@@ -662,7 +662,7 @@ def get_category_for_institution(institution):
 
     return None
 
-def get_categories_for_authors(finna_image):
+def get_categories_for_authors(wikidata_site, finna_image):
     categories = set()
     authors = finna_image.non_presenter_authors.all()
     for author in authors:
@@ -672,7 +672,7 @@ def get_categories_for_authors(finna_image):
                 exit()
             
             # "photographs by" category under photographer
-            category = get_photography_category_by_photographer_id(author.wikidata_id)
+            category = get_photography_category_by_photographer_id(wikidata_site, author.wikidata_id)
             if (category != None):
                 categories.add(category)
 
@@ -684,7 +684,7 @@ def get_categories_for_authors(finna_image):
                     print("wikidata id missing for author: ", author.name)
                     exit()
 
-                category = get_building_category_by_architect_id(author.wikidata_id)
+                category = get_building_category_by_architect_id(wikidata_site, author.wikidata_id)
                 if (category != None):
                     categories.add(category)
 
@@ -695,7 +695,7 @@ def get_categories_for_authors(finna_image):
             if (not author.wikidata_id):
                 print("wikidata id missing for author: ", author.name)
                 exit()
-            category = get_works_category_by_creator_id(author.wikidata_id)
+            category = get_works_category_by_creator_id(wikidata_site, author.wikidata_id)
             if (category != None):
                 categories.add(category)
 
@@ -703,7 +703,7 @@ def get_categories_for_authors(finna_image):
             if (not author.wikidata_id):
                 print("wikidata id missing for author: ", author.name)
                 exit()
-            category = get_works_category_by_creator_id(author.wikidata_id)
+            category = get_works_category_by_creator_id(wikidata_site, author.wikidata_id)
             if (category != None):
                 categories.add(category)
 
@@ -761,7 +761,7 @@ def places_cleaner(finna_image):
     return places
 
 
-def create_categories_new(finna_image):
+def create_categories_for_new_image(wikidata_site, finna_image):
     subject_names = finna_image.subjects.values_list('name', flat=True)
     subject_places = places_cleaner(finna_image) # clean some issues in data
     depicted_places = str(list(subject_places))
@@ -785,11 +785,11 @@ def create_categories_new(finna_image):
         if (subject_actor.skip_actor() == True):
             continue
 
-        category = get_category_by_wikidata_id(subject_actor.wikidata_id)
+        category = get_category_by_wikidata_id(wikidata_site, subject_actor.wikidata_id)
         if category:
             categories.add(category)
 
-    authorcategories = get_categories_for_authors(finna_image)
+    authorcategories = get_categories_for_authors(wikidata_site, finna_image)
     for ac in authorcategories:
         if ac:
             if ac not in categories:
@@ -800,7 +800,7 @@ def create_categories_new(finna_image):
     for best_wikidata_location in best_wikidata_locations.all():
         wikidata_id = best_wikidata_location.uri.replace('http://www.wikidata.org/entity/', '')
         print(f'FOOBAR {wikidata_id}')
-        category_name = get_category_by_wikidata_id(wikidata_id)
+        category_name = get_category_by_wikidata_id(wikidata_site, wikidata_id)
         if category_name:
             categories.add(category_name)
 
@@ -945,7 +945,7 @@ def create_categories_new(finna_image):
                 categories.add(cattext)
 
     for collection in finna_image.collections.all():
-        category = get_category_for_collection(collection)
+        category = get_category_for_collection(wikidata_site, collection)
         if (category is not None and category not in categories):
             categories.add(category)
 
@@ -958,7 +958,7 @@ def create_categories_new(finna_image):
     # this is never used?
     for add_category in finna_image.add_categories.all():
 
-        category_name = get_category_by_wikidata_id(add_category.wikidata_id)
+        category_name = get_category_by_wikidata_id(wikidata_site, add_category.wikidata_id)
         if category_name:
             categories.add(category_name)
 

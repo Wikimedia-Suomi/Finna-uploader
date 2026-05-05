@@ -7,8 +7,16 @@ from images.wikitext.wikidata_helpers import get_collection_names
 
 from images.imagehash_helpers import isimageformatsupported
 
-s = requests.Session()
-s.headers.update({'User-Agent': 'FinnaUploader 0.2 (https://commons.wikimedia.org/wiki/User:FinnaUploadBot)'}) # noqa
+g_finnasession = None
+def getFinnasession():
+    global g_finnasession
+    if (g_finnasession == None):
+
+        g_finnasession = requests.Session()
+        g_finnasession.headers.update({'User-Agent': 'FinnaUploader 0.2 (https://commons.wikimedia.org/wiki/User:FinnaUploadBot)'}) # noqa
+        
+    return g_finnasession
+
 
 # TODO: responses could be cached instead of possibly repeating
 def get_json_response(session, url):
@@ -291,7 +299,8 @@ def do_finna_search(page=1, lookfor=None, type='AllFields', collection=None, ful
     if type:
         url += finna_api_parameter('type', f'{type}')
 
-    return get_json_response(s, url)
+    fs = getFinnasession()
+    return get_json_response(fs, url)
 
 
 # called from imagehash_helpers.py
@@ -423,7 +432,8 @@ def get_finna_record(id, full=False, lang=None):
 
     url = get_finna_record_url(id, full, lang)
 
-    return get_json_response(s, url)
+    fs = getFinnasession()
+    return get_json_response(fs, url)
 
 
 def get_summary_in_language(id, lang):
@@ -435,7 +445,8 @@ def get_summary_in_language(id, lang):
     url += finna_api_parameter('field[]', 'summary')
     url += f'&lng={lang}'
     
-    json = get_json_response(s, url)
+    fs = getFinnasession()
+    json = get_json_response(fs, url)
     if (is_valid_finna_record(json) == True):
         return json['records'][0]['summary']
     
@@ -471,5 +482,4 @@ def get_finna_id_from_url(url):
                 matched_str = str(match.group(1)).replace('_', '-')
                 id = f'musketti.M012:HK7155:{matched_str}'
                 return id
-
 
