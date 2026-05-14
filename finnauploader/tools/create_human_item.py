@@ -8,6 +8,9 @@
 import re
 import sys
 import pywikibot
+from pywikibot.data import sparql
+from pywikibot.data.sparql import SparqlQuery
+
 from requests import get
 import json
 
@@ -308,6 +311,102 @@ def checkqcodesforhuman(repo, nametitle, firstname, lastname, qcodes):
         
     return False
 
+def getitembyqcode(repo, itemqcode):
+    if (itemqcode == None or itemqcode == ""):
+        print("no qcode for item")
+        return None
+
+    item = pywikibot.ItemPage(repo, itemqcode)
+    if (item.isRedirectPage() == True):
+        return None
+    return item
+
+def getlabelbylangfromitem(item, lang):
+
+    for li in item.labels:
+        label = item.labels[li]
+        if (li == lang):
+            print("DEBUG: found label for ", item.getID() ," in lang ", lang ,": ", label)
+            return label
+    return None
+
+# page id from query usually has full url of item:
+# we want just the qcode
+def parseqcodefromwikidatalink(text):
+
+    ilast = text.rfind("/", 0, len(text)-1)
+    if (ilast < 0):
+        return text
+    return text[ilast+1:]
+
+# sparql query can give more exact matches that api search.
+# some items in wikidata might not have finnish label, but might have in "mul" or english, or vice versa..
+def searchItembySparql(repo, text, lang='fi'):
+
+    print("DEBUG: searching item with label: ", text)
+
+    endpoint = 'https://query.wikidata.org/sparql'
+    entity_url = 'https://www.wikidata.org/entity/' # must be provided when endpoint is given
+    
+    query = 'SELECT distinct ?item ?itemLabel ?itemDescription WHERE{'
+    query += ' ?item ?label "'+ text +'"@' + lang + '.' # or alternative label(s)
+    query += ' ?article schema:about ?item .'
+    query += ' ?article schema:inLanguage "' + lang + '" .' # note part of below
+    query += ' ?article schema:isPartOf <https://' + lang + '.wikipedia.org/>.'
+    query += ' SERVICE wikibase:label { bd:serviceParam wikibase:language "' + lang + '". } }'
+
+    #print("DEBUG: using endpoint: ", endpoint)
+
+    query_object = sparql.SparqlQuery(endpoint=endpoint, entity_url=entity_url)
+
+    print("DEBUG: executing SPARQL query: ", query)
+    
+    # Execute the SPARQL query and retrieve the data
+    data = query_object.select(query, full_data=True)
+    if data is None:
+        print("SPARQL failed. query error or login BUG?")
+        return None
+
+
+    print("DEBUG: checking query results.. ")
+
+    # list of potentatial matches (may have sub-types etc.)
+    qidlist = list()
+
+    for row in data:
+        print("DEBUG: row:", row)
+        page_id = str(row['item'])
+        
+        # error: page_id is a link, not just qcode..
+        # Http://www.wikidata.org/entity/Q484179
+        # -> strip it
+        itemqcode = parseqcodefromwikidatalink(page_id)
+        
+        item = getitembyqcode(repo, itemqcode)
+        if (item == None):
+            # invalid qcode?
+            continue
+        
+        lbl = getlabelbylangfromitem(item, lang)
+        if (lbl == None):
+            # no label in this language?
+            print("no label in language: ", lang)
+            continue
+
+        if (lbl != text):
+            # not correct label for some reason
+            print("label is not correct: ", lbl)
+            continue
+
+        if itemqcode not in qidlist:
+            qidlist.append(itemqcode)
+
+    if (len(qidlist) == 0):
+        print("did not find item for:", text)
+    return qidlist
+
+
+# parse results from api search
 def getqcodesfromresponse(record):
     qcodes = list()
     if "search" in record:
@@ -319,6 +418,7 @@ def getqcodesfromresponse(record):
                     qcodes.append(res["id"])
     return qcodes
 
+# api search may give ambiguous results with partial labels
 # https://github.com/mpeel/wikicode/blob/master/wir_newpages.py#L706
 def searchbyname(repo, wtitle, lang='fi'):
     print("searching for ", wtitle)
@@ -386,13 +486,16 @@ def addhuman(repo, complete_name, given_name_qcode, last_name_qcode):
     print('Creating a new item...')
 
     #create item
-    newitem = pywikibot.ItemPage(repo)
+    #newitem = pywikibot.ItemPage(repo)
+    #newitemlabels = {'fi': complete_name,'en': complete_name}
+    #for key in newitemlabels:
+    #    newitem.editLabels(labels={key: newitemlabels[key]},
+    #        summary="Setting label: {} = '{}'".format(key, newitemlabels[key]))
 
-    newitemlabels = {'fi': complete_name,'en': complete_name}
-    for key in newitemlabels:
-        newitem.editLabels(labels={key: newitemlabels[key]},
-            summary="Setting label: {} = '{}'".format(key, newitemlabels[key]))
-        
+    # use batch instead of looping: also add case where multiple languages use the name as-is
+    data = {"labels": {"en": complete_name, "fi": complete_name, "mul": complete_name}}
+    newitem = pywikibot.ItemPage(repo, None)
+    newitem.editEntity(data, summary=u'Edited item: set labels, descriptions')
     newitem.get()
 
     print('Adding properties...')
@@ -467,15 +570,19 @@ if __name__ == "__main__":
 
         print(" ---- searching -----")
 
+        # search full human name first, use api search for now:
+        # this should be wide enough to avoid duplicate humans
         qcodes = searchbyname(repo, complete_name)
         if (checkqcodesforhuman(repo, complete_name, first_name, last_name, qcodes) == True):
             print(f"Human already exists by same name: {complete_name}")
             exit(1)
 
-        # locate qcodes for first and last name
-        qcodesFirstname = searchbyname(repo, first_name)
+        # locate qcodes for first and last name:
+        # use sparql here as that might give more accurate matches (without partials)
+        # as we want to be precise where we link to
+        qcodesFirstname = searchItembySparql(repo, first_name)
         qcodeFirstName = getFirstNameQcode(qcodesFirstname, first_name)
-        qcodesLastname = searchbyname(repo, last_name)
+        qcodesLastname = searchItembySparql(repo, last_name)
         qcodeLastName = getLastNameQcode(qcodesLastname, last_name)
         if (qcodeFirstName == '' or qcodeLastName == ''):
             print(f"Items for names missing")
