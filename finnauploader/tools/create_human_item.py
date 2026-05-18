@@ -147,13 +147,26 @@ def skipByWritingSystem(item):
 
     writingsystem = item.claims.get('P282', [])
     for claim in writingsystem:
+        qid = claim.getTarget().id
         
         # kiinan kirjoitusjärjestelmä
-        if (claim.getTarget().id == 'Q8201'):
+        if (qid == 'Q8201'):
+            # skip
             return True
         
+        #kyrillinen kirjaimisto (Q8209)
+        #if (qid == 'Q8209'):
+            # skip
+            #return True
+        
+        #heprealainen kirjaimisto (Q33513)
+        #if (qid == 'Q33513'):
+            # skip
+            #return True
+        
         # not latin alphabet
-        if (claim.getTarget().id != 'Q8229'):
+        if (qid != 'Q8229'):
+            # skip
             return True
 
     return False
@@ -176,6 +189,10 @@ def getFirstNameQcode(qcodes, name):
         nameitem = pywikibot.ItemPage(repo, itemqcode)
         if (nameitem.isRedirectPage() == True):
             continue
+
+        # don't link to names that have different writing systems
+        #if (skipByWritingSystem(nameitem) == True):
+        #    continue
         
         if (isItemFirstName(nameitem) == True):
             label = getlabelfromitem(nameitem)
@@ -330,14 +347,41 @@ def getlabelbylangfromitem(item, lang):
             return label
     return None
 
-# page id from query usually has full url of item:
-# we want just the qcode
+# in case query gives wikidata link instead of plain qcode
+# -> parse to plain qcode
 def parseqcodefromwikidatalink(text):
+
+    # should have "entity/Q.."
+    # should not have "entity/statement/Q.."
 
     ilast = text.rfind("/", 0, len(text)-1)
     if (ilast < 0):
         return text
     return text[ilast+1:]
+
+# check that qcode seems valid
+def isQcode(qcode):
+    if (qcode == None):
+        return False
+    
+    # must have at least Q and numbers
+    if (len(qcode) < 2):
+        return False
+    ch = qcode[0]
+    if (ch != "Q"):
+        return False
+    
+    # uuid instead of plain qcode?
+    if (qcode.find("-") > 0):
+        return False
+
+    # does it look like valid integer as well?
+    qnum = qcode[1:]
+    inum = int(qnum)
+    if (inum < 1):
+        return False
+    return True
+
 
 # sparql query can give more exact matches that api search.
 # some items in wikidata might not have finnish label, but might have in "mul" or english, or vice versa..
@@ -350,9 +394,9 @@ def searchItembySparql(repo, text, lang='fi'):
     
     query = 'SELECT distinct ?item ?itemLabel ?itemDescription WHERE{'
     query += ' ?item ?label "'+ text +'"@' + lang + '.' # or alternative label(s)
-    query += ' ?article schema:about ?item .'
+    query += ' ?article schema:about ?item .' #
     query += ' ?article schema:inLanguage "' + lang + '" .' # note part of below
-    query += ' ?article schema:isPartOf <https://' + lang + '.wikipedia.org/>.'
+    #query += ' ?article schema:isPartOf <https://' + lang + '.wikipedia.org/>.' # not useful if there is no article of each name?
     query += ' SERVICE wikibase:label { bd:serviceParam wikibase:language "' + lang + '". } }'
 
     #print("DEBUG: using endpoint: ", endpoint)
@@ -381,7 +425,10 @@ def searchItembySparql(repo, text, lang='fi'):
         # Http://www.wikidata.org/entity/Q484179
         # -> strip it
         itemqcode = parseqcodefromwikidatalink(page_id)
-        
+        if (isQcode(itemqcode) == False):
+            print("not a valid qcode: ", itemqcode)
+            continue
+
         item = getitembyqcode(repo, itemqcode)
         if (item == None):
             # invalid qcode?
